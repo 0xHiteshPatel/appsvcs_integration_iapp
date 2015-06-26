@@ -1,0 +1,785 @@
+cli admin-partitions {
+    update-partition Common
+}
+sys application template /Common/appsvcs_integration_v0.3_001 {
+    actions {
+        definition {
+            html-help {
+            }
+            implementation {
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+set startTime [clock seconds]
+set NAME "F5 Application Services Integration iApp (Community Edition)"
+set IMPLVERSION "0.3(001)"
+set PRESVERSION "001"
+
+proc custom_extensions {} {
+  # ####################################################################
+  # Custom config example
+  # The purpose of the customConfig__stringX fields are to allow for changes WITHOUT updates
+  # to the APIC device package.  By exposing these fields now we can add code to the implementation
+  # portion of the iApp to handle new functionality.  Example 1 parses a string of the
+  # format "key1=val1;key2=val2;key3=val3" and populates variables that can be acted on.
+  #
+  # Another use case is to use the field to pass raw commands to the tmsh::create command as in Example 2 below
+  #
+  # Example 1
+  set pairs [split $::customConfig__string1 \;]
+  debug "\[custom_extentions\] Custom1: pairs=$pairs"
+  array set custom_kvp {}
+  foreach pair $pairs {
+   set key [lindex [split $pair =] 0]
+   set val [lindex [split $pair =] 1]
+   set custom_kvp($key) $val
+   debug "\[custom_extentions\] Custom1: pair=$pair key=$key val=$val custom_kvp($key)=$custom_kvp($key)"
+  }
+  
+  if { [info exists custom_kvp(nagle)] && $custom_kvp(nagle) == 0 } {
+  debug "\[custom_extentions\] TThis is an example of the custom KVP nagle=0 in Custom String 1"
+  }
+  
+  if { [info exists custom_kvp(logit)] && $custom_kvp(logit) == 1} {
+   debug "\[custom_extentions\] This is an example of the custom KVP logit=1 in Custom String 1"
+  }
+  
+  # Example 2 
+  # Populate String 2 with a valid command like:
+  #  ltm data-group internal customDG type string records replace-all-with { record1 { data data1 } record2 { data data2 } }
+  #
+  # Once the template executes you can see the creation of the datagroup under the application template container
+  # tmsh::create $::customConfig__string2
+  #
+  # End custom config example
+  # ####################################################################
+}
+
+# Print a timestamped debug message to /var/tmp/scriptd.out
+# Input: string
+proc debug { string } {
+  set systemTime [clock seconds]
+  puts "\[[clock format $systemTime -format %D]\]\[[clock format $systemTime -format %H:%M:%S]\]\[$tmsh::app_name\] $string"
+}
+
+# Figure out which type of environment we are executing in.
+# Return: list $mode $folder $partition $routedomainid
+# Modes: 1 = Standalone
+#        2 = Cisco APIC
+proc get_mode { } {
+  set folder [tmsh::pwd]
+  set partition [lindex [split $folder /] 1]
+  set routedomainid 0
+  debug "\[get_mode\] starting folder=$folder partition=$partition routedomainid=$routedomainid"
+  
+  # Check for a partition that starts with apic_ and return APIC mode and RD if found
+  if { [string match -nocase "apic_*" $partition] } {
+    debug "\[get_mode\]\[apic\] partition starts with apic_, assuming APIC deployment mode (2)"
+    set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
+    set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
+    debug "\[get_mode\]\[apic\] rdobjs=$rdobjs routedomainid=$routedomainid"
+    return [list 2 $folder $partition $routedomainid]
+  }
+
+  # Default is Standalone mode
+  debug "\[get_mode\]\[standalone\] no integration vendor found, assuming Standalone deployment mode (1)"    
+  return [list 1 $folder $partition $routedomainid]
+}
+
+# Create a specfic option command and return it
+# Input: $debug_id, $input_var, $option_string
+# Return: string $cmd
+
+proc generic_add_option { debug_id input_var option_string custom_format replace_commas} {
+  set cmd " "
+  if { [string length $input_var] > 0 } {
+      if { $replace_commas == 1 } {
+        set input_var [string map {"," " "} $input_var]
+      }
+
+      if { [string length $custom_format] > 0 } {
+        set cmd [format $custom_format $input_var]
+      } else {
+        set cmd [format " $option_string \"%s\"" $input_var]
+      }
+      debug [format "\[%s\]\[generic_add_option\] cmd=%s" $debug_id $cmd]
+  }
+  return $cmd
+}
+
+# Check to see if an ip has a routedomain included.
+# Return: 0=false; 1=true
+proc has_routedomain { ip } {
+  return [string match *%* $ip]
+}
+
+set app $tmsh::app_name
+debug "Starting $NAME version IMPL=$IMPLVERSION PRES=$PRESVERSION app_name=$app"
+
+set modeinfo [get_mode]
+set mode [lindex $modeinfo 0]
+set folder [lindex $modeinfo 1]
+set partition [lindex $modeinfo 2]
+set rd [lindex $modeinfo 3]
+
+debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd"
+
+# Fixup incoming variables: If no value is sent for a particular iApp field than the var is not created which
+# results in all sorts of problems.  We just check for existence of the var and set to "" if it doesn't exist
+
+set allVars {
+ iapp__strictUpdates \
+ iapp__appStats \
+ virtualServerConfig__vsName \
+ virtualServerConfig__vsIpProtocol \
+ virtualServerConfig__vsConnectionLimit \
+ virtualServerConfig__vsDescription \
+ virtualServerConfig__vsSourceAddress \
+ pool__addr \
+ pool__mask \
+ pool__port \
+ virtualServerConfig__vsProfileClientProtocol \
+ virtualServerConfig__vsProfileServerProtocol \
+ virtualServerConfig__vsProfileHTTP \
+ virtualServerConfig__vsProfileOneConnect \
+ virtualServerConfig__vsProfileDefaultPersist \
+ virtualServerConfig__vsProfileFallbackPersist \
+ virtualServerConfig__vsSNATConfig \
+ virtualServerConfig__vsProfileClientSSL \
+ virtualServerConfig__vsProfileClientSSLCert \
+ virtualServerConfig__vsProfileClientSSLKey \
+ virtualServerConfig__vsProfileClientSSLChain \
+ virtualServerConfig__vsProfileClientSSLCipherString \
+ virtualServerConfig__vsOptionSourcePort \
+ virtualServerConfig__vsOptionConnectionMirroring \
+ virtualServerConfig__vsIrules \
+ poolConfig__poolName \
+ poolConfig__poolDescription \
+ poolConfig__poolMonitor \
+ poolConfig__poolLbMethod \
+ poolConfig__poolMemberDefaultPort \
+ poolConfig__poolMembers \
+ customConfig__string1 \
+ customConfig__string2 \
+ customConfig__string3 \
+ app_stats }
+
+array set table_defaults {
+    poolMembers {
+        poolMemberState enabled
+        poolMemberIPAddress Error
+        poolMemberPort 80
+        poolMemberConnectionLimit 0
+        poolMemberRatio 1
+    }
+}
+array set pool_state {
+    enabled        {session user-enabled state user-up}
+    disabled       {state user-down}
+    force-disabled {state user-down}
+    drain-disabled {session user-disabled state user-up}
+}
+
+foreach var $allVars {
+  if {[info exists [subst $var]]} {
+    debug "\[input\] $var sent, value is: [set [subst $var]]"
+  } else {
+    set [subst $var] ""
+    debug "\[input\] $var NOT sent, setting to blank"
+  }
+}
+
+# Special handling for the Source Address because it comes in as 0.0.0.0/0 and
+# needs to be 0.0.0.0%xxxx/0, where '%xxxx' is the route-domain ID
+set working $virtualServerConfig__vsSourceAddress
+debug "\[fix_src_addr\] Check if virtualServerConfig__vsSourceAddress needs to be fixed"
+if { [string length $working] > 0 } {
+  debug "\[fix_src_addr\]  Fixing virtualServerConfig__vsSourceAddress: orig=$working"
+  set net  [lindex [split $working /] 0]
+  set cidr [lindex [split $working /] 1]
+  set virtualServerConfig__vsSourceAddress "$net%$rd\/$cidr"
+  debug "\[fix_src_addr\]  new=$virtualServerConfig__vsSourceAddress"
+}
+
+# Create Client-SSL profile if Cert and Key are specified but ClientSSLProfile is not
+debug "\[proc_client_ssl\] checking if client ssl cert & key were entered"
+set clientssl 0
+if { [string length $virtualServerConfig__vsProfileClientSSLKey] > 0 && [string length $virtualServerConfig__vsProfileClientSSLCert] > 0 && [string length $virtualServerConfig__vsProfileClientSSL] == 0 } {
+	tmsh::get_config /sys file ssl-key $virtualServerConfig__vsProfileClientSSLKey
+ 	tmsh::get_config /sys file ssl-cert $virtualServerConfig__vsProfileClientSSLCert
+ 	debug "\[create_client_ssl\]  ssl cert & key found... creating profile"
+
+ 	set cmd [format "ltm profile client-ssl %s_clientssl key %s cert %s" $app $virtualServerConfig__vsProfileClientSSLKey $virtualServerConfig__vsProfileClientSSLCert]
+
+ 	if { [string length $virtualServerConfig__vsProfileClientSSLChain] > 0 } {
+  		tmsh::get_config /sys file ssl-cert $virtualServerConfig__vsProfileClientSSLChain
+  		debug "\[create_client_ssl\]  adding cert chain"
+  		append cmd [format " chain %s" $virtualServerConfig__vsProfileClientSSLChain]
+ 	}
+
+ 	if { [string length $virtualServerConfig__vsProfileClientSSLCipherString] > 0 } {
+  		debug "\[create_client_ssl\]  adding cipher string"
+  		append cmd [format " ciphers \"%s\"" $virtualServerConfig__vsProfileClientSSLCipherString]
+ 	}
+
+ 	debug "\[create_client_ssl\]  TMSH CREATE: $cmd"
+ 	tmsh::create $cmd
+ 	set clientssl 1
+} else { 
+  if { [string length $virtualServerConfig__vsProfileClientSSL] > 0 } {
+    debug "\[proc_client_ssl\] ClientSSLProfile was provided... checking if it exists"
+    tmsh::get_config /ltm profile client-ssl $virtualServerConfig__vsProfileClientSSL
+    set clientssl 2
+  } else {
+ 	  debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
+  }
+}
+
+
+# Create pool
+
+# Check to see if a poolName was specified... if not set to $app_pool
+if { [string length $poolConfig__poolName] == 0 } {
+    set poolConfig__poolName [format "%s_pool" $app]
+    debug "\[create_pool\] no poolName specified... setting to $poolConfig__poolName"
+}
+
+debug "\[create_pool\] name=$poolConfig__poolName"
+
+
+# Setup the members portion of the command my processing the poolConfig__poolMembers APL table
+set nummembers [llength $poolConfig__poolMembers]
+set numcolumns [llength [lindex [lindex $poolConfig__poolMembers 0] 0]]
+
+if { $nummembers == 0 } {
+  set memberstr " members none "
+  debug "\[create_pool\]\[member_str\] No pool members found... setting to none"
+} else {
+  set memberstr "members replace-all-with \{ "
+  debug "\[create_pool\]\[member_str\] Checking pool table... nummembers=$nummembers numcolumns=$numcolumns"
+  foreach row $poolConfig__poolMembers {
+    debug "\[create_pool\]\[member_str\]  row=$row"
+    array set column_defaults [subst $::table_defaults(poolMembers)]
+    array unset column
+
+    # extract the iApp table data - borrowed from f5.lbaas.tmpl
+    foreach column_data [lrange [split [join $row] "\n"] 1 end-1] {
+        set name [lindex $column_data 0]
+        set column($name) [lrange $column_data 1 end]
+        #debug [format "column_data name=%s val=%s" $name $column($name)]
+    }
+
+    # fill in any empty table values - borrowed from f5.lbaas.tmpl
+    foreach name [array names column_defaults] {
+        if { ![info exists column($name)] || $column($name) eq "" } {
+            set column($name) $column_defaults($name)
+            debug "\[create_pool\]\[member_str\]  value for $name not found... setting to default of $column_defaults($name)"
+        }
+    }
+
+    set ip $column(poolMemberIPAddress)
+    set port $column(poolMemberPort)
+    set connlimit $column(poolMemberConnectionLimit)
+    set state $column(poolMemberState)
+    set ratio $column(poolMemberRatio)
+    
+    # Add a route domain if it wasn't included
+    if {![has_routedomain $ip]} {
+      set ip "$ip%$rd"
+    }
+
+    # TODO: Is this still required?
+    # Sometimes we receive a transposed ip/port from BIG-IQ... fix it here
+    if {[has_routedomain $port]} {
+      set port $column(poolMemberIPAddress)
+      set ip $column(poolMemberPort)
+      debug "\[create_pool\]\[member_str\]  fixing ip=$ip port=$port"
+    }
+    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit state=$state"
+    
+    # If we don't get a port in the pool member table than use the template value for poolConfig__poolMemberDefaultPort
+    if { [string length $port] == 0} {
+      if { [string length $poolConfig__poolMemberDefaultPort] == 0 } {
+        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, poolConfig__poolMemberDefaultPort was blank, using pool__port=$pool__port"
+        set port $pool__port
+      } else {
+        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, using poolConfig__poolMemberDefaultPort=$poolConfig__poolMemberDefaultPort"
+        set port $poolConfig__poolMemberDefaultPort
+      }
+    }
+
+    append memberstr [format " %s:%s \{ connection-limit %s ratio %s %s\} " $ip $port $connlimit $ratio $::pool_state($state)]
+  }
+  append memberstr " \} "
+}
+#set memberstr [ iapp::pool_members $poolConfig__poolMembers -fields {address poolMemberIPAddress port poolMemberPort} ]
+debug "\[create_pool\]\[member_str\]  memberstr=$memberstr"
+
+# Setup the base pool create command
+set cmd [format "ltm pool %s %s " $poolConfig__poolName $memberstr $poolConfig__poolLbMethod]
+
+array set pool_options {
+  "poolConfig__poolLbMethod" "load-balancing-mode"
+  "poolConfig__poolDescription" "description"
+  "poolConfig__poolMonitor" "monitor"
+}
+
+foreach {optionvar optioncmd} [array get pool_options] {
+  #debug "\[create_pool\]\[options\] var=$optionvar cmd=$optioncmd"
+  append cmd [generic_add_option "create_pool\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
+}
+
+# Add the pool description
+# if { [string length $poolConfig__poolDescription] > 0 } {
+#   	append cmd [format " description \"%s\"" $poolConfig__poolDescription]
+# }
+
+# # Add the pool monitor
+# if { [string length $poolConfig__poolMonitor] > 0 } {
+#   	append cmd [format " monitor %s" $poolConfig__poolMonitor]
+# }
+
+
+debug "\[create_pool\] TMSH CREATE: $cmd"
+tmsh::create $cmd
+
+# Create virtual Server
+
+# Check to see if a vsName was specified... if not set to $app_pool
+if { [string length $virtualServerConfig__vsName] == 0 } {
+    set virtualServerConfig__vsName [format "%s_vs" $app]
+    debug "\[create_virtual\] no vsName specified... setting to $virtualServerConfig__vsName"
+}
+
+set cmd [format "ltm virtual %s " $virtualServerConfig__vsName]
+debug "\[create_virtual\] base cmd=$cmd"
+
+# Setup our listener destination address
+if { ![has_routedomain $pool__addr]} {
+  set vs_dest "$pool__addr%$rd:$pool__port"
+} else {
+  set vs_dest "$pool__addr:$pool__port"
+}
+
+# Set virtual server options we support.  This array assumes a format " <option> <input value>" for the TMSH command.
+array set vs_options {
+ "pool__mask" "mask"
+ "poolConfig__poolName" "pool"
+ "vs_dest" "destination"
+ "virtualServerConfig__vsIpProtocol" "ip-protocol"
+ "virtualServerConfig__vsConnectionLimit" "connection-limit"
+ "virtualServerConfig__vsDescription" "description"
+ "virtualServerConfig__vsSourceAddress" "source"
+ "virtualServerConfig__vsOptionSourcePort" "source-port"
+ "virtualServerConfig__vsOptionConnectionMirroring" "mirror"
+ "virtualServerConfig__vsProfileFallbackPersist" "fallback-persistence"
+}
+
+# Set virtual server options we support.  This array allows specifcation of the specific TMSH command format
+array set vs_options_custom {
+ "virtualServerConfig__vsIrules" " rules \{ %s \}"
+ "virtualServerConfig__vsProfileDefaultPersist" " persist replace-all-with \{ %s \}"
+}
+
+# Process the vs_options array
+foreach {optionvar optioncmd} [array get vs_options] {
+  #debug "\[create_virtual\]\[options\] var=$optionvar cmd=$optioncmd"
+  append cmd [generic_add_option "create_virtual\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
+}
+
+# Process the vs_options_custom array
+foreach {optionvar optioncmd} [array get vs_options_custom] {
+  #debug "\[create_virtual\]\[options\] var=$optionvar cmd=$optioncmd"
+  append cmd [generic_add_option "create_virtual\]\[options_custom" [set [subst $optionvar]] "" $optioncmd 1]
+}
+
+set snatcmd ""
+# Add SNAT options
+if { [string length $virtualServerConfig__vsSNATConfig] > 0 } {
+  switch [string tolower $virtualServerConfig__vsSNATConfig] {
+    automap { 
+      append snatcmd " source-address-translation \{ type automap \}" 
+    }
+    partition-default { 
+      append snatcmd [format " source-address-translation \{ pool /%s/%s type snat \}" $partition $partition] 
+    }
+    none { 
+      append snatcmd " source-address-translation \{ type none \}" 
+    }
+    default {
+          tmsh::get_config /ltm snatpool $virtualServerConfig__vsSNATConfig
+          append snatcmd [format " source-address-translation \{ pool %s type snat \}" $virtualServerConfig__vsSNATConfig]
+    }
+  }
+  debug "\[create_virtual\] adding snat cmd=$snatcmd"
+}
+append cmd $snatcmd
+
+# Add profiles
+set vsprofiles " profiles replace-all-with  \{ "
+debug "\[create_virtual\] adding base vsprofiles=$vsprofiles"
+
+# We have to specify context aware profiles first
+# Figure out the correct context to apply protocol profiles
+set clientContext "all"
+set serverContext "all"
+
+if { [string length $virtualServerConfig__vsProfileClientProtocol] > 0 && [string length $virtualServerConfig__vsProfileServerProtocol] > 0 && $virtualServerConfig__vsProfileClientProtocol ne $virtualServerConfig__vsProfileServerProtocol } {
+  debug "\[create_virtual\]\[proto_profiles\] got both client and server protocol profiles"
+  set clientContext "clientside"
+  set serverContext "serverside"
+} 
+
+# Client-side protocol
+if { [string length $virtualServerConfig__vsProfileClientProtocol] > 0 } {
+  append vsprofiles [format " %s \{ context %s \}" $virtualServerConfig__vsProfileClientProtocol $clientContext]
+  debug "\[create_virtual\]\[proto_profiles\] clientside protocol name=$virtualServerConfig__vsProfileClientProtocol context=$clientContext"
+}
+
+# Server-side protocol
+if { [string length $virtualServerConfig__vsProfileServerProtocol] > 0 && $virtualServerConfig__vsProfileClientProtocol ne $virtualServerConfig__vsProfileServerProtocol } {
+	append vsprofiles [format " %s \{ context %s \}" $virtualServerConfig__vsProfileServerProtocol $serverContext]
+  debug "\[create_virtual\]\[proto_profiles\] serverside protocol name=$virtualServerConfig__vsProfileServerProtocol context=$serverContext"
+}
+
+# Set virtual server profiles we support.  The format expected is: profiles replace-all-with { <profile1> <profile2> }.  
+# To achieve this while re-using generic_add_option() we simply pass the var name with a blank option string
+array set vs_profiles {
+ "virtualServerConfig__vsProfileHTTP" ""
+ "virtualServerConfig__vsProfileOneConnect" ""
+}
+
+# Client-SSL profile created by iApp
+if { $clientssl == 1 } {
+  set virtualServerConfig__vsProfileClientSSL [format "%s_clientssl" $app]
+  set vs_profiles(virtualServerConfig__vsProfileClientSSL) ""
+	debug "\[create_virtual\]\[client_ssl_created\] name=$virtualServerConfig__vsProfileClientSSL"
+}
+
+# Client-SSL profile specified via virtualServerConfig__vsProfileClientSSL
+if { $clientssl == 2 } {
+  set vs_profiles(virtualServerConfig__vsProfileClientSSL) ""
+  debug "\[create_virtual\]\[client_ssl_specified\] name=$virtualServerConfig__vsProfileClientSSL"
+}
+
+# Process the vs_profiles array to build the profiles command
+foreach {optionvar optioncmd} [array get vs_profiles] {
+  #debug "\[create_virtual\]\[profiles\] var=$optionvar cmd=$optioncmd"
+  append vsprofiles [generic_add_option "create_virtual\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
+}
+
+append vsprofiles " \}"
+debug "\[create_virtual\]\[profiles\] final string=$vsprofiles"
+
+# Add the profile string to the TMSH command
+append cmd $vsprofiles
+
+# Create the virtual server
+debug "\[create_virtual\]  TMSH CREATE: $cmd"
+tmsh::create $cmd
+
+# Create iCall statistics publisher
+# CAVEATS: This is mode specific because $app_stats is not set unless deployment
+# is driven by BIG-IQ.  To accomodate all use cases we make this mode specific:
+# mode=1 (Standalone): Look at $iapp__appStats from the presentation layer to control creation
+# mode=2 (APIC)      : Look at $app_stats set by BIG-IQ to control creation
+debug "\[create_stats\] mode=$mode app_stats=$app_stats iapp__appStats=$iapp__appStats"
+if { $mode == 2 && $app_stats eq "enabled" || $mode == 1 && $iapp__appStats eq "enabled"} {
+  # Create the iCall stats publisher
+  # TODO: This needs to check for the presence of a HTTP profile and only add HTTP stats if that exists
+  debug "\[create_stats\] creating icall stats publisher"
+      # START EMBEDDED ICALL SCRIPT
+  set icall_script_tmpl {
+    set app APP
+    set partition PART
+    set aso "sys.application.service /$partition/${app}.app/$app"
+          
+    set virtual_path    "ltm virtual /$partition/${app}.app/VS"
+    set http_path       "ltm profile http HTTP"
+    set pool_path       "ltm pool /$partition/${app}.app/POOL"
+
+    #puts "app=$app"
+    #puts "partition=$partition"
+    #puts "aso=$aso"
+    #puts "virtual_path=$virtual_path"
+    #puts "http_path=$http_path"
+    #puts "pool_path=$pool_path"
+
+    # these lists represent strings taken from "show ... field-fmt"
+    set http_stats { get-reqs number-reqs post-reqs resp-5xx-cnt }
+    set virtual_stats {
+        clientside.bits-in clientside.bits-out clientside.cur-conns
+        clientside.max-conns clientside.pkts-in clientside.pkts-out
+        clientside.tot-conns status.availability-state status.enabled-state
+        status.status-reason
+    }
+    set pool_stats {
+        active-member-cnt serverside.bits-in serverside.bits-out
+        serverside.cur-conns serverside.max-conns serverside.pkts-in
+        serverside.pkts-out serverside.tot-conns
+    }
+
+    # loop over each type of object we want to look at, building the name
+    # of the path and the stats for it as needed
+    foreach type { HTYPE virtual pool } {
+        # making this its own variable made the Tcl validator stop throwing
+        # a warning - though it _should_ be fine to move it inline w/its use
+        set path [set ${type}_path]
+        set objs [tmsh::get_status $path raw]
+        if { [llength $objs] == 0 } {
+            puts "no object found for: $type"
+            continue
+        }
+        set obj [lindex $objs 0]
+        #puts "obj=$obj"
+        foreach stat [set ${type}_stats] {
+            #puts " stat=$stat"
+            set value [tmsh::get_field_value $obj $stat]
+            #puts " aso=$aso stat=$stat value=$value"
+            # associate the iStat with the app service
+            istats::set "$aso string $stat" $value
+        }
+    }
+
+    # Set an additional iStat for the size of the pool, as this is not
+    # stored as a stat but is nice to have when looking at pool health.
+    # Do that here each run through rather than in the iApp because if
+    # an external pool is used or strictness was off the size of the
+    # pool can change and the iApp wouldn't run to adjust the size
+    set pools [tmsh::get_config $pool_path]
+    set numpools [llength $pools]
+    set pool_size 0
+    #puts "numpools=$numpools pool_size=$pool_size"
+    if { $numpools == 1 } {
+      # safe to assume only obj in list is our pool now. grab its size
+      # and move along
+      set pool [lindex $pools 0]
+      set fdx 0
+      set fields [tmsh::get_field_names nested $pool]
+      set field_count [llength $fields]
+      while { $fdx < $field_count } {
+        set field [lindex $fields $fdx]
+        #puts "field=$field"
+        incr fdx
+        if { $field eq "members"} {
+          set pool_size [llength [tmsh::get_field_value $pool members]]
+          #puts "new pool_size=$pool_size"
+        }
+      }
+    }
+    istats::set "$aso string total-member-cnt" $pool_size
+    #set tmc [istats::get $aso total-member-cnt]
+    #puts "tmc=$tmc"
+  }; # END EMBEDDED ICALL SCRIPT
+
+  #debug "done creating icall stats publisher icall_script_tmpl=$icall_script_tmpl"
+  if { [string length $virtualServerConfig__vsProfileHTTP] > 0 } {
+  	set htype "http"
+  } else {
+  	set htype ""
+  }
+
+      # used to fill in variables within iCall script
+  set script_map [list APP   $tmsh::app_name \
+                       VS    $virtualServerConfig__vsName \
+                       HTTP  [format "%s" $virtualServerConfig__vsProfileHTTP] \
+                       POOL  $poolConfig__poolName \
+                       PART  $partition \
+                       HTYPE $htype ]
+
+  set icall_script_src [string map $script_map $icall_script_tmpl]
+  debug "\[create_stats\] icall_script_src=$icall_script_src"
+
+  debug "\[create_stats\] TMSH CREATE publish_stats script"
+  tmsh::create sys icall script publish_stats definition \{ $icall_script_src \}
+  debug "\[create_stats\] TMSH CREATE iCall handler"
+  tmsh::create sys icall handler periodic publish_stats interval 60 script publish_stats
+}
+
+# Call the custom_extensions proc to allow site-specific customizations
+custom_extensions
+
+if { $iapp__strictUpdates eq "disabled" } {
+  debug "\[strict_updates\] disabling strict updates"
+  tmsh::modify [format "sys application service /%s/%s.app/%s strict-updates disabled" $partition $app $app]
+}
+
+set runTime [expr {[clock seconds] - $startTime}]
+debug "Finished app_name=$app, total run time was $runTime seconds"
+            }
+            macro {
+            }
+            presentation {
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+section intro {
+	message hello
+}
+
+section pool {
+  string addr display "large" required default "172.16.0.231"
+  string mask display "large" required default "255.255.255.255"
+  string port display "small" required default "443"
+
+}
+
+section iapp {
+  string strictUpdates display "large" default "enabled"
+  string appStats display "medium" default "enabled"
+}
+
+section virtualServerConfig {
+	string vsName display "xxlarge" required default "my_virtualserver"
+	string vsDescription display "xxlarge" default "vsdescr"
+	string vsSourceAddress display "large" default "0.0.0.0/0"
+	#string vsIpAddress display "large" required default "172.16.0.231"
+  #string vsMask display "large" required default "255.255.255.255"
+	#string vsPort display "small" required default "443"
+
+  string vsIpProtocol display "small" default "tcp"
+  string vsConnectionLimit display "medium" default "0"
+  string vsProfileClientProtocol display "large" default "/Common/tcp-wan-optimized"
+	string vsProfileServerProtocol display "large" default "/Common/tcp-lan-optimized"
+
+	string vsProfileHTTP display "large" default "/Common/http" 
+
+	string vsProfileOneConnect display "large" default "/Common/oneconnect"
+
+	string vsProfileDefaultPersist display "large" default "/Common/cookie"
+	string vsProfileFallbackPersist display "large" default "/Common/source_addr"
+
+	string vsSNATConfig display "large" default "automap"
+  string vsProfileClientSSL display "large"
+	string vsProfileClientSSLCert display "large" default "/Common/default.crt"
+	string vsProfileClientSSLKey display "large" default "/Common/default.key"
+	string vsProfileClientSSLChain display "large" default "/Common/ca-bundle.crt"
+	string vsProfileClientSSLCipherString display "xxlarge" default "DEFAULT:!SSLV3"
+
+	choice vsOptionSourcePort default "preserve" { "Preserve" => "preserve", "Preserve-Strict" => "preserve-strict", "Change" => "change"}
+	choice vsOptionConnectionMirroring default "disabled" { "Disabled" => "disabled", "Enabled" => "enabled"}
+
+	string vsIrules display "xxlarge" default ""
+}
+
+section poolConfig {
+	string poolName display "xxlarge" required default "my_pool"
+	string poolDescription display "xxlarge" default "pooldescr"
+	string poolMonitor display "large" default "/Common/http"
+
+	choice poolLbMethod display "xxlarge" default "round-robin" {
+        "dynamic-ratio-member",
+        "dynamic-ratio-node",
+        "fastest-app-response",
+        "fastest-node",
+        "least-connections-member",
+        "least-connections-node",
+        "least-sessions",
+        "observed-member",
+        "observed-node",
+        "predictive-member",
+        "predictive-node",
+        "round-robin",
+        "ratio-member",
+        "ratio-node",
+        "ratio-session",
+        "ratio-least-connections-member",
+        "ratio-least-connections-node",
+        "weighted-least-connections-member"
+    }
+
+  string poolMemberDefaultPort display "small" default "80"
+
+	table poolMembers {
+		string poolMemberIPAddress display "large" required default "10.0.0.100"
+		string poolMemberPort display "small" required default "80"
+    string poolMemberConnectionLimit display "medium" required default "0"
+    string poolMemberRatio display "small" required default "1"
+    choice poolMemberState display "medium" default "enabled" {
+      "enabled",
+      "drain-disabled",
+      "disabled"
+    }
+	}
+
+}
+
+section customConfig {
+  string string1 display "xxlarge"
+  string string2 display "xxlarge" 
+  string string3 display "xxlarge"  
+}
+
+text { 
+	intro "F5 Application Services Integration iApp (Community Edition)"
+	intro.hello "Introduction" "Please complete the following template"
+
+  iapp "iApp Options"
+  iapp.strictUpdates "iApp Strict Updates"
+  iapp.appStats "iApp Statistics Handler Creation"
+
+  # These need to be in this section and named exactly for BIG-IQ to pickup the VS association for stats
+  pool "Virtual Server Listener"
+  pool.addr "Destination Address"
+  pool.mask "Destination Mask"
+  pool.port "Service Port"
+
+	virtualServerConfig "Virtual Server Configuration"
+	virtualServerConfig.vsName "Name"
+  virtualServerConfig.vsIpProtocol "Virtual Server IP Protocol"
+	virtualServerConfig.vsDescription "Virtual Server Description"
+	virtualServerConfig.vsSourceAddress "Source Address"
+	virtualServerConfig.vsProfileClientProtocol "Client-side L4 Protocol Profile"
+	virtualServerConfig.vsProfileServerProtocol "Server-side L4 Protocol Profile"
+	virtualServerConfig.vsProfileHTTP "HTTP Profile"
+	virtualServerConfig.vsProfileOneConnect "OneConnect Profile"
+	virtualServerConfig.vsProfileDefaultPersist "Default Persistence Profile"
+	virtualServerConfig.vsProfileFallbackPersist "Fallback Persistence Profile"
+	virtualServerConfig.vsSNATConfig "SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)"
+  virtualServerConfig.vsProfileClientSSL "Client SSL Profile"
+	virtualServerConfig.vsProfileClientSSLCert "Client SSL Certificate"
+	virtualServerConfig.vsProfileClientSSLKey "Client SSL Key"
+	virtualServerConfig.vsProfileClientSSLChain "Client SSL Certificate Chain"
+	virtualServerConfig.vsProfileClientSSLCipherString "Client SSL Cipher String"
+	virtualServerConfig.vsOptionSourcePort "Source Port Behavior"
+	virtualServerConfig.vsOptionConnectionMirroring "Connection Mirroring"
+	virtualServerConfig.vsIrules "iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)"
+  virtualServerConfig.vsConnectionLimit "Virtual Server Connection Limit (0=unlimited)"
+	
+  poolConfig "Pool Configuration"
+	poolConfig.poolName "Pool Name"
+	poolConfig.poolDescription "Pool Description"
+	poolConfig.poolMonitor "Health Monitor"
+	poolConfig.poolLbMethod "Load Balancing Method"
+	poolConfig.poolMembers "Pool Members"
+  poolConfig.poolMemberDefaultPort "Pool Member Default Port"
+	poolConfig.poolMembers.poolMemberIPAddress "IP:"
+	poolConfig.poolMembers.poolMemberPort "Port:"
+  poolConfig.poolMembers.poolMemberConnectionLimit "Connection Limit:"
+  poolConfig.poolMembers.poolMemberRatio "Ratio:"
+  poolConfig.poolMembers.poolMemberState "State:"
+
+
+  customConfig "Custom Config Section"
+  customConfig.string1 "Custom Config 1"
+  customConfig.string2 "Custom Config 2"
+  customConfig.string3 "Custom Config 3"
+}
+            }
+            role-acl none
+            run-as none
+        }
+    }
+    description none
+    ignore-verification false
+    requires-bigip-version-max none
+    requires-bigip-version-min none
+    requires-modules { ltm }
+    signing-key none
+    tmpl-checksum none
+    tmpl-signature none
+}
