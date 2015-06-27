@@ -1,7 +1,7 @@
 cli admin-partitions {
     update-partition Common
 }
-sys application template /Common/appsvcs_integration_v0.3_002 {
+sys application template /Common/appsvcs_integration_v0.3_003 {
     actions {
         definition {
             html-help {
@@ -14,13 +14,13 @@ sys application template /Common/appsvcs_integration_v0.3_002 {
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(002)"
-set PRESVERSION "002"
+set IMPLVERSION "0.3(003)"
+set PRESVERSION "003"
 
 proc custom_extensions {} {
   # ####################################################################
   # Custom config example
-  # The purpose of the customConfig__stringX fields are to allow for changes WITHOUT updates
+  # The purpose of the extensions__fieldX fields are to allow for changes WITHOUT updates
   # to the APIC device package.  By exposing these fields now we can add code to the implementation
   # portion of the iApp to handle new functionality.  Example 1 parses a string of the
   # format "key1=val1;key2=val2;key3=val3" and populates variables that can be acted on.
@@ -28,7 +28,7 @@ proc custom_extensions {} {
   # Another use case is to use the field to pass raw commands to the tmsh::create command as in Example 2 below
   #
   # Example 1
-  set pairs [split $::customConfig__string1 \;]
+  set pairs [split $::extensions__Field1 \;]
   debug "\[custom_extentions\] Custom1: pairs=$pairs"
   array set custom_kvp {}
   foreach pair $pairs {
@@ -51,7 +51,7 @@ proc custom_extensions {} {
   #  ltm data-group internal customDG type string records replace-all-with { record1 { data data1 } record2 { data data2 } }
   #
   # Once the template executes you can see the creation of the datagroup under the application template container
-  # tmsh::create $::customConfig__string2
+  # tmsh::create $::extensions__Field2
   #
   # End custom config example
   # ####################################################################
@@ -130,48 +130,48 @@ debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd"
 set allVars {
  iapp__strictUpdates \
  iapp__appStats \
- virtualServerConfig__vsName \
- virtualServerConfig__vsIpProtocol \
- virtualServerConfig__vsConnectionLimit \
- virtualServerConfig__vsDescription \
- virtualServerConfig__vsSourceAddress \
+ vs__Name \
+ vs__IpProtocol \
+ vs__ConnectionLimit \
+ vs__Description \
+ vs__SourceAddress \
  pool__addr \
  pool__mask \
  pool__port \
- virtualServerConfig__vsProfileClientProtocol \
- virtualServerConfig__vsProfileServerProtocol \
- virtualServerConfig__vsProfileHTTP \
- virtualServerConfig__vsProfileOneConnect \
- virtualServerConfig__vsProfileDefaultPersist \
- virtualServerConfig__vsProfileFallbackPersist \
- virtualServerConfig__vsSNATConfig \
- virtualServerConfig__vsProfileClientSSL \
- virtualServerConfig__vsProfileClientSSLCert \
- virtualServerConfig__vsProfileClientSSLKey \
- virtualServerConfig__vsProfileClientSSLChain \
- virtualServerConfig__vsProfileClientSSLCipherString \
- virtualServerConfig__vsOptionSourcePort \
- virtualServerConfig__vsOptionConnectionMirroring \
- virtualServerConfig__vsIrules \
- virtualServerConfig__securityEnableHSTS \
- poolConfig__poolName \
- poolConfig__poolDescription \
- poolConfig__poolMonitor \
- poolConfig__poolLbMethod \
- poolConfig__poolMemberDefaultPort \
- poolConfig__poolMembers \
- customConfig__string1 \
- customConfig__string2 \
- customConfig__string3 \
+ vs__ProfileClientProtocol \
+ vs__ProfileServerProtocol \
+ vs__ProfileHTTP \
+ vs__ProfileOneConnect \
+ vs__ProfileDefaultPersist \
+ vs__ProfileFallbackPersist \
+ vs__SNATConfig \
+ vs__ProfileClientSSL \
+ vs__ProfileClientSSLCert \
+ vs__ProfileClientSSLKey \
+ vs__ProfileClientSSLChain \
+ vs__ProfileClientSSLCipherString \
+ vs__OptionSourcePort \
+ vs__OptionConnectionMirroring \
+ vs__Irules \
+ vs__securityEnableHSTS \
+ pool__Name \
+ pool__Description \
+ pool__Monitor \
+ pool__LbMethod \
+ pool__MemberDefaultPort \
+ pool__Members \
+ extensions__Field1 \
+ extensions__Field2 \
+ extensions__Field3 \
  app_stats }
 
 array set table_defaults {
-    poolMembers {
-        poolMemberState enabled
-        poolMemberIPAddress Error
-        poolMemberPort 80
-        poolMemberConnectionLimit 0
-        poolMemberRatio 1
+    Members {
+        State enabled
+        IPAddress Error
+        Port 80
+        ConnectionLimit 0
+        Ratio 1
     }
 }
 array set pool_state {
@@ -203,48 +203,48 @@ foreach var $allVars {
 
 # Special handling for the Source Address because it comes in as 0.0.0.0/0 and
 # needs to be 0.0.0.0%xxxx/0, where '%xxxx' is the route-domain ID
-set working $virtualServerConfig__vsSourceAddress
-debug "\[fix_src_addr\] Check if virtualServerConfig__vsSourceAddress needs to be fixed"
+set working $vs__SourceAddress
+debug "\[fix_src_addr\] Check if vs__SourceAddress needs to be fixed"
 if { [string length $working] > 0 } {
-  debug "\[fix_src_addr\]  Fixing virtualServerConfig__vsSourceAddress: orig=$working"
+  debug "\[fix_src_addr\]  Fixing vs__SourceAddress: orig=$working"
   set net  [lindex [split $working /] 0]
   set cidr [lindex [split $working /] 1]
-  set virtualServerConfig__vsSourceAddress "$net%$rd\/$cidr"
-  debug "\[fix_src_addr\]  new=$virtualServerConfig__vsSourceAddress"
+  set vs__SourceAddress "$net%$rd\/$cidr"
+  debug "\[fix_src_addr\]  new=$vs__SourceAddress"
 }
 
 # Create Client-SSL profile if Cert and Key are specified but ClientSSLProfile is not
 debug "\[proc_client_ssl\] checking if client ssl cert & key were entered"
 set clientssl 0
-if { [string length $virtualServerConfig__vsProfileClientSSLKey] > 0 && [string length $virtualServerConfig__vsProfileClientSSLCert] > 0 && [string length $virtualServerConfig__vsProfileClientSSL] == 0 } {
-	tmsh::get_config /sys file ssl-key $virtualServerConfig__vsProfileClientSSLKey
- 	tmsh::get_config /sys file ssl-cert $virtualServerConfig__vsProfileClientSSLCert
- 	debug "\[create_client_ssl\]  ssl cert & key found... creating profile"
+if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__ProfileClientSSLCert] > 0 && [string length $vs__ProfileClientSSL] == 0 } {
+  tmsh::get_config /sys file ssl-key $vs__ProfileClientSSLKey
+  tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLCert
+  debug "\[create_client_ssl\]  ssl cert & key found... creating profile"
 
- 	set cmd [format "ltm profile client-ssl %s_clientssl key %s cert %s" $app $virtualServerConfig__vsProfileClientSSLKey $virtualServerConfig__vsProfileClientSSLCert]
+  set cmd [format "ltm profile client-ssl %s_clientssl key %s cert %s" $app $vs__ProfileClientSSLKey $vs__ProfileClientSSLCert]
 
- 	if { [string length $virtualServerConfig__vsProfileClientSSLChain] > 0 } {
-  		tmsh::get_config /sys file ssl-cert $virtualServerConfig__vsProfileClientSSLChain
-  		debug "\[create_client_ssl\]  adding cert chain"
-  		append cmd [format " chain %s" $virtualServerConfig__vsProfileClientSSLChain]
- 	}
+  if { [string length $vs__ProfileClientSSLChain] > 0 } {
+      tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLChain
+      debug "\[create_client_ssl\]  adding cert chain"
+      append cmd [format " chain %s" $vs__ProfileClientSSLChain]
+  }
 
- 	if { [string length $virtualServerConfig__vsProfileClientSSLCipherString] > 0 } {
-  		debug "\[create_client_ssl\]  adding cipher string"
-  		append cmd [format " ciphers \"%s\"" $virtualServerConfig__vsProfileClientSSLCipherString]
- 	}
+  if { [string length $vs__ProfileClientSSLCipherString] > 0 } {
+      debug "\[create_client_ssl\]  adding cipher string"
+      append cmd [format " ciphers \"%s\"" $vs__ProfileClientSSLCipherString]
+  }
 
- 	debug "\[create_client_ssl\]  TMSH CREATE: $cmd"
- 	tmsh::create $cmd
- 	set clientssl 1
+  debug "\[create_client_ssl\]  TMSH CREATE: $cmd"
+  tmsh::create $cmd
+  set clientssl 1
 } else { 
-  if { [string length $virtualServerConfig__vsProfileClientSSL] > 0 } {
+  if { [string length $vs__ProfileClientSSL] > 0 } {
     debug "\[proc_client_ssl\] ClientSSLProfile was provided... checking if it exists"
-    tmsh::get_config /ltm profile client-ssl $virtualServerConfig__vsProfileClientSSL
+    tmsh::get_config /ltm profile client-ssl $vs__ProfileClientSSL
     set clientssl 2
   } else {
     set clientssl 0
- 	  debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
+    debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
   }
 }
 
@@ -252,17 +252,17 @@ if { [string length $virtualServerConfig__vsProfileClientSSLKey] > 0 && [string 
 # Create pool
 
 # Check to see if a poolName was specified... if not set to $app_pool
-if { [string length $poolConfig__poolName] == 0 } {
-    set poolConfig__poolName [format "%s_pool" $app]
-    debug "\[create_pool\] no poolName specified... setting to $poolConfig__poolName"
+if { [string length $pool__Name] == 0 } {
+    set pool__Name [format "%s_pool" $app]
+    debug "\[create_pool\] no poolName specified... setting to $pool__Name"
 }
 
-debug "\[create_pool\] name=$poolConfig__poolName"
+debug "\[create_pool\] name=$pool__Name"
 
 
-# Setup the members portion of the command my processing the poolConfig__poolMembers APL table
-set nummembers [llength $poolConfig__poolMembers]
-set numcolumns [llength [lindex [lindex $poolConfig__poolMembers 0] 0]]
+# Setup the members portion of the command my processing the pool__Members APL table
+set nummembers [llength $pool__Members]
+set numcolumns [llength [lindex [lindex $pool__Members 0] 0]]
 
 if { $nummembers == 0 } {
   set memberstr " members none "
@@ -270,9 +270,9 @@ if { $nummembers == 0 } {
 } else {
   set memberstr "members replace-all-with \{ "
   debug "\[create_pool\]\[member_str\] Checking pool table... nummembers=$nummembers numcolumns=$numcolumns"
-  foreach row $poolConfig__poolMembers {
+  foreach row $pool__Members {
     debug "\[create_pool\]\[member_str\]  row=$row"
-    array set column_defaults [subst $::table_defaults(poolMembers)]
+    array set column_defaults [subst $::table_defaults(Members)]
     array unset column
 
     # extract the iApp table data - borrowed from f5.lbaas.tmpl
@@ -290,11 +290,11 @@ if { $nummembers == 0 } {
         }
     }
 
-    set ip $column(poolMemberIPAddress)
-    set port $column(poolMemberPort)
-    set connlimit $column(poolMemberConnectionLimit)
-    set state $column(poolMemberState)
-    set ratio $column(poolMemberRatio)
+    set ip $column(IPAddress)
+    set port $column(Port)
+    set connlimit $column(ConnectionLimit)
+    set state $column(State)
+    set ratio $column(Ratio)
     
     # Add a route domain if it wasn't included
     if {![has_routedomain $ip]} {
@@ -304,20 +304,20 @@ if { $nummembers == 0 } {
     # TODO: Is this still required?
     # Sometimes we receive a transposed ip/port from BIG-IQ... fix it here
     if {[has_routedomain $port]} {
-      set port $column(poolMemberIPAddress)
-      set ip $column(poolMemberPort)
+      set port $column(IPAddress)
+      set ip $column(Port)
       debug "\[create_pool\]\[member_str\]  fixing ip=$ip port=$port"
     }
-    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit state=$state"
+    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit ratio=$ratio state=$state"
     
-    # If we don't get a port in the pool member table than use the template value for poolConfig__poolMemberDefaultPort
+    # If we don't get a port in the pool member table than use the template value for pool__MemberDefaultPort
     if { [string length $port] == 0} {
-      if { [string length $poolConfig__poolMemberDefaultPort] == 0 } {
-        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, poolConfig__poolMemberDefaultPort was blank, using pool__port=$pool__port"
+      if { [string length $pool__MemberDefaultPort] == 0 } {
+        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, pool__MemberDefaultPort was blank, using pool__port=$pool__port"
         set port $pool__port
       } else {
-        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, using poolConfig__poolMemberDefaultPort=$poolConfig__poolMemberDefaultPort"
-        set port $poolConfig__poolMemberDefaultPort
+        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, using pool__MemberDefaultPort=$pool__MemberDefaultPort"
+        set port $pool__MemberDefaultPort
       }
     }
 
@@ -325,16 +325,15 @@ if { $nummembers == 0 } {
   }
   append memberstr " \} "
 }
-#set memberstr [ iapp::pool_members $poolConfig__poolMembers -fields {address poolMemberIPAddress port poolMemberPort} ]
 debug "\[create_pool\]\[member_str\]  memberstr=$memberstr"
 
 # Setup the base pool create command
-set cmd [format "ltm pool %s %s " $poolConfig__poolName $memberstr $poolConfig__poolLbMethod]
+set cmd [format "ltm pool %s %s " $pool__Name $memberstr $pool__LbMethod]
 
 array set pool_options {
-  "poolConfig__poolLbMethod" "load-balancing-mode"
-  "poolConfig__poolDescription" "description"
-  "poolConfig__poolMonitor" "monitor"
+  "pool__LbMethod" "load-balancing-mode"
+  "pool__Description" "description"
+  "pool__Monitor" "monitor"
 }
 
 foreach {optionvar optioncmd} [array get pool_options] {
@@ -343,13 +342,13 @@ foreach {optionvar optioncmd} [array get pool_options] {
 }
 
 # Add the pool description
-# if { [string length $poolConfig__poolDescription] > 0 } {
-#   	append cmd [format " description \"%s\"" $poolConfig__poolDescription]
+# if { [string length $pool__Description] > 0 } {
+#     append cmd [format " description \"%s\"" $pool__Description]
 # }
 
 # # Add the pool monitor
-# if { [string length $poolConfig__poolMonitor] > 0 } {
-#   	append cmd [format " monitor %s" $poolConfig__poolMonitor]
+# if { [string length $pool__Monitor] > 0 } {
+#     append cmd [format " monitor %s" $pool__Monitor]
 # }
 
 
@@ -360,7 +359,7 @@ tmsh::create $cmd
 
 # Check for HTTP Strict Transport Security (HSTS) option.  We do this here 
 # so the irule can be easily appended to the existing iRule list
-if { $clientssl > 0 && $virtualServerConfig__securityEnableHSTS eq "enabled"} {
+if { $clientssl > 0 && $vs__securityEnableHSTS eq "enabled"} {
   debug "\[create_virtual\]\[enable_hsts\] creating HSTS iRule"
   set hstsrule [format "/%s/%s.app/hsts_irule" $partition $app]
   set hstscmd "ltm rule $hstsrule $irule_HSTS"
@@ -368,23 +367,23 @@ if { $clientssl > 0 && $virtualServerConfig__securityEnableHSTS eq "enabled"} {
   debug "\[create_virtual\]\[enable_hsts\] TMSH CREATE: $hstscmd"
   tmsh::create $hstscmd
 
-  if { [string length $virtualServerConfig__vsIrules] > 0 } {
-    debug "\[create_virtual\]\[enable_hsts\] virtualServerConfig__vsIrules has data, appending"
-    append virtualServerConfig__vsIrules ",$hstsrule"
+  if { [string length $vs__Irules] > 0 } {
+    debug "\[create_virtual\]\[enable_hsts\] vs__Irules has data, appending"
+    append vs__Irules ",$hstsrule"
   } else {
-    debug "\[create_virtual\]\[enable_hsts\] virtualServerConfig__vsIrules is empty, setting"
-    set virtualServerConfig__vsIrules $hstsrule
+    debug "\[create_virtual\]\[enable_hsts\] vs__Irules is empty, setting"
+    set vs__Irules $hstsrule
   }
-  debug "\[create_virtual\]\[enable_hsts\] virtualServerConfig__vsIrules=$virtualServerConfig__vsIrules"
+  debug "\[create_virtual\]\[enable_hsts\] vs__Irules=$vs__Irules"
 }
 
 # Check to see if a vsName was specified... if not set to $app_pool
-if { [string length $virtualServerConfig__vsName] == 0 } {
-    set virtualServerConfig__vsName [format "%s_vs" $app]
-    debug "\[create_virtual\] no vsName specified... setting to $virtualServerConfig__vsName"
+if { [string length $vs__Name] == 0 } {
+    set vs__Name [format "%s_vs" $app]
+    debug "\[create_virtual\] no vsName specified... setting to $vs__Name"
 }
 
-set cmd [format "ltm virtual %s " $virtualServerConfig__vsName]
+set cmd [format "ltm virtual %s " $vs__Name]
 debug "\[create_virtual\] base cmd=$cmd"
 
 # Setup our listener destination address
@@ -397,21 +396,21 @@ if { ![has_routedomain $pool__addr]} {
 # Set virtual server options we support.  This array assumes a format " <option> <input value>" for the TMSH command.
 array set vs_options {
  "pool__mask" "mask"
- "poolConfig__poolName" "pool"
+ "pool__Name" "pool"
  "vs_dest" "destination"
- "virtualServerConfig__vsIpProtocol" "ip-protocol"
- "virtualServerConfig__vsConnectionLimit" "connection-limit"
- "virtualServerConfig__vsDescription" "description"
- "virtualServerConfig__vsSourceAddress" "source"
- "virtualServerConfig__vsOptionSourcePort" "source-port"
- "virtualServerConfig__vsOptionConnectionMirroring" "mirror"
- "virtualServerConfig__vsProfileFallbackPersist" "fallback-persistence"
+ "vs__IpProtocol" "ip-protocol"
+ "vs__ConnectionLimit" "connection-limit"
+ "vs__Description" "description"
+ "vs__SourceAddress" "source"
+ "vs__OptionSourcePort" "source-port"
+ "vs__OptionConnectionMirroring" "mirror"
+ "vs__ProfileFallbackPersist" "fallback-persistence"
 }
 
 # Set virtual server options we support.  This array allows specifcation of the specific TMSH command format
 array set vs_options_custom {
- "virtualServerConfig__vsIrules" " rules \{ %s \}"
- "virtualServerConfig__vsProfileDefaultPersist" " persist replace-all-with \{ %s \}"
+ "vs__Irules" " rules \{ %s \}"
+ "vs__ProfileDefaultPersist" " persist replace-all-with \{ %s \}"
 }
 
 # Process the vs_options array
@@ -428,8 +427,8 @@ foreach {optionvar optioncmd} [array get vs_options_custom] {
 
 set snatcmd ""
 # Add SNAT options
-if { [string length $virtualServerConfig__vsSNATConfig] > 0 } {
-  switch [string tolower $virtualServerConfig__vsSNATConfig] {
+if { [string length $vs__SNATConfig] > 0 } {
+  switch [string tolower $vs__SNATConfig] {
     automap { 
       append snatcmd " source-address-translation \{ type automap \}" 
     }
@@ -440,8 +439,8 @@ if { [string length $virtualServerConfig__vsSNATConfig] > 0 } {
       append snatcmd " source-address-translation \{ type none \}" 
     }
     default {
-          tmsh::get_config /ltm snatpool $virtualServerConfig__vsSNATConfig
-          append snatcmd [format " source-address-translation \{ pool %s type snat \}" $virtualServerConfig__vsSNATConfig]
+          tmsh::get_config /ltm snatpool $vs__SNATConfig
+          append snatcmd [format " source-address-translation \{ pool %s type snat \}" $vs__SNATConfig]
     }
   }
   debug "\[create_virtual\] adding snat cmd=$snatcmd"
@@ -457,42 +456,42 @@ debug "\[create_virtual\] adding base vsprofiles=$vsprofiles"
 set clientContext "all"
 set serverContext "all"
 
-if { [string length $virtualServerConfig__vsProfileClientProtocol] > 0 && [string length $virtualServerConfig__vsProfileServerProtocol] > 0 && $virtualServerConfig__vsProfileClientProtocol ne $virtualServerConfig__vsProfileServerProtocol } {
+if { [string length $vs__ProfileClientProtocol] > 0 && [string length $vs__ProfileServerProtocol] > 0 && $vs__ProfileClientProtocol ne $vs__ProfileServerProtocol } {
   debug "\[create_virtual\]\[proto_profiles\] got both client and server protocol profiles"
   set clientContext "clientside"
   set serverContext "serverside"
 } 
 
 # Client-side protocol
-if { [string length $virtualServerConfig__vsProfileClientProtocol] > 0 } {
-  append vsprofiles [format " %s \{ context %s \}" $virtualServerConfig__vsProfileClientProtocol $clientContext]
-  debug "\[create_virtual\]\[proto_profiles\] clientside protocol name=$virtualServerConfig__vsProfileClientProtocol context=$clientContext"
+if { [string length $vs__ProfileClientProtocol] > 0 } {
+  append vsprofiles [format " %s \{ context %s \}" $vs__ProfileClientProtocol $clientContext]
+  debug "\[create_virtual\]\[proto_profiles\] clientside protocol name=$vs__ProfileClientProtocol context=$clientContext"
 }
 
 # Server-side protocol
-if { [string length $virtualServerConfig__vsProfileServerProtocol] > 0 && $virtualServerConfig__vsProfileClientProtocol ne $virtualServerConfig__vsProfileServerProtocol } {
-	append vsprofiles [format " %s \{ context %s \}" $virtualServerConfig__vsProfileServerProtocol $serverContext]
-  debug "\[create_virtual\]\[proto_profiles\] serverside protocol name=$virtualServerConfig__vsProfileServerProtocol context=$serverContext"
+if { [string length $vs__ProfileServerProtocol] > 0 && $vs__ProfileClientProtocol ne $vs__ProfileServerProtocol } {
+  append vsprofiles [format " %s \{ context %s \}" $vs__ProfileServerProtocol $serverContext]
+  debug "\[create_virtual\]\[proto_profiles\] serverside protocol name=$vs__ProfileServerProtocol context=$serverContext"
 }
 
 # Set virtual server profiles we support.  The format expected is: profiles replace-all-with { <profile1> <profile2> }.  
 # To achieve this while re-using generic_add_option() we simply pass the var name with a blank option string
 array set vs_profiles {
- "virtualServerConfig__vsProfileHTTP" ""
- "virtualServerConfig__vsProfileOneConnect" ""
+ "vs__ProfileHTTP" ""
+ "vs__ProfileOneConnect" ""
 }
 
 # Client-SSL profile created by iApp
 if { $clientssl == 1 } {
-  set virtualServerConfig__vsProfileClientSSL [format "%s_clientssl" $app]
-  set vs_profiles(virtualServerConfig__vsProfileClientSSL) ""
-	debug "\[create_virtual\]\[client_ssl_created\] name=$virtualServerConfig__vsProfileClientSSL"
+  set vs__ProfileClientSSL [format "%s_clientssl" $app]
+  set vs_profiles(vs__ProfileClientSSL) ""
+  debug "\[create_virtual\]\[client_ssl_created\] name=$vs__ProfileClientSSL"
 }
 
-# Client-SSL profile specified via virtualServerConfig__vsProfileClientSSL
+# Client-SSL profile specified via vs__ProfileClientSSL
 if { $clientssl == 2 } {
-  set vs_profiles(virtualServerConfig__vsProfileClientSSL) ""
-  debug "\[create_virtual\]\[client_ssl_specified\] name=$virtualServerConfig__vsProfileClientSSL"
+  set vs_profiles(vs__ProfileClientSSL) ""
+  debug "\[create_virtual\]\[client_ssl_specified\] name=$vs__ProfileClientSSL"
 }
 
 # Process the vs_profiles array to build the profiles command
@@ -606,17 +605,17 @@ if { $mode == 2 && $app_stats eq "enabled" || $mode == 1 && $iapp__appStats eq "
   }; # END EMBEDDED ICALL SCRIPT
 
   #debug "done creating icall stats publisher icall_script_tmpl=$icall_script_tmpl"
-  if { [string length $virtualServerConfig__vsProfileHTTP] > 0 } {
-  	set htype "http"
+  if { [string length $vs__ProfileHTTP] > 0 } {
+    set htype "http"
   } else {
-  	set htype ""
+    set htype ""
   }
 
       # used to fill in variables within iCall script
   set script_map [list APP   $tmsh::app_name \
-                       VS    $virtualServerConfig__vsName \
-                       HTTP  [format "%s" $virtualServerConfig__vsProfileHTTP] \
-                       POOL  $poolConfig__poolName \
+                       VS    $vs__Name \
+                       HTTP  [format "%s" $vs__ProfileHTTP] \
+                       POOL  $pool__Name \
                        PART  $partition \
                        HTYPE $htype ]
 
@@ -649,13 +648,7 @@ debug "Finished app_name=$app, total run time was $runTime seconds"
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 section intro {
-	message hello
-}
-
-section pool {
-  string addr display "large" required default "172.16.0.231"
-  string mask display "large" required default "255.255.255.255"
-  string port display "small" required default "443"
+  message hello
 }
 
 section iapp {
@@ -663,46 +656,16 @@ section iapp {
   string appStats display "medium" default "enabled"
 }
 
-section virtualServerConfig {
-  string vsName display "xxlarge" required default "my_virtualserver"
-  string vsDescription display "xxlarge" default "vsdescr"
-  string vsSourceAddress display "large" default "0.0.0.0/0"
-  #string vsIpAddress display "large" required default "172.16.0.231"
-  #string vsMask display "large" required default "255.255.255.255"
-  #string vsPort display "small" required default "443"
+section pool {
+  string addr display "large" required default "172.16.0.231"
+  string mask display "large" required default "255.255.255.255"
+  string port display "small" required default "443"
 
-  string vsIpProtocol display "small" default "tcp"
-  string vsConnectionLimit display "medium" default "0"
-  string vsProfileClientProtocol display "large" default "/Common/tcp-wan-optimized"
-  string vsProfileServerProtocol display "large" default "/Common/tcp-lan-optimized"
+  string Name display "xxlarge" required default "my_pool"
+  string Description display "xxlarge" default "pooldescr"
+  string Monitor display "large" default "/Common/http"
 
-  string vsProfileHTTP display "large" default "/Common/http" 
-
-  string vsProfileOneConnect display "large" default "/Common/oneconnect"
-
-  string vsProfileDefaultPersist display "large" default "/Common/cookie"
-  string vsProfileFallbackPersist display "large" default "/Common/source_addr"
-
-  string vsSNATConfig display "large" default "automap"
-  string vsProfileClientSSL display "large"
-  string vsProfileClientSSLCert display "large" default "/Common/default.crt"
-  string vsProfileClientSSLKey display "large" default "/Common/default.key"
-  string vsProfileClientSSLChain display "large" default "/Common/ca-bundle.crt"
-  string vsProfileClientSSLCipherString display "xxlarge" default "DEFAULT:!SSLV3"
-
-  choice vsOptionSourcePort default "preserve" { "Preserve" => "preserve", "Preserve-Strict" => "preserve-strict", "Change" => "change"}
-  choice vsOptionConnectionMirroring default "disabled" { "Disabled" => "disabled", "Enabled" => "enabled"}
-
-  string vsIrules display "xxlarge" default ""
-  string securityEnableHSTS display "medium" default "disabled"
-}
-
-section poolConfig {
-  string poolName display "xxlarge" required default "my_pool"
-  string poolDescription display "xxlarge" default "pooldescr"
-  string poolMonitor display "large" default "/Common/http"
-
-  choice poolLbMethod display "xxlarge" default "round-robin" {
+  choice LbMethod display "xxlarge" default "round-robin" {
     "dynamic-ratio-member",
     "dynamic-ratio-node",
     "fastest-app-response",
@@ -723,82 +686,114 @@ section poolConfig {
     "weighted-least-connections-member"
   }
 
-  string poolMemberDefaultPort display "small" default "80"
+  string MemberDefaultPort display "small" default "80"
 
-  table poolMembers {
-  	string poolMemberIPAddress display "large" required default "10.0.0.100"
-  	string poolMemberPort display "small" required default "80"
-    string poolMemberConnectionLimit display "medium" required default "0"
-    string poolMemberRatio display "small" required default "1"
-    choice poolMemberState display "medium" default "enabled" {
+  table Members {
+    string IPAddress display "large" required default "10.0.0.100"
+    string Port display "small" required default "80"
+    string ConnectionLimit display "medium" required default "0"
+    string Ratio display "small" required default "1"
+    choice State display "medium" default "enabled" {
       "enabled",
       "drain-disabled",
       "disabled"
     }
-  }
+  }  
 }
 
-section customConfig {
-  string string1 display "xxlarge"
-  string string2 display "xxlarge" 
-  string string3 display "xxlarge"  
+section vs {
+  string Name display "xxlarge" required default "my_virtualserver"
+  string Description display "xxlarge" default "vsdescr"
+  string SourceAddress display "large" default "0.0.0.0/0"
+  #string IpAddress display "large" required default "172.16.0.231"
+  #string Mask display "large" required default "255.255.255.255"
+  #string Port display "small" required default "443"
+
+  string IpProtocol display "small" default "tcp"
+  string ConnectionLimit display "medium" default "0"
+  string ProfileClientProtocol display "large" default "/Common/tcp-wan-optimized"
+  string ProfileServerProtocol display "large" default "/Common/tcp-lan-optimized"
+
+  string ProfileHTTP display "large" default "/Common/http" 
+
+  string ProfileOneConnect display "large" default "/Common/oneconnect"
+
+  string ProfileDefaultPersist display "large" default "/Common/cookie"
+  string ProfileFallbackPersist display "large" default "/Common/source_addr"
+
+  string SNATConfig display "large" default "automap"
+  string ProfileClientSSL display "large"
+  string ProfileClientSSLCert display "large" default "/Common/default.crt"
+  string ProfileClientSSLKey display "large" default "/Common/default.key"
+  string ProfileClientSSLChain display "large" default "/Common/ca-bundle.crt"
+  string ProfileClientSSLCipherString display "xxlarge" default "DEFAULT:!SSLV3"
+
+  choice OptionSourcePort default "preserve" { "preserve", "preserve-strict", "change"}
+  choice OptionConnectionMirroring default "disabled" { "disabled", "enabled"}
+
+  string Irules display "xxlarge" default ""
+  choice securityEnableHSTS default "disabled" { "disabled", "enabled"}
+}
+
+section extensions {
+  string Field1 display "xxlarge"
+  string Field2 display "xxlarge" 
+  string Field3 display "xxlarge"  
 }
 
 text { 
-	intro "F5 Application Services Integration iApp (Community Edition)"
-	intro.hello "Introduction" "Please complete the following template"
+  intro "F5 Application Services Integration iApp (Community Edition)"
+  intro.hello "Introduction" "Please complete the following template"
 
   iapp "iApp Options"
-  iapp.strictUpdates "iApp Strict Updates"
-  iapp.appStats "iApp Statistics Handler Creation"
+  iapp.strictUpdates "iApp: Strict Updates"
+  iapp.appStats "iApp: Statistics Handler Creation"
 
   # These need to be in this section and named exactly for BIG-IQ to pickup the VS association for stats
-  pool "Virtual Server Listener"
-  pool.addr "Destination Address"
-  pool.mask "Destination Mask"
-  pool.port "Service Port"
+  pool "Virtual Server Listener & Pool Configuration"
+  pool.addr "Virtual Server: Address"
+  pool.mask "Virtual Server: Mask"
+  pool.port "Virtual Server: Port"
 
-	virtualServerConfig "Virtual Server Configuration"
-	virtualServerConfig.vsName "Name"
-  virtualServerConfig.vsIpProtocol "Virtual Server IP Protocol"
-	virtualServerConfig.vsDescription "Virtual Server Description"
-	virtualServerConfig.vsSourceAddress "Source Address"
-	virtualServerConfig.vsProfileClientProtocol "Client-side L4 Protocol Profile"
-	virtualServerConfig.vsProfileServerProtocol "Server-side L4 Protocol Profile"
-	virtualServerConfig.vsProfileHTTP "HTTP Profile"
-	virtualServerConfig.vsProfileOneConnect "OneConnect Profile"
-	virtualServerConfig.vsProfileDefaultPersist "Default Persistence Profile"
-	virtualServerConfig.vsProfileFallbackPersist "Fallback Persistence Profile"
-	virtualServerConfig.vsSNATConfig "SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)"
-  virtualServerConfig.vsProfileClientSSL "Client SSL Profile"
-	virtualServerConfig.vsProfileClientSSLCert "Client SSL Certificate"
-	virtualServerConfig.vsProfileClientSSLKey "Client SSL Key"
-	virtualServerConfig.vsProfileClientSSLChain "Client SSL Certificate Chain"
-	virtualServerConfig.vsProfileClientSSLCipherString "Client SSL Cipher String"
-	virtualServerConfig.vsOptionSourcePort "Source Port Behavior"
-	virtualServerConfig.vsOptionConnectionMirroring "Connection Mirroring"
-	virtualServerConfig.vsIrules "iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)"
-  virtualServerConfig.vsConnectionLimit "Virtual Server Connection Limit (0=unlimited)"
-	virtualServerConfig.securityEnableHSTS "Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)"
+  pool.Name "Pool: Name"
+  pool.Description "Pool: Description"
+  pool.Monitor "Pool: Health Monitor"
+  pool.LbMethod "Pool: Load Balancing Method"
+  pool.MemberDefaultPort "Pool: Member Default Port"
+  pool.Members "Pool: Members"
+  pool.Members.IPAddress "IP:"
+  pool.Members.Port "Port:"
+  pool.Members.ConnectionLimit "Connection Limit:"
+  pool.Members.Ratio "Ratio:"
+  pool.Members.State "State:"
 
-  poolConfig "Pool Configuration"
-	poolConfig.poolName "Pool Name"
-	poolConfig.poolDescription "Pool Description"
-	poolConfig.poolMonitor "Health Monitor"
-	poolConfig.poolLbMethod "Load Balancing Method"
-	poolConfig.poolMembers "Pool Members"
-  poolConfig.poolMemberDefaultPort "Pool Member Default Port"
-	poolConfig.poolMembers.poolMemberIPAddress "IP:"
-	poolConfig.poolMembers.poolMemberPort "Port:"
-  poolConfig.poolMembers.poolMemberConnectionLimit "Connection Limit:"
-  poolConfig.poolMembers.poolMemberRatio "Ratio:"
-  poolConfig.poolMembers.poolMemberState "State:"
+  vs "Virtual Server Configuration"
+  vs.Name "Virtual Server: Name"
+  vs.IpProtocol "Virtual Server: IP Protocol"
+  vs.Description "Virtual Server: Description"
+  vs.SourceAddress "Virtual Server: Source Address"
+  vs.ProfileClientProtocol "Virtual Server: Client-side L4 Protocol Profile"
+  vs.ProfileServerProtocol "Virtual Server: Server-side L4 Protocol Profile"
+  vs.ProfileHTTP "Virtual Server: HTTP Profile"
+  vs.ProfileOneConnect "Virtual Server: OneConnect Profile"
+  vs.ProfileDefaultPersist "Virtual Server: Default Persistence Profile"
+  vs.ProfileFallbackPersist "Virtual Server: Fallback Persistence Profile"
+  vs.SNATConfig "Virtual Server: SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)"
+  vs.ProfileClientSSL "Virtual Server: Client SSL Profile"
+  vs.ProfileClientSSLCert "Virtual Server: Client SSL Certificate"
+  vs.ProfileClientSSLKey "Virtual Server: Client SSL Key"
+  vs.ProfileClientSSLChain "Virtual Server: Client SSL Certificate Chain"
+  vs.ProfileClientSSLCipherString "Virtual Server: Client SSL Cipher String"
+  vs.OptionSourcePort "Virtual Server: Source Port Behavior"
+  vs.OptionConnectionMirroring "Virtual Server: Connection Mirroring"
+  vs.Irules "Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)"
+  vs.ConnectionLimit "Virtual Server: Virtual Server Connection Limit (0=unlimited)"
+  vs.securityEnableHSTS "Virtual Server: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)"
 
-
-  customConfig "Custom Config Section"
-  customConfig.string1 "Custom Config 1"
-  customConfig.string2 "Custom Config 2"
-  customConfig.string3 "Custom Config 3"
+  extensions "Custom Extensions Section"
+  extensions.Field1 "Extensions: Field 1"
+  extensions.Field2 "Extensions: Field 2"
+  extensions.Field3 "Extensions: Field 3"
 }
             }
             role-acl none
