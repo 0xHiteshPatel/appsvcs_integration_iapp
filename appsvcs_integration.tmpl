@@ -1,7 +1,7 @@
 cli admin-partitions {
     update-partition Common
 }
-sys application template /Common/appsvcs_integration_v0.3_003 {
+sys application template /Common/appsvcs_integration_v0.3_004 {
     actions {
         definition {
             html-help {
@@ -14,8 +14,8 @@ sys application template /Common/appsvcs_integration_v0.3_003 {
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(004)"
-set PRESVERSION "003"
+set IMPLVERSION "0.3(005)"
+set PRESVERSION "004"
 
 proc custom_extensions {} {
   # ####################################################################
@@ -160,7 +160,8 @@ set allVars {
  vs__OptionSourcePort \
  vs__OptionConnectionMirroring \
  vs__Irules \
- vs__securityEnableHSTS \
+ feature__redirectToHTTPS \
+ feature__securityEnableHSTS \
  pool__Name \
  pool__Description \
  pool__Monitor \
@@ -335,7 +336,7 @@ if { $nummembers == 0 } {
 debug "\[create_pool\]\[member_str\]  memberstr=$memberstr"
 
 # Setup the base pool create command
-set cmd [format "ltm pool %s %s " $pool__Name $memberstr $pool__LbMethod]
+set cmd [format "ltm pool /%s/%s.app/%s %s " $partition $app $pool__Name $memberstr]
 
 array set pool_options {
   "pool__LbMethod" "load-balancing-mode"
@@ -364,24 +365,30 @@ tmsh::create $cmd
 
 # Create virtual Server
 
+# Process the 'auto' flag for feature__redirectToHTTPS
+if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" } {
+  debug "\[create_virtual\]\[feature__redirectToHTTPS\] found auto flag and port is 443, setting feature to enabled"
+  set feature__redirectToHTTPS enabled
+}
+
 # Check for HTTP Strict Transport Security (HSTS) option.  We do this here 
 # so the irule can be easily appended to the existing iRule list
-if { $clientssl > 0 && $vs__securityEnableHSTS eq "enabled"} {
-  debug "\[create_virtual\]\[enable_hsts\] creating HSTS iRule"
+if { $clientssl > 0 && $feature__securityEnableHSTS eq "enabled"} {
+  debug "\[create_virtual\]\[feature__securityEnableHSTS\] creating HSTS iRule"
   set hstsrule [format "/%s/%s.app/hsts_irule" $partition $app]
   set hstscmd "ltm rule $hstsrule $irule_HSTS"
 
-  debug "\[create_virtual\]\[enable_hsts\] TMSH CREATE: $hstscmd"
+  debug "\[create_virtual\]\[feature__securityEnableHSTS\] TMSH CREATE: $hstscmd"
   tmsh::create $hstscmd
 
   if { [string length $vs__Irules] > 0 } {
-    debug "\[create_virtual\]\[enable_hsts\] vs__Irules has data, appending"
+    debug "\[create_virtual\]\[feature__securityEnableHSTS\] vs__Irules has data, appending"
     append vs__Irules ",$hstsrule"
   } else {
-    debug "\[create_virtual\]\[enable_hsts\] vs__Irules is empty, setting"
+    debug "\[create_virtual\]\[feature__securityEnableHSTS\] vs__Irules is empty, setting"
     set vs__Irules $hstsrule
   }
-  debug "\[create_virtual\]\[enable_hsts\] vs__Irules=$vs__Irules"
+  debug "\[create_virtual\]\[feature__securityEnableHSTS\] vs__Irules=$vs__Irules"
 }
 
 # Check to see if a vsName was specified... if not set to $app_pool
@@ -390,15 +397,18 @@ if { [string length $vs__Name] == 0 } {
     debug "\[create_virtual\] no vsName specified... setting to $vs__Name"
 }
 
-set cmd [format "ltm virtual %s " $vs__Name]
+set cmd [format "ltm virtual /%s/%s.app/%s " $partition $app $vs__Name]
 debug "\[create_virtual\] base cmd=$cmd"
 
 # Setup our listener destination address
 if { ![has_routedomain $pool__addr]} {
-  set vs_dest "$pool__addr%$rd:$pool__port"
+  set vs_dest_addr "$pool__addr%$rd"
 } else {
-  set vs_dest "$pool__addr:$pool__port"
+  set vs_dest_addr "$pool__addr"
 }
+
+# Keep vs_dest_addr as is for use by other features, create vs_dest with full <ip>%<rd>:<port> format
+set vs_dest "$vs_dest_addr:$pool__port"
 
 # Set virtual server options we support.  This array assumes a format " <option> <input value>" for the TMSH command.
 array set vs_options {
@@ -488,6 +498,11 @@ array set vs_profiles {
  "vs__ProfileOneConnect" ""
 }
 
+# Save the base profile string for later use by feature__redirectToHTTPS
+if { $feature__redirectToHTTPS eq "enabled"} {
+  set vsprofiles_redirect $vsprofiles
+}
+
 # Client-SSL profile created by iApp
 if { $clientssl == 1 } {
   set vs__ProfileClientSSL [format "%s_clientssl" $app]
@@ -517,6 +532,31 @@ append cmd $vsprofiles
 debug "\[create_virtual\]  TMSH CREATE: $cmd"
 tmsh::create $cmd
 
+# Create and additional virtual server on port 80 for feature__redirectToHTTPS
+if { $feature__redirectToHTTPS eq "enabled" } {
+  debug "\[create_virtual\]\[feature__redirectToHTTPS\] feature__redirectToHTTPS is enabled, creating redirect virtual server on $vs_dest_addr:80"
+
+  set redirect_cmd [format "ltm virtual /%s/%s.app/%s_redirect destination %s:80 " $partition $app $vs__Name $vs_dest_addr]
+  array set vs_redirect_options {
+   "pool__mask" "mask"
+   "vs__IpProtocol" "ip-protocol"
+   "vs__SourceAddress" "source"
+ }
+
+  # Process the vs_options array
+  foreach {optionvar optioncmd} [array get vs_redirect_options] {
+    #debug "\[create_virtual\]\[options\] var=$optionvar cmd=$optioncmd"
+    append redirect_cmd [generic_add_option "create_virtual\]\[feature__redirectToHTTPS\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
+  }
+
+  append redirect_cmd " rules { /Common/_sys_https_redirect } "
+  append redirect_cmd $vsprofiles_redirect
+  append redirect_cmd [generic_add_option "create_virtual\]\[feature__redirectToHTTPS\]\[options" $vs__ProfileHTTP "" "" 0]
+  append redirect_cmd " \}"
+  debug "\[create_virtual\]\[feature__redirectToHTTPS\] TMSH CREATE: $redirect_cmd"
+  tmsh::create $redirect_cmd
+}
+
 # Create iCall statistics publisher
 # CAVEATS: This is mode specific because $app_stats is not set unless deployment
 # is driven by BIG-IQ.  To accomodate all use cases we make this mode specific:
@@ -524,7 +564,7 @@ tmsh::create $cmd
 # mode=2 (BIGIQ Cloud): Look at $app_stats set by BIG-IQ to control creation
 # mode=3 (APIC)       : Look at $app_stats set by BIG-IQ to control creation
 debug "\[create_stats\] mode=$mode app_stats=$app_stats iapp__appStats=$iapp__appStats"
-if { [expr $mode == 2 | $mode == 3] && $app_stats eq "enabled" || $mode == 1 && $iapp__appStats eq "enabled"} {
+if { (($mode == 2 || $mode == 3) && $app_stats eq "enabled") || ($mode == 1 && $iapp__appStats eq "enabled") } {
   # Create the iCall stats publisher
   # TODO: This needs to check for the presence of a HTTP profile and only add HTTP stats if that exists
   debug "\[create_stats\] creating icall stats publisher"
@@ -740,6 +780,10 @@ section vs {
   choice OptionConnectionMirroring default "disabled" { "disabled", "enabled"}
 
   string Irules display "xxlarge" default ""
+}
+
+section feature {
+  choice redirectToHTTPS default "auto" { "auto"," disabled", "enabled"}
   choice securityEnableHSTS default "disabled" { "disabled", "enabled"}
 }
 
@@ -796,7 +840,10 @@ text {
   vs.OptionConnectionMirroring "Virtual Server: Connection Mirroring"
   vs.Irules "Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)"
   vs.ConnectionLimit "Virtual Server: Virtual Server Connection Limit (0=unlimited)"
-  vs.securityEnableHSTS "Virtual Server: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)"
+
+  feature "L4-7 Application Functionality"
+  feature.redirectToHTTPS "HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect"
+  feature.securityEnableHSTS "HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)"
 
   extensions "Custom Extensions Section"
   extensions.Field1 "Extensions: Field 1"
