@@ -14,7 +14,7 @@ sys application template /Common/appsvcs_integration_v0.3_004 {
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(005)"
+set IMPLVERSION "0.3(006)"
 set PRESVERSION "004"
 
 proc custom_extensions {} {
@@ -189,14 +189,19 @@ array set pool_state {
     drain-disabled {session user-disabled state user-up}
 }
 
-set irule_HSTS {
-when RULE_INIT {
-  set static::expires [clock scan 20110926]
-}
+# iRules used for feature__securityEnableHSTS
+set irule_HSTS {  
 when HTTP_RESPONSE {
-  HTTP::header insert Strict-Transport-Security "max-age=[expr {$static::expires - [clock seconds]}]; includeSubDomains"
+  HTTP::header insert Strict-Transport-Security "max-age=31536000"
 }
 }; # end irule_HSTS
+
+set irule_HSTS_redirect {  
+when HTTP_REQUEST {
+  HTTP::respond 301 Location "https://[getfield [HTTP::host] ":" 1][HTTP::uri]"
+}
+}; # end irule_HSTS_redirect
+# end iRules used for feature__securityEnableHSTS
 
 # Fixup incoming variables: If no value is sent for a particular iApp field than the var is not created which
 # results in all sorts of problems.  We just check for existence of the var and set to "" if it doesn't exist
@@ -377,10 +382,17 @@ if { $clientssl > 0 && $feature__securityEnableHSTS eq "enabled"} {
   debug "\[create_virtual\]\[feature__securityEnableHSTS\] creating HSTS iRule"
   set hstsrule [format "/%s/%s.app/hsts_irule" $partition $app]
   set hstscmd "ltm rule $hstsrule $irule_HSTS"
-
   debug "\[create_virtual\]\[feature__securityEnableHSTS\] TMSH CREATE: $hstscmd"
   tmsh::create $hstscmd
 
+  if { $feature__redirectToHTTPS eq "enabled"} {
+    debug "\[create_virtual\]\[feature__securityEnableHSTS\] feature_redirectToHTTPS enabled, creating HSTS redirect iRule"
+    set hstsredirectrule [format "/%s/%s.app/hsts_redirect_irule" $partition $app]
+    set hstsredirectcmd "ltm rule $hstsredirectrule $irule_HSTS_redirect"
+    debug "\[create_virtual\]\[feature__securityEnableHSTS\] TMSH CREATE: $hstsredirectcmd"
+    tmsh::create $hstsredirectcmd
+  }
+  
   if { [string length $vs__Irules] > 0 } {
     debug "\[create_virtual\]\[feature__securityEnableHSTS\] vs__Irules has data, appending"
     append vs__Irules ",$hstsrule"
@@ -549,7 +561,14 @@ if { $feature__redirectToHTTPS eq "enabled" } {
     append redirect_cmd [generic_add_option "create_virtual\]\[feature__redirectToHTTPS\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
   }
 
-  append redirect_cmd " rules { /Common/_sys_https_redirect } "
+  # The HSTS spec recommends that when redirected a 301 Redirect is used, rather than a 302 like _sys_https_redirect uses
+  if { $feature__securityEnableHSTS eq "enabled" } {
+    debug "\[create_virtual\]\[feature__redirectToHTTPS\] feature__securityEnableHSTS is enabled, using $hstsredirectrule"
+    append redirect_cmd " rules { $hstsredirectrule } "
+  } else {
+    append redirect_cmd " rules { /Common/_sys_https_redirect } "
+  }
+
   append redirect_cmd $vsprofiles_redirect
   append redirect_cmd [generic_add_option "create_virtual\]\[feature__redirectToHTTPS\]\[options" $vs__ProfileHTTP "" "" 0]
   append redirect_cmd " \}"
