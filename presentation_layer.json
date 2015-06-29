@@ -1,0 +1,501 @@
+{
+	"tmpl_majorversion":"0.3",
+	"pres_revision":"004",
+	"sections":[
+		{
+			"name":"intro",
+			"description":"F5 Application Services Integration iApp (Community Edition)",
+			"fields":[
+				{
+					"name":"hello",
+					"description":"Introduction",
+					"type":"text",
+					"text":"Please complete the following template"
+				}
+			]
+		},
+		{
+			"name":"iapp",
+			"description":"iApp Options",
+			"fields":[
+				{
+					"name":"strictUpdates",
+					"description":"iApp: Strict Updates",
+					"help":"Control Strict Updates mode",
+					"type":"boolean",
+					"default":true,
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"appStats",
+					"description":"iApp: Statistics Handler Creation",
+					"type":"boolean",
+					"default":true,
+					"required":false,
+					"display":"large",
+					"modes":[1,2],
+					"minver":"0.3_001"
+				}
+			]
+		},
+		{
+			"name":"pool",
+			"description":"Virtual Server Listener & Pool Configuration",
+			"fields":[
+				{
+					"name":"addr",
+					"description":"Virtual Server: Address",
+					"type":"ipaddr",
+					"default":"172.168.0.231",
+					"required":true,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"mask",
+					"description":"Virtual Server: Mask",
+					"type":"ipaddr",
+					"default":"255.255.255.255",
+					"required":true,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"port",
+					"description":"Virtual Server: Port",
+					"type":"port",
+					"default":"443",
+					"display":"small",
+					"required":true,
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"Name",
+					"description":"Virtual Server: Name",
+					"type":"string",
+					"default":"my_pool",
+					"required":true,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"Description",
+					"description":"Virtual Server: Description",
+					"type":"string",
+					"default":"pooldescr",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"Monitor",
+					"description":"Pool: Health Monitor",
+					"type":"string",
+					"default":"/Common/http",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"LbMethod",
+					"description":"Pool: Load Balancing Method",
+					"type":"choice",
+					"default":"round-robin",
+					"choices":[
+					    "dynamic-ratio-member",
+					    "dynamic-ratio-node",
+					    "fastest-app-response",
+					    "fastest-node",
+					    "least-connections-member",
+					    "least-connections-node",
+					    "least-sessions",
+					    "observed-member",
+					    "observed-node",
+					    "predictive-member",
+					    "predictive-node",
+					    "round-robin",
+					    "ratio-member",
+					    "ratio-node",
+					    "ratio-session",
+					    "ratio-least-connections-member",
+					    "ratio-least-connections-node",
+					    "weighted-least-connections-member"
+					    ],
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"MemberDefaultPort",
+					"description":"Pool: Member Default Port",
+					"type":"string",
+					"default":"80",
+					"required":false,
+					"display":"small",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"Members",
+					"description":"Pool: Members",
+					"type":"table",
+					"modes":[1,2,3],
+					"minver":"0.3_001",
+					"fields":[
+						{
+							"name":"IPAddress",
+							"description":"IP:",
+							"type":"string",
+							"default":"10.0.0.100",
+							"required":true,
+							"display":"large",
+							"modes":[1,2,3],
+							"minver":"0.3_001"
+						},
+						{
+							"name":"Port",
+							"description":"Port:",
+							"type":"string",
+							"default":"80",
+							"required":true,
+							"display":"small",
+							"modes":[1,2,3],
+							"minver":"0.3_001"
+						},
+						{
+							"name":"ConnectionLimit",
+							"description":"Connection Limit:",
+							"type":"string",
+							"default":"0",
+							"required":true,
+							"display":"medium",
+							"modes":[1,2,3],
+							"minver":"0.3_001"
+						},
+
+						{
+							"name":"Ratio",
+							"description":"Ratio:",
+							"type":"string",
+							"default":"1",
+							"required":true,
+							"display":"small",
+							"modes":[1,2,3],
+							"minver":"0.3_001"
+						},
+						{
+							"name":"State",
+							"description":"State:",
+							"type":"choice",
+							"default":"enabled",
+							"choices":[
+							    "enabled",
+							    "drain-disabled",
+							    "disabled"
+								],
+							"required":false,
+							"modes":[1,2,3],
+							"minver":"0.3_001"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name":"vs",
+			"description":"Virtual Server Configuration",
+			"fields":[
+				{
+					"name":"Name",
+					"description":"Virtual Server: Name",
+					"type":"string",
+					"default":"my_virtualserver",
+					"required":true,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"Description",
+					"description":"Virtual Server: Description",
+					"type":"string",
+					"default":"vsdescr",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"SourceAddress",
+					"description":"Virtual Server: Source Address",
+					"type":"string",
+					"default":"0.0.0.0/0",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"IpProtocol",
+					"description":"Virtual Server: IP Protocol",
+					"type":"string",
+					"default":"tcp",
+					"required":false,
+					"display":"small",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ConnectionLimit",
+					"description":"Virtual Server: Virtual Server Connection Limit (0=unlimited)",
+					"type":"string",
+					"default":"0",
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileClientProtocol",
+					"description":"Virtual Server: Client-side L4 Protocol Profile",
+					"type":"string",
+					"default":"/Common/tcp-wan-optimized",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileServerProtocol",
+					"description":"Virtual Server: Server-side L4 Protocol Profile",
+					"type":"string",
+					"default":"/Common/tcp-lan-optimized",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileHTTP",
+					"description":"Virtual Server: HTTP Profile",
+					"type":"string",
+					"default":"/Common/http",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileOneConnect",
+					"description":"Virtual Server: OneConnect Profile",
+					"type":"string",
+					"default":"/Common/oneconnect",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileDefaultPersist",
+					"description":"Virtual Server: Default Persistence Profile",
+					"type":"string",
+					"default":"/Common/cookie",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileFallbackPersist",
+					"description":"Virtual Server: Fallback Persistence Profile",
+					"type":"string",
+					"default":"/Common/source_addr",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"SNATConfig",
+					"description":"Virtual Server: SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)",
+					"type":"string",
+					"default":"automap",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileClientSSL",
+					"description":"Virtual Server: Client SSL Profile",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileClientSSLCert",
+					"description":"Virtual Server: Client SSL Certificate",
+					"type":"string",
+					"default":"/Common/default.crt",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileClientSSLKey",
+					"description":"Virtual Server: Client SSL Key",
+					"type":"string",
+					"default":"/Common/default.key",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				}, 
+				{
+					"name":"ProfileClientSSLChain",
+					"description":"Virtual Server: Client SSL Certificate Chain",
+					"type":"string",
+					"default":"/Common/ca-bundle.crt",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileClientSSLCipherString",
+					"description":"Virtual Server: Client SSL Cipher String",
+					"type":"string",
+					"default":"DEFAULT:!SSLV3",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"OptionSourcePort",
+					"description":"Virtual Server: Source Port Behavior",
+					"type":"choice",
+					"default":"preserve",
+					"choices":[
+					    "preserve",
+					    "preserve-strict",
+					    "change"
+						],
+					"required":false,
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"OptionConnectionMirroring",
+					"description":"Virtual Server: Connection Mirroring",
+					"type":"boolean",
+					"default":false,
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},				
+				{
+					"name":"Irules",
+					"description":"Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				}
+			]
+		},
+		{
+			"name":"feature",
+			"description":"L4-7 Application Functionality",
+			"fields":[
+				{
+					"name":"redirectToHTTPS",
+					"description":"HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect",
+					"type":"choice",
+					"default":"auto",
+					"choices":[
+						"auto",
+						"enabled",
+						"disabled"
+					],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"securityEnableHSTS",
+					"description":"HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)",
+					"type":"choice",
+					"default":"disabled",
+					"required":false,
+					"choices":[
+						"disabled",
+						"enabled",
+						"enabled-preload",
+						"enabled-subdomain",
+						"enabled-preload-subdomain"
+					],
+					"display":"large",
+					"modes":[1,2],
+					"minver":"0.3_001"
+				}
+			]
+		},
+		{
+			"name":"extensions",
+			"description":"Custom Extensions Section",
+			"fields":[
+				{
+					"name":"Field1",
+					"description":"Extensions: Field 1",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+				{
+					"name":"Field2",
+					"description":"Extensions: Field 2",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				},
+
+				{
+					"name":"Field3",
+					"description":"Extensions: Field 3",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3],
+					"minver":"0.3_001"
+				}
+			]
+		}			
+	]
+}
+
