@@ -8,9 +8,9 @@ set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLVERSION "0.3(006)"
 set PRESVERSION "%PRESENTATION_REV%"
 
-%insertfile:include/custom_extensions.tcl%
-
 %insertfile:src/util.tcl%
+
+%insertfile:include/custom_extensions.tcl%
 
 set app $tmsh::app_name
 debug "Starting $NAME version IMPL=$IMPLVERSION PRES=$PRESVERSION app_name=$app"
