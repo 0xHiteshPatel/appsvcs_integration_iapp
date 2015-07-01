@@ -1,0 +1,34 @@
+cli admin-partitions {
+    update-partition Common
+}
+sys application template /Common/appsvcs_integration_v%IMPLVERSION_MAJOR%_%PRESENTATION_REV% {
+    actions {
+        definition {
+            html-help {
+            }
+            implementation {
+%insertfile:src/implementation_layer.tcl%
+            }
+            macro {
+            }
+            presentation {
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+%insertfile:tmp/apl.build%
+            }
+            role-acl none
+            run-as none
+        }
+    }
+    description none
+    ignore-verification false
+    requires-bigip-version-max none
+    requires-bigip-version-min none
+    requires-modules { ltm }
+    signing-key none
+    tmpl-checksum none
+    tmpl-signature none
+}

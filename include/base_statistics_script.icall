@@ -1,0 +1,80 @@
+set app %APP%
+set partition %PART%
+set aso "sys.application.service /$partition/${app}.app/$app"
+      
+set virtual_path    "ltm virtual /$partition/${app}.app/%VS%"
+set http_path       "ltm profile http %HTTP%"
+set pool_path       "ltm pool /$partition/${app}.app/%POOL%"
+
+#puts "app=$app"
+#puts "partition=$partition"
+#puts "aso=$aso"
+#puts "virtual_path=$virtual_path"
+#puts "http_path=$http_path"
+#puts "pool_path=$pool_path"
+
+# these lists represent strings taken from "show ... field-fmt"
+set http_stats { get-reqs number-reqs post-reqs resp-5xx-cnt }
+set virtual_stats {
+    clientside.bits-in clientside.bits-out clientside.cur-conns
+    clientside.max-conns clientside.pkts-in clientside.pkts-out
+    clientside.tot-conns status.availability-state status.enabled-state
+    status.status-reason
+}
+set pool_stats {
+    active-member-cnt serverside.bits-in serverside.bits-out
+    serverside.cur-conns serverside.max-conns serverside.pkts-in
+    serverside.pkts-out serverside.tot-conns
+}
+
+# loop over each type of object we want to look at, building the name
+# of the path and the stats for it as needed
+foreach type { %HTYPE% virtual pool } {
+    # making this its own variable made the Tcl validator stop throwing
+    # a warning - though it _should_ be fine to move it inline w/its use
+    set path [set ${type}_path]
+    set objs [tmsh::get_status $path raw]
+    if { [llength $objs] == 0 } {
+        puts "no object found for: $type"
+        continue
+    }
+    set obj [lindex $objs 0]
+    #puts "obj=$obj"
+    foreach stat [set ${type}_stats] {
+        #puts " stat=$stat"
+        set value [tmsh::get_field_value $obj $stat]
+        #puts " aso=$aso stat=$stat value=$value"
+        # associate the iStat with the app service
+        istats::set "$aso string $stat" $value
+    }
+}
+
+# Set an additional iStat for the size of the pool, as this is not
+# stored as a stat but is nice to have when looking at pool health.
+# Do that here each run through rather than in the iApp because if
+# an external pool is used or strictness was off the size of the
+# pool can change and the iApp wouldn't run to adjust the size
+set pools [tmsh::get_config $pool_path]
+set numpools [llength $pools]
+set pool_size 0
+#puts "numpools=$numpools pool_size=$pool_size"
+if { $numpools == 1 } {
+  # safe to assume only obj in list is our pool now. grab its size
+  # and move along
+  set pool [lindex $pools 0]
+  set fdx 0
+  set fields [tmsh::get_field_names nested $pool]
+  set field_count [llength $fields]
+  while { $fdx < $field_count } {
+    set field [lindex $fields $fdx]
+    #puts "field=$field"
+    incr fdx
+    if { $field eq "members"} {
+      set pool_size [llength [tmsh::get_field_value $pool members]]
+      #puts "new pool_size=$pool_size"
+    }
+  }
+}
+istats::set "$aso string total-member-cnt" $pool_size
+#set tmc [istats::get $aso total-member-cnt]
+#puts "tmc=$tmc"

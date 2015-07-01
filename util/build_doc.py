@@ -32,8 +32,12 @@ def process_field (field, section, tab):
 	print "  <td>%s</td>" % field["minver"]
 
 	return
+	
+if len(sys.argv) != 2:
+	print "Usage: %s <JSON file>" % sys.argv[0]
+	quit(0)
 
-with open('../presentation_layer.json') as data_file:    
+with open(sys.argv[1]) as data_file:    
     data = json.load(data_file)
 
 #pprint(data)

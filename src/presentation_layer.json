@@ -1,10 +1,10 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"004",
+	"pres_revision":"005",
 	"sections":[
 		{
 			"name":"intro",
-			"description":"F5 Application Services Integration iApp (Community Edition)",
+			"description":"F5 Application Services Integration iApp v%IMPLVERSION_MAJOR%_%PRESENTATION_REV% (Community Edition)",
 			"fields":[
 				{
 					"name":"hello",
@@ -306,6 +306,36 @@
 					"minver":"0.3_001"
 				},
 				{
+					"name":"ProfileCompression",
+					"description":"Virtual Server: Compression Profile",
+					"type":"string",
+					"default":"/Common/httpcompression",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_005"
+				},
+				{
+					"name":"ProfileAnalytics",
+					"description":"Virtual Server: Analytics Profile",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_005"
+				},
+				{
+					"name":"ProfileRequestLogging",
+					"description":"Virtual Server: Request Logging Profile",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_005"
+				},				
+				{
 					"name":"ProfileDefaultPersist",
 					"description":"Virtual Server: Default Persistence Profile",
 					"type":"string",
@@ -334,6 +364,16 @@
 					"display":"large",
 					"modes":[1,2,3],
 					"minver":"0.3_001"
+				},
+				{
+					"name":"ProfileServerSSL",
+					"description":"Virtual Server: Server SSL Profile",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3],
+					"minver":"0.3_005"
 				},
 				{
 					"name":"ProfileClientSSL",
@@ -426,6 +466,21 @@
 			"description":"L4-7 Application Functionality",
 			"fields":[
 				{
+					"name":"insertXForwardedFor",
+					"description":"HTTP: Insert X-Forwarded-For Header",
+					"type":"choice",
+					"default":"auto",
+					"choices":[
+						"auto",
+						"enabled",
+						"disabled"
+					],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3],
+					"minver":"0.3_005"
+				},
+				{
 					"name":"redirectToHTTPS",
 					"description":"HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect",
 					"type":"choice",
@@ -453,8 +508,8 @@
 						"enabled-subdomain",
 						"enabled-preload-subdomain"
 					],
-					"display":"large",
-					"modes":[1,2],
+					"display":"xlarge",
+					"modes":[1,2,3],
 					"minver":"0.3_001"
 				}
 			]
@@ -498,4 +553,3 @@
 		}			
 	]
 }
-

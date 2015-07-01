@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><td colspan=7><b>Generated from JSON v0.3_004</b></td></tr>
+ <tr><td colspan=7><b>Generated from JSON v0.3_005</b></td></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -249,6 +249,33 @@ disabled</td>
   <td>0.3_001</td>
 </tr>
 <tr>
+  <td>vs.ProfileCompression</td>
+  <td>$vs__ProfileCompression</td>
+  <td>Virtual Server: Compression Profile</td>
+  <td>[1, 2, 3]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_005</td>
+</tr>
+<tr>
+  <td>vs.ProfileAnalytics</td>
+  <td>$vs__ProfileAnalytics</td>
+  <td>Virtual Server: Analytics Profile</td>
+  <td>[1, 2, 3]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_005</td>
+</tr>
+<tr>
+  <td>vs.ProfileRequestLogging</td>
+  <td>$vs__ProfileRequestLogging</td>
+  <td>Virtual Server: Request Logging Profile</td>
+  <td>[1, 2, 3]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_005</td>
+</tr>
+<tr>
   <td>vs.ProfileDefaultPersist</td>
   <td>$vs__ProfileDefaultPersist</td>
   <td>Virtual Server: Default Persistence Profile</td>
@@ -274,6 +301,15 @@ disabled</td>
   <td>string</td>
   <td></td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>vs.ProfileServerSSL</td>
+  <td>$vs__ProfileServerSSL</td>
+  <td>Virtual Server: Server SSL Profile</td>
+  <td>[1, 2, 3]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_005</td>
 </tr>
 <tr>
   <td>vs.ProfileClientSSL</td>
@@ -351,6 +387,17 @@ change</td>
 </tr>
 <tr><td colspan=7><b>Section: feature</b></td></tr>
 <tr>
+  <td>feature.insertXForwardedFor</td>
+  <td>$feature__insertXForwardedFor</td>
+  <td>HTTP: Insert X-Forwarded-For Header</td>
+  <td>[1, 2, 3]</td>
+  <td>choice</td>
+  <td>auto,
+enabled,
+disabled</td>
+  <td>0.3_005</td>
+</tr>
+<tr>
   <td>feature.redirectToHTTPS</td>
   <td>$feature__redirectToHTTPS</td>
   <td>HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect</td>
@@ -365,7 +412,7 @@ disabled</td>
   <td>feature.securityEnableHSTS</td>
   <td>$feature__securityEnableHSTS</td>
   <td>HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)</td>
-  <td>[1, 2]</td>
+  <td>[1, 2, 3]</td>
   <td>choice</td>
   <td>disabled,
 enabled,

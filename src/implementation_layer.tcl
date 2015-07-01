@@ -1,12 +1,3 @@
-cli admin-partitions {
-    update-partition Common
-}
-sys application template /Common/appsvcs_integration_v0.3_004 {
-    actions {
-        definition {
-            html-help {
-            }
-            implementation {
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,112 +6,11 @@ sys application template /Common/appsvcs_integration_v0.3_004 {
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLVERSION "0.3(006)"
-set PRESVERSION "004"
+set PRESVERSION "%PRESENTATION_REV%"
 
-proc custom_extensions {} {
-  # ####################################################################
-  # Custom config example
-  # The purpose of the extensions__fieldX fields are to allow for changes WITHOUT updates
-  # to the APIC device package.  By exposing these fields now we can add code to the implementation
-  # portion of the iApp to handle new functionality.  Example 1 parses a string of the
-  # format "key1=val1;key2=val2;key3=val3" and populates variables that can be acted on.
-  #
-  # Another use case is to use the field to pass raw commands to the tmsh::create command as in Example 2 below
-  #
-  # Example 1
-  set pairs [split $::extensions__Field1 \;]
-  debug "\[custom_extentions\] Custom1: pairs=$pairs"
-  array set custom_kvp {}
-  foreach pair $pairs {
-   set key [lindex [split $pair =] 0]
-   set val [lindex [split $pair =] 1]
-   set custom_kvp($key) $val
-   debug "\[custom_extentions\] Custom1: pair=$pair key=$key val=$val custom_kvp($key)=$custom_kvp($key)"
-  }
-  
-  if { [info exists custom_kvp(nagle)] && $custom_kvp(nagle) == 0 } {
-  debug "\[custom_extentions\] This is an example of the custom KVP nagle=0 in Custom String 1"
-  }
-  
-  if { [info exists custom_kvp(logit)] && $custom_kvp(logit) == 1} {
-   debug "\[custom_extentions\] This is an example of the custom KVP logit=1 in Custom String 1"
-  }
-  
-  # Example 2 
-  # Populate String 2 with a valid command like:
-  #  ltm data-group internal customDG type string records replace-all-with { record1 { data data1 } record2 { data data2 } }
-  #
-  # Once the template executes you can see the creation of the datagroup under the application template container
-  # tmsh::create $::extensions__Field2
-  #
-  # End custom config example
-  # ####################################################################
-}
+%insertfile:include/custom_extensions.tcl%
 
-# Print a timestamped debug message to /var/tmp/scriptd.out
-# Input: string
-proc debug { string } {
-  set systemTime [clock seconds]
-  puts "\[[clock format $systemTime -format %D]\]\[[clock format $systemTime -format %H:%M:%S]\]\[$tmsh::app_name\] $string"
-}
-
-# Figure out which type of environment we are executing in.
-# Return: list $mode $folder $partition $routedomainid
-# Modes: 1 = Standalone
-#        2 = BIG-IQ Cloud
-#        3 = Cisco APIC
-proc get_mode { } {
-  set folder [tmsh::pwd]
-  set partition [lindex [split $folder /] 1]
-  set routedomainid 0
-  debug "\[get_mode\] starting folder=$folder partition=$partition routedomainid=$routedomainid"
-  
-  # Check for a partition that starts with apic_ and return APIC mode (2) and RD if found
-  if { [string match -nocase "apic_*" $partition] } {
-    debug "\[get_mode\]\[apic\] partition starts with apic_, assuming APIC deployment mode (3)"
-    set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
-    set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
-    debug "\[get_mode\]\[apic\] rdobjs=$rdobjs routedomainid=$routedomainid"
-    return [list 3 $folder $partition $routedomainid]
-  }
-
-  # If we get here we can safely assume that this is either a Standalone or BIG-IQ Cloud mode deployment
-  # The only way we currently have to check for BIG-IQ Cloud mode is to see if app_stats was sent
-  if { [info exists ::app_stats] } {
-    debug "\[get_mode\]\[bigiq\] all other modes checked for and app_stats set, assuming BIG-IQ Cloud deployment mode (2)"
-    return [list 2 $folder $partition $routedomainid]
-  }
-
-  # Default is Standalone mode
-  debug "\[get_mode\]\[standalone\] no integration vendor found, assuming Standalone deployment mode (1)"    
-  return [list 1 $folder $partition $routedomainid]
-}
-
-# Create a specfic option command and return it
-# Input: $debug_id, $input_var, $option_string
-# Return: string $cmd
-proc generic_add_option { debug_id input_var option_string custom_format replace_commas } {
-  set cmd " "
-  if { [string length $input_var] > 0 } {
-      if { $replace_commas == 1 } {
-        set input_var [string map {"," " "} $input_var]
-      }
-
-      if { [string length $custom_format] > 0 } {
-        set cmd [format $custom_format $input_var]
-      } else {
-        set cmd [format " $option_string \"%s\"" $input_var]
-      }
-      debug [format "\[%s\]\[generic_add_option\] cmd=%s" $debug_id $cmd]
-  }
-  return $cmd
-}
-
-# Check to see if an ip has a routedomain included.
-# Return: 0=false; 1=true
-proc has_routedomain { ip } {
-  return [string match *%* $ip]
-}
+%insertfile:src/util.tcl%
 
 set app $tmsh::app_name
 debug "Starting $NAME version IMPL=$IMPLVERSION PRES=$PRESVERSION app_name=$app"
@@ -130,47 +20,13 @@ set mode [lindex $modeinfo 0]
 set folder [lindex $modeinfo 1]
 set partition [lindex $modeinfo 2]
 set rd [lindex $modeinfo 3]
+set app_path [format "/%s/%s.app" $partition $app]
 
 debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd"
 
 # Define various global values
 set allVars {
- iapp__strictUpdates \
- iapp__appStats \
- vs__Name \
- vs__IpProtocol \
- vs__ConnectionLimit \
- vs__Description \
- vs__SourceAddress \
- pool__addr \
- pool__mask \
- pool__port \
- vs__ProfileClientProtocol \
- vs__ProfileServerProtocol \
- vs__ProfileHTTP \
- vs__ProfileOneConnect \
- vs__ProfileDefaultPersist \
- vs__ProfileFallbackPersist \
- vs__SNATConfig \
- vs__ProfileClientSSL \
- vs__ProfileClientSSLCert \
- vs__ProfileClientSSLKey \
- vs__ProfileClientSSLChain \
- vs__ProfileClientSSLCipherString \
- vs__OptionSourcePort \
- vs__OptionConnectionMirroring \
- vs__Irules \
- feature__redirectToHTTPS \
- feature__securityEnableHSTS \
- pool__Name \
- pool__Description \
- pool__Monitor \
- pool__LbMethod \
- pool__MemberDefaultPort \
- pool__Members \
- extensions__Field1 \
- extensions__Field2 \
- extensions__Field3 \
+%PRESENTATION_TCL_ALLVARS% 
  app_stats }
 
 array set table_defaults {
@@ -188,20 +44,6 @@ array set pool_state {
     force-disabled {state user-down}
     drain-disabled {session user-disabled state user-up}
 }
-
-# iRules used for feature__securityEnableHSTS
-set irule_HSTS {  
-when HTTP_RESPONSE {
-  HTTP::header insert Strict-Transport-Security "max-age=31536000"
-}
-}; # end irule_HSTS
-
-set irule_HSTS_redirect {  
-when HTTP_REQUEST {
-  HTTP::respond 301 Location "https://[getfield [HTTP::host] ":" 1][HTTP::uri]"
-}
-}; # end irule_HSTS_redirect
-# end iRules used for feature__securityEnableHSTS
 
 # Fixup incoming variables: If no value is sent for a particular iApp field than the var is not created which
 # results in all sorts of problems.  We just check for existence of the var and set to "" if it doesn't exist
@@ -341,7 +183,7 @@ if { $nummembers == 0 } {
 debug "\[create_pool\]\[member_str\]  memberstr=$memberstr"
 
 # Setup the base pool create command
-set cmd [format "ltm pool /%s/%s.app/%s %s " $partition $app $pool__Name $memberstr]
+set cmd [format "ltm pool %s/%s %s " $app_path $pool__Name $memberstr]
 
 array set pool_options {
   "pool__LbMethod" "load-balancing-mode"
@@ -354,17 +196,6 @@ foreach {optionvar optioncmd} [array get pool_options] {
   append cmd [generic_add_option "create_pool\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
 }
 
-# Add the pool description
-# if { [string length $pool__Description] > 0 } {
-#     append cmd [format " description \"%s\"" $pool__Description]
-# }
-
-# # Add the pool monitor
-# if { [string length $pool__Monitor] > 0 } {
-#     append cmd [format " monitor %s" $pool__Monitor]
-# }
-
-
 debug "\[create_pool\] TMSH CREATE: $cmd"
 tmsh::create $cmd
 
@@ -376,18 +207,43 @@ if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" } {
   set feature__redirectToHTTPS enabled
 }
 
+# Process the 'auto' flag for feature__insertXForwardedFor
+if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $pool__port eq "80"}] } {
+  debug "\[create_virtual\]\[feature__insertXForwardedFor\] found auto flag and port is 443 or 80, setting feature to enabled"
+  set feature__insertXForwardedFor enabled
+}
+
 # Check for HTTP Strict Transport Security (HSTS) option.  We do this here 
 # so the irule can be easily appended to the existing iRule list
-if { $clientssl > 0 && $feature__securityEnableHSTS eq "enabled"} {
+if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
+  # include iRules used for feature__securityEnableHSTS
+  set irule_HSTS { 
+    %insertfile:include/feature_securityEnableHSTS.irule% 
+  }; # end irule_HSTS
+  set irule_HSTS_redirect { 
+    %insertfile:include/feature_securityEnableHSTS_redirect.irule% 
+  }; 
+  
   debug "\[create_virtual\]\[feature__securityEnableHSTS\] creating HSTS iRule"
-  set hstsrule [format "/%s/%s.app/hsts_irule" $partition $app]
-  set hstscmd "ltm rule $hstsrule $irule_HSTS"
+  set hstsrule [format "%s/hsts_irule" $app_path]
+
+  # Substitute in HSTS options is specified
+  switch [string tolower $feature__securityEnableHSTS] {
+    enabled-preload { set hstsoptions "\; preload" }
+    enabled-subdomain { set hstsoptions "\; includeSubDomains" }
+    enabled-preload-subdomain { set hstsoptions "\; includeSubDomains\; preload" }
+    default { set hstsoptions "" }
+  }
+
+  set irule_HSTS_final [string map [list %HSTSOPTIONS% $hstsoptions] $irule_HSTS]
+
+  set hstscmd "ltm rule $hstsrule $irule_HSTS_final"
   debug "\[create_virtual\]\[feature__securityEnableHSTS\] TMSH CREATE: $hstscmd"
   tmsh::create $hstscmd
 
   if { $feature__redirectToHTTPS eq "enabled"} {
     debug "\[create_virtual\]\[feature__securityEnableHSTS\] feature_redirectToHTTPS enabled, creating HSTS redirect iRule"
-    set hstsredirectrule [format "/%s/%s.app/hsts_redirect_irule" $partition $app]
+    set hstsredirectrule [format "%s/hsts_redirect_irule" $app_path]
     set hstsredirectcmd "ltm rule $hstsredirectrule $irule_HSTS_redirect"
     debug "\[create_virtual\]\[feature__securityEnableHSTS\] TMSH CREATE: $hstsredirectcmd"
     tmsh::create $hstsredirectcmd
@@ -409,7 +265,7 @@ if { [string length $vs__Name] == 0 } {
     debug "\[create_virtual\] no vsName specified... setting to $vs__Name"
 }
 
-set cmd [format "ltm virtual /%s/%s.app/%s " $partition $app $vs__Name]
+set cmd [format "ltm virtual %s/%s " $app_path $vs__Name]
 debug "\[create_virtual\] base cmd=$cmd"
 
 # Setup our listener destination address
@@ -508,6 +364,10 @@ if { [string length $vs__ProfileServerProtocol] > 0 && $vs__ProfileClientProtoco
 array set vs_profiles {
  "vs__ProfileHTTP" ""
  "vs__ProfileOneConnect" ""
+ "vs__ProfileCompression" ""
+ "vs__ProfileAnalytics" ""
+ "vs__ProfileRequestLogging" ""
+ "vs__ProfileServerSSL" ""
 }
 
 # Save the base profile string for later use by feature__redirectToHTTPS
@@ -526,6 +386,15 @@ if { $clientssl == 1 } {
 if { $clientssl == 2 } {
   set vs_profiles(vs__ProfileClientSSL) ""
   debug "\[create_virtual\]\[client_ssl_specified\] name=$vs__ProfileClientSSL"
+}
+
+# Process feature__insertXForwardedFor
+if { $feature__insertXForwardedFor eq "enabled"} {
+  set xffcmd [format "ltm profile http %s/%s_http defaults-from %s insert-xforwarded-for enabled" $app_path $app $vs__ProfileHTTP]
+  debug "\[create_virtual\]\[feature__insertXForwardedFor\] creating custom HTTP profile defaults-from=$vs__ProfileHTTP"
+  debug "\[create_virtual\]\[feature__insertXForwardedFor\] TMSH CREATE: $xffcmd"
+  tmsh::create $xffcmd
+  set vs__ProfileHTTP [format "%s/%s_http" $app_path $app]
 }
 
 # Process the vs_profiles array to build the profiles command
@@ -548,7 +417,7 @@ tmsh::create $cmd
 if { $feature__redirectToHTTPS eq "enabled" } {
   debug "\[create_virtual\]\[feature__redirectToHTTPS\] feature__redirectToHTTPS is enabled, creating redirect virtual server on $vs_dest_addr:80"
 
-  set redirect_cmd [format "ltm virtual /%s/%s.app/%s_redirect destination %s:80 " $partition $app $vs__Name $vs_dest_addr]
+  set redirect_cmd [format "ltm virtual %s/%s_redirect destination %s:80 " $app_path $vs__Name $vs_dest_addr]
   array set vs_redirect_options {
    "pool__mask" "mask"
    "vs__IpProtocol" "ip-protocol"
@@ -589,86 +458,7 @@ if { (($mode == 2 || $mode == 3) && $app_stats eq "enabled") || ($mode == 1 && $
   debug "\[create_stats\] creating icall stats publisher"
       # START EMBEDDED ICALL SCRIPT
   set icall_script_tmpl {
-    set app APP
-    set partition PART
-    set aso "sys.application.service /$partition/${app}.app/$app"
-          
-    set virtual_path    "ltm virtual /$partition/${app}.app/VS"
-    set http_path       "ltm profile http HTTP"
-    set pool_path       "ltm pool /$partition/${app}.app/POOL"
-
-    #puts "app=$app"
-    #puts "partition=$partition"
-    #puts "aso=$aso"
-    #puts "virtual_path=$virtual_path"
-    #puts "http_path=$http_path"
-    #puts "pool_path=$pool_path"
-
-    # these lists represent strings taken from "show ... field-fmt"
-    set http_stats { get-reqs number-reqs post-reqs resp-5xx-cnt }
-    set virtual_stats {
-        clientside.bits-in clientside.bits-out clientside.cur-conns
-        clientside.max-conns clientside.pkts-in clientside.pkts-out
-        clientside.tot-conns status.availability-state status.enabled-state
-        status.status-reason
-    }
-    set pool_stats {
-        active-member-cnt serverside.bits-in serverside.bits-out
-        serverside.cur-conns serverside.max-conns serverside.pkts-in
-        serverside.pkts-out serverside.tot-conns
-    }
-
-    # loop over each type of object we want to look at, building the name
-    # of the path and the stats for it as needed
-    foreach type { HTYPE virtual pool } {
-        # making this its own variable made the Tcl validator stop throwing
-        # a warning - though it _should_ be fine to move it inline w/its use
-        set path [set ${type}_path]
-        set objs [tmsh::get_status $path raw]
-        if { [llength $objs] == 0 } {
-            puts "no object found for: $type"
-            continue
-        }
-        set obj [lindex $objs 0]
-        #puts "obj=$obj"
-        foreach stat [set ${type}_stats] {
-            #puts " stat=$stat"
-            set value [tmsh::get_field_value $obj $stat]
-            #puts " aso=$aso stat=$stat value=$value"
-            # associate the iStat with the app service
-            istats::set "$aso string $stat" $value
-        }
-    }
-
-    # Set an additional iStat for the size of the pool, as this is not
-    # stored as a stat but is nice to have when looking at pool health.
-    # Do that here each run through rather than in the iApp because if
-    # an external pool is used or strictness was off the size of the
-    # pool can change and the iApp wouldn't run to adjust the size
-    set pools [tmsh::get_config $pool_path]
-    set numpools [llength $pools]
-    set pool_size 0
-    #puts "numpools=$numpools pool_size=$pool_size"
-    if { $numpools == 1 } {
-      # safe to assume only obj in list is our pool now. grab its size
-      # and move along
-      set pool [lindex $pools 0]
-      set fdx 0
-      set fields [tmsh::get_field_names nested $pool]
-      set field_count [llength $fields]
-      while { $fdx < $field_count } {
-        set field [lindex $fields $fdx]
-        #puts "field=$field"
-        incr fdx
-        if { $field eq "members"} {
-          set pool_size [llength [tmsh::get_field_value $pool members]]
-          #puts "new pool_size=$pool_size"
-        }
-      }
-    }
-    istats::set "$aso string total-member-cnt" $pool_size
-    #set tmc [istats::get $aso total-member-cnt]
-    #puts "tmc=$tmc"
+%insertfile:include/base_statistics_script.icall%
   }; # END EMBEDDED ICALL SCRIPT
 
   #debug "done creating icall stats publisher icall_script_tmpl=$icall_script_tmpl"
@@ -679,12 +469,12 @@ if { (($mode == 2 || $mode == 3) && $app_stats eq "enabled") || ($mode == 1 && $
   }
 
       # used to fill in variables within iCall script
-  set script_map [list APP   $tmsh::app_name \
-                       VS    $vs__Name \
-                       HTTP  [format "%s" $vs__ProfileHTTP] \
-                       POOL  $pool__Name \
-                       PART  $partition \
-                       HTYPE $htype ]
+  set script_map [list %APP%   $tmsh::app_name \
+                       %VS%    $vs__Name \
+                       %HTTP%  [format "%s" $vs__ProfileHTTP] \
+                       %POOL%  $pool__Name \
+                       %PART%  $partition \
+                       %HTYPE% $htype ]
 
   set icall_script_src [string map $script_map $icall_script_tmpl]
   debug "\[create_stats\] icall_script_src=$icall_script_src"
@@ -700,186 +490,8 @@ custom_extensions
 
 if { $iapp__strictUpdates eq "disabled" } {
   debug "\[strict_updates\] disabling strict updates"
-  tmsh::modify [format "sys application service /%s/%s.app/%s strict-updates disabled" $partition $app $app]
+  tmsh::modify [format "sys application service %s/%s strict-updates disabled" $app_path $app]
 }
 
 set runTime [expr {[clock seconds] - $startTime}]
 debug "Finished app_name=$app, total run time was $runTime seconds"
-            }
-            macro {
-            }
-            presentation {
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-section intro {
-  message hello
-}
-
-section iapp {
-  string strictUpdates display "large" default "enabled"
-  string appStats display "medium" default "enabled"
-}
-
-section pool {
-  string addr display "large" required default "172.16.0.231"
-  string mask display "large" required default "255.255.255.255"
-  string port display "small" required default "443"
-
-  string Name display "xxlarge" required default "my_pool"
-  string Description display "xxlarge" default "pooldescr"
-  string Monitor display "large" default "/Common/http"
-
-  choice LbMethod display "xxlarge" default "round-robin" {
-    "dynamic-ratio-member",
-    "dynamic-ratio-node",
-    "fastest-app-response",
-    "fastest-node",
-    "least-connections-member",
-    "least-connections-node",
-    "least-sessions",
-    "observed-member",
-    "observed-node",
-    "predictive-member",
-    "predictive-node",
-    "round-robin",
-    "ratio-member",
-    "ratio-node",
-    "ratio-session",
-    "ratio-least-connections-member",
-    "ratio-least-connections-node",
-    "weighted-least-connections-member"
-  }
-
-  string MemberDefaultPort display "small" default "80"
-
-  table Members {
-    string IPAddress display "large" required default "10.0.0.100"
-    string Port display "small" required default "80"
-    string ConnectionLimit display "medium" required default "0"
-    string Ratio display "small" required default "1"
-    choice State display "medium" default "enabled" {
-      "enabled",
-      "drain-disabled",
-      "disabled"
-    }
-  }  
-}
-
-section vs {
-  string Name display "xxlarge" required default "my_virtualserver"
-  string Description display "xxlarge" default "vsdescr"
-  string SourceAddress display "large" default "0.0.0.0/0"
-  #string IpAddress display "large" required default "172.16.0.231"
-  #string Mask display "large" required default "255.255.255.255"
-  #string Port display "small" required default "443"
-
-  string IpProtocol display "small" default "tcp"
-  string ConnectionLimit display "medium" default "0"
-  string ProfileClientProtocol display "large" default "/Common/tcp-wan-optimized"
-  string ProfileServerProtocol display "large" default "/Common/tcp-lan-optimized"
-
-  string ProfileHTTP display "large" default "/Common/http" 
-
-  string ProfileOneConnect display "large" default "/Common/oneconnect"
-
-  string ProfileDefaultPersist display "large" default "/Common/cookie"
-  string ProfileFallbackPersist display "large" default "/Common/source_addr"
-
-  string SNATConfig display "large" default "automap"
-  string ProfileClientSSL display "large"
-  string ProfileClientSSLCert display "large" default "/Common/default.crt"
-  string ProfileClientSSLKey display "large" default "/Common/default.key"
-  string ProfileClientSSLChain display "large" default "/Common/ca-bundle.crt"
-  string ProfileClientSSLCipherString display "xxlarge" default "DEFAULT:!SSLV3"
-
-  choice OptionSourcePort default "preserve" { "preserve", "preserve-strict", "change"}
-  choice OptionConnectionMirroring default "disabled" { "disabled", "enabled"}
-
-  string Irules display "xxlarge" default ""
-}
-
-section feature {
-  choice redirectToHTTPS default "auto" { "auto", "enabled", "disabled"}
-  choice securityEnableHSTS default "disabled" { "disabled", "enabled"}
-}
-
-section extensions {
-  string Field1 display "xxlarge"
-  string Field2 display "xxlarge" 
-  string Field3 display "xxlarge"  
-}
-
-text { 
-  intro "F5 Application Services Integration iApp (Community Edition)"
-  intro.hello "Introduction" "Please complete the following template"
-
-  iapp "iApp Options"
-  iapp.strictUpdates "iApp: Strict Updates"
-  iapp.appStats "iApp: Statistics Handler Creation"
-
-  # These need to be in this section and named exactly for BIG-IQ to pickup the VS association for stats
-  pool "Virtual Server Listener & Pool Configuration"
-  pool.addr "Virtual Server: Address"
-  pool.mask "Virtual Server: Mask"
-  pool.port "Virtual Server: Port"
-
-  pool.Name "Pool: Name"
-  pool.Description "Pool: Description"
-  pool.Monitor "Pool: Health Monitor"
-  pool.LbMethod "Pool: Load Balancing Method"
-  pool.MemberDefaultPort "Pool: Member Default Port"
-  pool.Members "Pool: Members"
-  pool.Members.IPAddress "IP:"
-  pool.Members.Port "Port:"
-  pool.Members.ConnectionLimit "Connection Limit:"
-  pool.Members.Ratio "Ratio:"
-  pool.Members.State "State:"
-
-  vs "Virtual Server Configuration"
-  vs.Name "Virtual Server: Name"
-  vs.IpProtocol "Virtual Server: IP Protocol"
-  vs.Description "Virtual Server: Description"
-  vs.SourceAddress "Virtual Server: Source Address"
-  vs.ProfileClientProtocol "Virtual Server: Client-side L4 Protocol Profile"
-  vs.ProfileServerProtocol "Virtual Server: Server-side L4 Protocol Profile"
-  vs.ProfileHTTP "Virtual Server: HTTP Profile"
-  vs.ProfileOneConnect "Virtual Server: OneConnect Profile"
-  vs.ProfileDefaultPersist "Virtual Server: Default Persistence Profile"
-  vs.ProfileFallbackPersist "Virtual Server: Fallback Persistence Profile"
-  vs.SNATConfig "Virtual Server: SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)"
-  vs.ProfileClientSSL "Virtual Server: Client SSL Profile"
-  vs.ProfileClientSSLCert "Virtual Server: Client SSL Certificate"
-  vs.ProfileClientSSLKey "Virtual Server: Client SSL Key"
-  vs.ProfileClientSSLChain "Virtual Server: Client SSL Certificate Chain"
-  vs.ProfileClientSSLCipherString "Virtual Server: Client SSL Cipher String"
-  vs.OptionSourcePort "Virtual Server: Source Port Behavior"
-  vs.OptionConnectionMirroring "Virtual Server: Connection Mirroring"
-  vs.Irules "Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)"
-  vs.ConnectionLimit "Virtual Server: Virtual Server Connection Limit (0=unlimited)"
-
-  feature "L4-7 Application Functionality"
-  feature.redirectToHTTPS "HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect"
-  feature.securityEnableHSTS "HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)"
-
-  extensions "Custom Extensions Section"
-  extensions.Field1 "Extensions: Field 1"
-  extensions.Field2 "Extensions: Field 2"
-  extensions.Field3 "Extensions: Field 3"
-}
-            }
-            role-acl none
-            run-as none
-        }
-    }
-    description none
-    ignore-verification false
-    requires-bigip-version-max none
-    requires-bigip-version-min none
-    requires-modules { ltm }
-    signing-key none
-    tmpl-checksum none
-    tmpl-signature none
-}
