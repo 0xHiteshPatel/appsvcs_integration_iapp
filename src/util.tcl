@@ -62,3 +62,30 @@ proc generic_add_option { debug_id input_var option_string custom_format replace
 proc has_routedomain { ip } {
   return [string match *%* $ip]
 }
+
+# Replace a profile within a virtual server definition while preserving the existing context
+# Input: $obj = tmsh obj representing profiles section of the VS get_config
+#        $oldprofile = name of the profile to replace
+#        $newprofile = name of the new profile
+# Return: string $newprofiles (string suitable for providing to replace-all-with option)
+proc replace_profile { obj oldprofile newprofile } {
+  #set vsobj [tmsh::get_config ltm virtual /Common/nagle.app/my_virtualserver profiles]
+  set profiles [tmsh::get_field_value [lindex $obj 0] "profiles"]
+  set newprofiles " { "
+  foreach profile $profiles {
+      set junk [lindex $profile 0]
+      set name [lindex $profile 1]
+      set contextobj [lindex $profile 2]
+      set context [lindex $contextobj 1]
+      #debug [format "\[replace_profile\] found profile name=$name context=$context" $name $context]
+      if { $name eq $oldprofile } {
+          debug [format "\[replace_profile\] replace profile '%s' with '%s' context=%s" $name $newprofile $context]
+          append newprofiles [format "%s { context %s } " $newprofile $context]
+      } else {
+          debug [format "\[replace_profile\] preserve profile '%s' context=%s" $name $context]
+          append newprofiles [format "%s { context %s } " $name $context]
+      }
+  }
+  append newprofiles " } "
+  return $newprofiles
+}
