@@ -377,7 +377,7 @@ if { $feature__redirectToHTTPS eq "enabled"} {
 
 # Client-SSL profile created by iApp
 if { $clientssl == 1 } {
-  set vs__ProfileClientSSL [format "%s_clientssl" $app]
+  set vs__ProfileClientSSL [format "%s/%s_clientssl" $app_path $app]
   set vs_profiles(vs__ProfileClientSSL) ""
   debug "\[create_virtual\]\[client_ssl_created\] name=$vs__ProfileClientSSL"
 }
@@ -462,19 +462,29 @@ if { (($mode == 2 || $mode == 3) && $app_stats eq "enabled") || ($mode == 1 && $
   }; # END EMBEDDED ICALL SCRIPT
 
   #debug "done creating icall stats publisher icall_script_tmpl=$icall_script_tmpl"
-  if { [string length $vs__ProfileHTTP] > 0 } {
-    set htype "http"
+  if { [expr {$feature__statsHTTP eq "enabled" || $feature__statsHTTP eq "auto"}] && [string length $vs__ProfileHTTP] > 0 } {
+    debug "\[create_stats\]\[feature_statsHTTP\] enabling HTTP stats"
+    set feature__statsHTTP 1
   } else {
-    set htype ""
+    set feature__statsHTTP 0
   }
 
-      # used to fill in variables within iCall script
-  set script_map [list %APP%   $tmsh::app_name \
-                       %VS%    $vs__Name \
-                       %HTTP%  [format "%s" $vs__ProfileHTTP] \
-                       %POOL%  $pool__Name \
-                       %PART%  $partition \
-                       %HTYPE% $htype ]
+  if { [expr {$feature__statsTLS eq "enabled" || $feature__statsTLS eq "auto"}] && [string length $vs__ProfileClientSSL] > 0 } {
+    debug "\[create_stats\]\[feature_statsTLS\] enabling TLS stats"
+    set feature__statsTLS 1
+  } else {
+    set feature__statsTLS 0
+  }
+  
+  # used to fill in variables within iCall script
+  set script_map [list %APP_NAME%      $tmsh::app_name \
+                       %VS_NAME%       $vs__Name \
+                       %POOL_NAME%     $pool__Name \
+                       %PARTITION%     $partition \
+                       %HTTP_ENABLED%  $feature__statsHTTP \
+                       %HTTP_PROFILE%  [format "%s" $vs__ProfileHTTP] \
+                       %SSL_ENABLED%   $feature__statsTLS \
+                       %SSL_PROFILE%   [format "%s" $vs__ProfileClientSSL] ]
 
   set icall_script_src [string map $script_map $icall_script_tmpl]
   debug "\[create_stats\] icall_script_src=$icall_script_src"

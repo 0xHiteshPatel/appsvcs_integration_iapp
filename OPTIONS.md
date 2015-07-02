@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><td colspan=7><b>Generated from JSON v0.3_005</b></td></tr>
+ <tr><td colspan=7><b>Generated from JSON v0.3_006</b></td></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -386,6 +386,28 @@ change</td>
   <td>0.3_001</td>
 </tr>
 <tr><td colspan=7><b>Section: feature</b></td></tr>
+<tr>
+  <td>feature.statsTLS</td>
+  <td>$feature__statsTLS</td>
+  <td>TLS/SSL: Stats Reporting</td>
+  <td>[1, 2, 3]</td>
+  <td>choice</td>
+  <td>auto,
+enabled,
+disabled</td>
+  <td>0.3_006</td>
+</tr>
+<tr>
+  <td>feature.statsHTTP</td>
+  <td>$feature__statsHTTP</td>
+  <td>HTTP: Stats Reporting</td>
+  <td>[1, 2, 3]</td>
+  <td>choice</td>
+  <td>auto,
+enabled,
+disabled</td>
+  <td>0.3_006</td>
+</tr>
 <tr>
   <td>feature.insertXForwardedFor</td>
   <td>$feature__insertXForwardedFor</td>

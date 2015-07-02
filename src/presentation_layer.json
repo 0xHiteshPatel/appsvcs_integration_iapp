@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"005",
+	"pres_revision":"006",
 	"sections":[
 		{
 			"name":"intro",
@@ -465,6 +465,36 @@
 			"name":"feature",
 			"description":"L4-7 Application Functionality",
 			"fields":[
+				{
+					"name":"statsTLS",
+					"description":"TLS/SSL: Stats Reporting",
+					"type":"choice",
+					"default":"auto",
+					"choices":[
+						"auto",
+						"enabled",
+						"disabled"
+					],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3],
+					"minver":"0.3_006"
+				},			
+				{
+					"name":"statsHTTP",
+					"description":"HTTP: Stats Reporting",
+					"type":"choice",
+					"default":"auto",
+					"choices":[
+						"auto",
+						"enabled",
+						"disabled"
+					],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3],
+					"minver":"0.3_006"
+				},
 				{
 					"name":"insertXForwardedFor",
 					"description":"HTTP: Insert X-Forwarded-For Header",
