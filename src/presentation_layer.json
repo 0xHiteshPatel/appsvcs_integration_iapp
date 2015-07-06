@@ -77,7 +77,7 @@
 				},
 				{
 					"name":"Name",
-					"description":"Virtual Server: Name",
+					"description":"Pool: Name",
 					"type":"string",
 					"default":"my_pool",
 					"required":true,
