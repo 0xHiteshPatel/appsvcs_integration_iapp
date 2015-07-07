@@ -5,7 +5,7 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(006)"
+set IMPLVERSION "0.3(007)"
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -15,6 +15,13 @@ set PRESVERSION "%PRESENTATION_REV%"
 set app $tmsh::app_name
 debug "Starting $NAME version IMPL=$IMPLVERSION PRES=$PRESVERSION app_name=$app"
 
+array set modenames {
+  1 {Standalone}
+  2 {BIG-IQ Cloud}
+  3 {Cisco APIC}
+  4 {VMware NSX}
+}
+
 set modeinfo [get_mode]
 set mode [lindex $modeinfo 0]
 set folder [lindex $modeinfo 1]
@@ -23,6 +30,10 @@ set rd [lindex $modeinfo 3]
 set app_path [format "/%s/%s.app" $partition $app]
 
 debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd"
+
+set asodescr [format "Deployed by appsvcs_integration_v%s_%s in %s mode on %s" $IMPLVERSION $PRESVERSION $modenames($mode) [clock format $startTime -format "%D %H:%M:%S"]]
+debug "\[set_aso_description\] setting ASO description=$asodescr"
+tmsh::modify sys application service /$partition/$app.app/$app description [format "\"%s\"" $asodescr]
 
 # Define various global values
 set allVars {
@@ -452,7 +463,7 @@ if { $feature__redirectToHTTPS eq "enabled" } {
 # mode=2 (BIGIQ Cloud): Look at $app_stats set by BIG-IQ to control creation
 # mode=3 (APIC)       : Look at $app_stats set by BIG-IQ to control creation
 debug "\[create_stats\] mode=$mode app_stats=$app_stats iapp__appStats=$iapp__appStats"
-if { (($mode == 2 || $mode == 3) && $app_stats eq "enabled") || ($mode == 1 && $iapp__appStats eq "enabled") } {
+if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($mode == 1 && $iapp__appStats eq "enabled") } {
   # Create the iCall stats publisher
   # TODO: This needs to check for the presence of a HTTP profile and only add HTTP stats if that exists
   debug "\[create_stats\] creating icall stats publisher"
@@ -477,7 +488,7 @@ if { (($mode == 2 || $mode == 3) && $app_stats eq "enabled") || ($mode == 1 && $
   }
   
   # used to fill in variables within iCall script
-  set script_map [list %APP_NAME%      $tmsh::app_name \
+  set script_map [list %APP_NAME%      $app \
                        %VS_NAME%       $vs__Name \
                        %POOL_NAME%     $pool__Name \
                        %PARTITION%     $partition \

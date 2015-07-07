@@ -49,7 +49,7 @@
 					"name":"addr",
 					"description":"Virtual Server: Address",
 					"type":"ipaddr",
-					"default":"172.168.0.231",
+					"default":"172.16.0.231",
 					"required":true,
 					"display":"large",
 					"modes":[1,2,3],

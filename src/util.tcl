@@ -2,7 +2,7 @@
 # Input: string
 proc debug { string } {
   set systemTime [clock seconds]
-  puts "\[[clock format $systemTime -format %D]\]\[[clock format $systemTime -format %H:%M:%S]\]\[$tmsh::app_name\] $string"
+  puts "\[[clock format $systemTime -format %D]\]\[[clock format $systemTime -format %H:%M:%S]\]\[$::app\] $string"
 }
 
 # Figure out which type of environment we are executing in.
@@ -10,19 +10,28 @@ proc debug { string } {
 # Modes: 1 = Standalone
 #        2 = BIG-IQ Cloud
 #        3 = Cisco APIC
+#        4 = VMware NSX
 proc get_mode { } {
   set folder [tmsh::pwd]
   set partition [lindex [split $folder /] 1]
   set routedomainid 0
   debug "\[get_mode\] starting folder=$folder partition=$partition routedomainid=$routedomainid"
   
-  # Check for a partition that starts with apic_ and return APIC mode (2) and RD if found
+  # Check for a partition that starts with apic_ and return APIC mode (3) and RD if found
   if { [string match -nocase "apic_*" $partition] } {
     debug "\[get_mode\]\[apic\] partition starts with apic_, assuming APIC deployment mode (3)"
     set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
     set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
     debug "\[get_mode\]\[apic\] rdobjs=$rdobjs routedomainid=$routedomainid"
     return [list 3 $folder $partition $routedomainid]
+  }
+
+  # Check for an $app name that is formatted like this:
+  # edge-<#>_<#>_virtualserver-<#>-serviceprofile-<#>
+  # and return NSX mode (4) 
+  if { [regexp -nocase {^edge-[0-9]+_[0-9]+_virtualserver-[0-9]+-serviceprofile-[0-9]+$} $::app] } {
+    debug "\[get_mode\]\[nsx\] app name matches NSX regexp, assuming NSX deployment mode (4)"
+    return [list 4 $folder $partition $routedomainid]    
   }
 
   # If we get here we can safely assume that this is either a Standalone or BIG-IQ Cloud mode deployment
