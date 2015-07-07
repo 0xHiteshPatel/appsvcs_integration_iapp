@@ -59,7 +59,7 @@
 <tr>
   <td>pool.Name</td>
   <td>$pool__Name</td>
-  <td>Virtual Server: Name</td>
+  <td>Pool: Name</td>
   <td>[1, 2, 3]</td>
   <td>string</td>
   <td></td>
