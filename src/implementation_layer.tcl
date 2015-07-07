@@ -5,7 +5,7 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(007)"
+set IMPLVERSION "0.3(008)"
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -83,6 +83,16 @@ if { [string length $working] > 0 } {
 debug "\[proc_client_ssl\] checking if client ssl cert & key were entered"
 set clientssl 0
 if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__ProfileClientSSLCert] > 0 && [string length $vs__ProfileClientSSL] == 0 } {
+  if { $vs__ProfileClientSSLKey == "auto" } {
+    debug "\[proc_client_ssl\] found auto option for key, setting vs__ProfileClientSSLKey=/Common/$app.key"
+    set vs__ProfileClientSSLKey "/Common/$app.key"
+  }
+
+  if { $vs__ProfileClientSSLCert == "auto" } {
+    debug "\[proc_client_ssl\] found auto option for key, setting vs__ProfileClientSSLCert=/Common/$app.key"
+    set vs__ProfileClientSSLCert "/Common/$app.crt"
+  }
+
   tmsh::get_config /sys file ssl-key $vs__ProfileClientSSLKey
   tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLCert
   debug "\[create_client_ssl\]  ssl cert & key found... creating profile"
