@@ -5,7 +5,7 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(008)"
+set IMPLVERSION "0.3(009)"
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -105,6 +105,8 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
       append cmd [format " chain %s" $vs__ProfileClientSSLChain]
   }
 
+%insertfile:include/feature_sslEasyCipher.tcl%
+
   if { [string length $vs__ProfileClientSSLCipherString] > 0 } {
       debug "\[create_client_ssl\]  adding cipher string"
       append cmd [format " ciphers \"%s\"" $vs__ProfileClientSSLCipherString]
@@ -123,7 +125,6 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
     debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
   }
 }
-
 
 # Create pool
 

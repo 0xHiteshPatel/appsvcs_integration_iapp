@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"006",
+	"pres_revision":"007",
 	"sections":[
 		{
 			"name":"intro",
@@ -26,7 +26,7 @@
 					"default":true,
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -52,7 +52,7 @@
 					"default":"172.16.0.231",
 					"required":true,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -62,7 +62,7 @@
 					"default":"255.255.255.255",
 					"required":true,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -72,7 +72,7 @@
 					"default":"443",
 					"display":"small",
 					"required":true,
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -82,7 +82,7 @@
 					"default":"my_pool",
 					"required":true,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -92,7 +92,7 @@
 					"default":"pooldescr",
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -102,7 +102,7 @@
 					"default":"/Common/http",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -132,7 +132,7 @@
 					    ],
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -142,14 +142,14 @@
 					"default":"80",
 					"required":false,
 					"display":"small",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
 					"name":"Members",
 					"description":"Pool: Members",
 					"type":"table",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001",
 					"fields":[
 						{
@@ -159,7 +159,7 @@
 							"default":"10.0.0.100",
 							"required":true,
 							"display":"large",
-							"modes":[1,2,3],
+							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
 						{
@@ -169,7 +169,7 @@
 							"default":"80",
 							"required":true,
 							"display":"small",
-							"modes":[1,2,3],
+							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
 						{
@@ -179,7 +179,7 @@
 							"default":"0",
 							"required":true,
 							"display":"medium",
-							"modes":[1,2,3],
+							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
 
@@ -190,7 +190,7 @@
 							"default":"1",
 							"required":true,
 							"display":"small",
-							"modes":[1,2,3],
+							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
 						{
@@ -204,7 +204,7 @@
 							    "disabled"
 								],
 							"required":false,
-							"modes":[1,2,3],
+							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						}
 					]
@@ -222,7 +222,7 @@
 					"default":"my_virtualserver",
 					"required":true,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -232,7 +232,7 @@
 					"default":"vsdescr",
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -242,7 +242,7 @@
 					"default":"0.0.0.0/0",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -252,7 +252,7 @@
 					"default":"tcp",
 					"required":false,
 					"display":"small",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -262,7 +262,7 @@
 					"default":"0",
 					"required":false,
 					"display":"medium",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -272,7 +272,7 @@
 					"default":"/Common/tcp-wan-optimized",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -282,7 +282,7 @@
 					"default":"/Common/tcp-lan-optimized",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -292,7 +292,7 @@
 					"default":"/Common/http",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -302,7 +302,7 @@
 					"default":"/Common/oneconnect",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -312,7 +312,7 @@
 					"default":"/Common/httpcompression",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},
 				{
@@ -322,7 +322,7 @@
 					"default":"",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},
 				{
@@ -332,7 +332,7 @@
 					"default":"",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},				
 				{
@@ -342,7 +342,7 @@
 					"default":"/Common/cookie",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -352,7 +352,7 @@
 					"default":"/Common/source_addr",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -362,7 +362,7 @@
 					"default":"automap",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -372,7 +372,7 @@
 					"default":"",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},
 				{
@@ -382,7 +382,7 @@
 					"default":"",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -392,7 +392,7 @@
 					"default":"/Common/default.crt",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -402,7 +402,7 @@
 					"default":"/Common/default.key",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				}, 
 				{
@@ -412,7 +412,7 @@
 					"default":"/Common/ca-bundle.crt",
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -422,7 +422,7 @@
 					"default":"DEFAULT:!SSLV3",
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -436,7 +436,7 @@
 					    "change"
 						],
 					"required":false,
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -446,7 +446,7 @@
 					"default":false,
 					"required":false,
 					"display":"large",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},				
 				{
@@ -456,7 +456,7 @@
 					"default":"",
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				}
 			]
@@ -477,7 +477,7 @@
 					],
 					"required":false,
 					"display":"medium",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_006"
 				},			
 				{
@@ -492,7 +492,7 @@
 					],
 					"required":false,
 					"display":"medium",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_006"
 				},
 				{
@@ -507,7 +507,7 @@
 					],
 					"required":false,
 					"display":"medium",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},
 				{
@@ -522,9 +522,27 @@
 					],
 					"required":false,
 					"display":"medium",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
+				{
+					"name":"sslEasyCipher",
+					"description":"TLS/SSL: Easy Cipher String (overrides VS section setting)",
+					"type":"choice",
+					"default":"disabled",
+					"choices":[
+						"compatible",
+						"medium",
+						"high",
+						"tls_1.2",
+						"tls_1.1+1.2",
+						"disabled"
+					],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3,4],
+					"minver":"0.3_007"
+				},				
 				{
 					"name":"securityEnableHSTS",
 					"description":"HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)",
@@ -539,7 +557,7 @@
 						"enabled-preload-subdomain"
 					],
 					"display":"xlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				}
 			]
@@ -555,7 +573,7 @@
 					"default":"",
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
@@ -565,7 +583,7 @@
 					"default":"",
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 
@@ -576,7 +594,7 @@
 					"default":"",
 					"required":false,
 					"display":"xxlarge",
-					"modes":[1,2,3],
+					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				}
 			]
