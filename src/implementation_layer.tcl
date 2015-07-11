@@ -5,7 +5,7 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(009)"
+set IMPLVERSION "0.3(010)"
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -335,7 +335,7 @@ foreach {optionvar optioncmd} [array get vs_options_custom] {
 set snatcmd ""
 # Add SNAT options
 if { [string length $vs__SNATConfig] > 0 } {
-  switch [string tolower $vs__SNATConfig] {
+  switch -glob [string tolower $vs__SNATConfig] {
     automap { 
       append snatcmd " source-address-translation \{ type automap \}" 
     }
@@ -344,6 +344,19 @@ if { [string length $vs__SNATConfig] > 0 } {
     }
     none { 
       append snatcmd " source-address-translation \{ type none \}" 
+    }
+    create:* {
+      # split a string formatted like this: "<ip>[,<ip1>]"
+      set create_snat_iplist [split [lindex [split $vs__SNATConfig :] 1] ,]
+      set create_snat_poolname [format "%s/%s_snatpool" $app_path $app]
+      set create_snat_poolcmd [format "ltm snatpool %s members replace-all-with { " $create_snat_poolname]
+      foreach ip $create_snat_iplist {
+        append create_snat_poolcmd [format " %s%%%s " $ip $rd]
+      }
+      append create_snat_poolcmd "} "
+      debug "\[create_virtual\]\[create_snat_pool\] TMSH CREATE: $create_snat_poolcmd"
+      tmsh::create $create_snat_poolcmd
+      append snatcmd [format " source-address-translation \{ pool %s type snat \}" $create_snat_poolname] 
     }
     default {
           tmsh::get_config /ltm snatpool $vs__SNATConfig
