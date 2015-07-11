@@ -113,7 +113,7 @@ weighted-least-connections-member</td>
   <td>pool.MemberDefaultPort</td>
   <td>$pool__MemberDefaultPort</td>
   <td>Pool: Member Default Port</td>
-  <td>[1, 2, 3, 4]</td>
+  <td>[3]</td>
   <td>string</td>
   <td></td>
   <td>0.3_001</td>

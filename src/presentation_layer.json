@@ -142,7 +142,7 @@
 					"default":"80",
 					"required":false,
 					"display":"small",
-					"modes":[1,2,3,4],
+					"modes":[3],
 					"minver":"0.3_001"
 				},
 				{
