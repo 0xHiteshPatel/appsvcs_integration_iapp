@@ -53,7 +53,7 @@ validators = {
 }
 
 print "<table border=1 width=\"100%\">"
-print " <tr><td colspan=7><b>Generated from JSON v%s_%s</b></td></tr>" % (data["tmpl_majorversion"], data["pres_revision"])
+print " <tr><th colspan=7><b>Generated from JSON v%s_%s</b></th></tr>" % (data["tmpl_majorversion"], data["pres_revision"])
 print " <tr>"
 print "  <th>Display Name</th>"
 print "  <th>Var Name</th>"

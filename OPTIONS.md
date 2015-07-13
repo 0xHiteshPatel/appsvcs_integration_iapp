@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><td colspan=7><b>Generated from JSON v0.3_007</b></td></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_007</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
