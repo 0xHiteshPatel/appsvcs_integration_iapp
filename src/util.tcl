@@ -98,3 +98,40 @@ proc replace_profile { obj oldprofile newprofile } {
   append newprofiles " } "
   return $newprofiles
 }
+
+# Look at a tmsh profile object and determine if $option is a valid profile option
+# Input: $obj = tmsh obj to check
+#        $option = option name to look for
+# Return: 1=Valid option; 0=Invalid option
+proc is_valid_profile_option { obj option } {
+    #debug [format "\[is_valid_profile_option\] looking for %s" $option]
+    set found 0
+    set fdx 0
+    set fields [tmsh::get_field_names value $obj]
+    set field_count [llength $fields]
+    while { $fdx < $field_count } {
+        set field [lindex $fields $fdx]
+        if { $field == $option } {
+          #debug [format "\[is_valid_profile_option\]  found %s" $option]
+          set found 1
+        }
+        incr fdx
+    }
+    return $found
+}
+
+# Process a string in the format key1=val1[;keyX=valX] and return an array 
+# Input $string = string to process
+# Return: array { key1 {val1} ... keyX{valX}}
+proc process_kvp_string { string } {
+  #debug "\[process_kvp_string\] processing string: $string"
+  set pairs [split $string \;]
+  array set ret {}
+  foreach pair $pairs {
+    set key [lindex [split $pair =] 0]
+    set val [lindex [split $pair =] 1]
+    set ret($key) $val
+    #debug "\[process_kvp_string\] pair=$pair key=$key val=$val"
+  }
+  return [array get ret]
+}

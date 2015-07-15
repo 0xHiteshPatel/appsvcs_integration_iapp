@@ -5,7 +5,7 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(010)"
+set IMPLVERSION "0.3(011)"
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -367,6 +367,64 @@ if { [string length $vs__SNATConfig] > 0 } {
 }
 append cmd $snatcmd
 
+# Process feature__insertXForwardedFor
+if { $feature__insertXForwardedFor eq "enabled"} {
+  if { [regexp -nocase {^create:} $vs__ProfileHTTP] } {
+    error "HTTP Profile customization cannot be used with the 'HTTP: Insert X-Forwarded-For Header'.  Add 'insert-xforwarded-for=enabled' option instead"
+  }
+  set vs__ProfileHTTP [format "create:insert-xforwarded-for=enabled;defaults-from=%s" $vs__ProfileHTTP]
+}
+
+# Process the create: option for profiles in the array below.  
+# Profiles that we support the "create:option=value[,option2=value2]" format for option customization
+array set create_supported {
+ "vs__ProfileClientProtocol" { tmsh "tcp" default "/Common/tcp-wan-optimized" append "_clientside" }
+ "vs__ProfileServerProtocol" { tmsh "tcp" default "/Common/tcp-lan-optimized" append "_serverside"}
+ "vs__ProfileHTTP" { tmsh "http" default "/Common/http" append ""}
+ "vs__ProfileOneConnect" { tmsh "one-connect" default "/Common/oneconnect" append ""}
+ "vs__ProfileCompression" { tmsh "http-compression" default "/Common/httpcompression" append ""}
+ "vs__ProfileRequestLogging" { tmsh "request-log" default "/Common/request-log" append ""}
+ "vs__ProfileServerSSL" { tmsh "server-ssl" default "/Common/serverssl" append ""}
+}
+
+foreach {profilevar} [array names create_supported] {
+  array set profile_attr [subst $::create_supported($profilevar)]
+  array set create_options {}
+  set profilecmd $profile_attr(tmsh)
+  set profiledefault $profile_attr(default)
+  set profileval [set [subst $profilevar]]
+  set profileappend $profile_attr(append)
+  set profilename [format "%s_%s%s" $app $profilecmd $profileappend]
+  set profilestr [format "ltm profile %s %s/%s " $profilecmd $app_path $profilename]
+  if { [regexp -nocase {^create:} $profileval] } {
+    set defaultfound 0
+    set kvpstring [lindex [split $profileval \:] 1]
+    debug "\[create_virtual\]\[profiles\]\[create_handler\] processing create for $profilevar=$profileval"
+
+    # Get all the options passed in array format
+    array set create_options [process_kvp_string $kvpstring]
+
+    # Get the supported options for a profile type according to the 'default' key in the create_supported array
+    set profileobj [lindex [tmsh::get_config ltm profile $profilecmd $profiledefault all-properties] 0]
+    foreach {option value} [array get create_options] {
+      if { [is_valid_profile_option $profileobj $option] == 0 } {
+        error "The option \"$option\" for $profilecmd profile is not valid"
+      }
+      if { $option == "defaults-from" } {
+        set defaultfound 1
+      }
+      append profilestr [format "%s \"%s\" " $option $value]
+    }
+    array unset create_options
+    if { $defaultfound == 0 } {
+      append profilestr [format "defaults-from %s " $profiledefault]
+    }
+    set [subst $profilevar] [format "%s/%s" $app_path $profilename]
+    debug "\[create_virtual\]\[profiles\]\[create_handler\] TMSH CREATE: $profilestr; $profilevar=[set [subst $profilevar]]"
+    tmsh::create $profilestr
+  }
+}
+
 # Add profiles
 set vsprofiles " profiles replace-all-with  \{ "
 debug "\[create_virtual\] adding base vsprofiles=$vsprofiles"
@@ -421,15 +479,6 @@ if { $clientssl == 1 } {
 if { $clientssl == 2 } {
   set vs_profiles(vs__ProfileClientSSL) ""
   debug "\[create_virtual\]\[client_ssl_specified\] name=$vs__ProfileClientSSL"
-}
-
-# Process feature__insertXForwardedFor
-if { $feature__insertXForwardedFor eq "enabled"} {
-  set xffcmd [format "ltm profile http %s/%s_http defaults-from %s insert-xforwarded-for enabled" $app_path $app $vs__ProfileHTTP]
-  debug "\[create_virtual\]\[feature__insertXForwardedFor\] creating custom HTTP profile defaults-from=$vs__ProfileHTTP"
-  debug "\[create_virtual\]\[feature__insertXForwardedFor\] TMSH CREATE: $xffcmd"
-  tmsh::create $xffcmd
-  set vs__ProfileHTTP [format "%s/%s_http" $app_path $app]
 }
 
 # Process the vs_profiles array to build the profiles command
