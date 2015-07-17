@@ -5,7 +5,7 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(011)"
+set IMPLVERSION "0.3(012)"
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -67,6 +67,9 @@ foreach var $allVars {
   }
 }
 
+# Call the custom_extensions_start proc to allow site-specific customizations
+custom_extensions_start
+
 # Special handling for the Source Address because it comes in as 0.0.0.0/0 and
 # needs to be 0.0.0.0%xxxx/0, where '%xxxx' is the route-domain ID
 set working $vs__SourceAddress
@@ -125,6 +128,9 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
     debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
   }
 }
+
+# Call the custom_extensions_before_pool proc to allow site-specific customizations
+custom_extensions_before_pool
 
 # Create pool
 
@@ -220,6 +226,12 @@ foreach {optionvar optioncmd} [array get pool_options] {
 
 debug "\[create_pool\] TMSH CREATE: $cmd"
 tmsh::create $cmd
+
+# Call the custom_extensions_after_pool proc to allow site-specific customizations
+custom_extensions_after_pool
+
+# Call the custom_extensions_before_vs proc to allow site-specific customizations
+custom_extensions_before_vs
 
 # Create virtual Server
 
@@ -497,6 +509,9 @@ append cmd $vsprofiles
 debug "\[create_virtual\]  TMSH CREATE: $cmd"
 tmsh::create $cmd
 
+# Call the custom_extensions_after_vs proc to allow site-specific customizations
+custom_extensions_after_vs
+
 # Create and additional virtual server on port 80 for feature__redirectToHTTPS
 if { $feature__redirectToHTTPS eq "enabled" } {
   debug "\[create_virtual\]\[feature__redirectToHTTPS\] feature__redirectToHTTPS is enabled, creating redirect virtual server on $vs_dest_addr:80"
@@ -579,8 +594,8 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
   tmsh::create sys icall handler periodic publish_stats interval 60 script publish_stats
 }
 
-# Call the custom_extensions proc to allow site-specific customizations
-custom_extensions
+# Call the custom_extensions_end proc to allow site-specific customizations
+custom_extensions_end
 
 if { $iapp__strictUpdates eq "disabled" } {
   debug "\[strict_updates\] disabling strict updates"
