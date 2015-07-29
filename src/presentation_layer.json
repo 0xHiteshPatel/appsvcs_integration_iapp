@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"007",
+	"pres_revision":"008",
 	"sections":[
 		{
 			"name":"intro",
@@ -21,7 +21,7 @@
 				{
 					"name":"strictUpdates",
 					"description":"iApp: Strict Updates",
-					"help":"Control Strict Updates mode",
+					"help":"Control Strict Updates mode (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211)",
 					"type":"boolean",
 					"default":true,
 					"required":false,
@@ -32,6 +32,7 @@
 				{
 					"name":"appStats",
 					"description":"iApp: Statistics Handler Creation",
+					"help":"Control whether Virtual Server/Pool statistics handlers are created in Standalone or BIG-IQ Cloud mode",
 					"type":"boolean",
 					"default":true,
 					"required":false,
@@ -48,6 +49,7 @@
 				{
 					"name":"addr",
 					"description":"Virtual Server: Address",
+					"help":"The destination address of the Virtual Server",
 					"type":"ipaddr",
 					"default":"172.16.0.231",
 					"required":true,
@@ -58,6 +60,7 @@
 				{
 					"name":"mask",
 					"description":"Virtual Server: Mask",
+					"help":"The destination network mask of the Virtual Server",
 					"type":"ipaddr",
 					"default":"255.255.255.255",
 					"required":true,
@@ -68,6 +71,7 @@
 				{
 					"name":"port",
 					"description":"Virtual Server: Port",
+					"help":"The L4 port the Virtual Server listens on.  '*' is supported",
 					"type":"port",
 					"default":"443",
 					"display":"small",
@@ -78,6 +82,7 @@
 				{
 					"name":"Name",
 					"description":"Pool: Name",
+					"help":"The name of the Pool.  Is no value is specified the name will be set to <iapp_name>_pool",
 					"type":"string",
 					"default":"my_pool",
 					"required":true,
@@ -87,7 +92,8 @@
 				},
 				{
 					"name":"Description",
-					"description":"Virtual Server: Description",
+					"description":"Pool: Description",
+					"help":"The description string configured in the Pool",
 					"type":"string",
 					"default":"pooldescr",
 					"required":false,
@@ -98,6 +104,7 @@
 				{
 					"name":"Monitor",
 					"description":"Pool: Health Monitor",
+					"help":"The path to a preconfigured Pool Health Monitor",
 					"type":"string",
 					"default":"/Common/http",
 					"required":false,
@@ -108,6 +115,7 @@
 				{
 					"name":"LbMethod",
 					"description":"Pool: Load Balancing Method",
+					"help":"The pool Load Balancing Method (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305)",
 					"type":"choice",
 					"default":"round-robin",
 					"choices":[
@@ -138,6 +146,7 @@
 				{
 					"name":"MemberDefaultPort",
 					"description":"Pool: Member Default Port",
+					"help":"The L4 port to used when a pool member is added via a Dynamic Endpoint Insertion notication from Cisco APIC",
 					"type":"string",
 					"default":"80",
 					"required":false,
@@ -148,6 +157,7 @@
 				{
 					"name":"Members",
 					"description":"Pool: Members",
+					"help":"The configuration for Pool Members within the Pool.",
 					"type":"table",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001",
@@ -155,6 +165,7 @@
 						{
 							"name":"IPAddress",
 							"description":"IP:",
+							"help":"IP Address of the Pool Member",
 							"type":"string",
 							"default":"10.0.0.100",
 							"required":true,
@@ -165,6 +176,7 @@
 						{
 							"name":"Port",
 							"description":"Port:",
+							"help":"L4 port of the Pool Member",
 							"type":"string",
 							"default":"80",
 							"required":true,
@@ -175,6 +187,7 @@
 						{
 							"name":"ConnectionLimit",
 							"description":"Connection Limit:",
+							"help":"The Connection Limit for the Pool Member.  '0' denotes unlimited connections",
 							"type":"string",
 							"default":"0",
 							"required":true,
@@ -186,6 +199,7 @@
 						{
 							"name":"Ratio",
 							"description":"Ratio:",
+							"help":"The Ratio weight for the Pool Member.  Used with 'ratio' based Load Balancing Methods",
 							"type":"string",
 							"default":"1",
 							"required":true,
@@ -196,6 +210,7 @@
 						{
 							"name":"State",
 							"description":"State:",
+							"help":"The administrative state of the Pool Member upon creation",
 							"type":"choice",
 							"default":"enabled",
 							"choices":[
@@ -218,6 +233,7 @@
 				{
 					"name":"Name",
 					"description":"Virtual Server: Name",
+					"help":"The name of the Virtual Server.  If no value is specified the name will be set to <iapp_name>_vs",
 					"type":"string",
 					"default":"my_virtualserver",
 					"required":true,
@@ -228,6 +244,7 @@
 				{
 					"name":"Description",
 					"description":"Virtual Server: Description",
+					"help":"The description string configured in the Virtual Server",
 					"type":"string",
 					"default":"vsdescr",
 					"required":false,
@@ -238,6 +255,7 @@
 				{
 					"name":"SourceAddress",
 					"description":"Virtual Server: Source Address",
+					"help":"The source address filter for the Virtual Server",
 					"type":"string",
 					"default":"0.0.0.0/0",
 					"required":false,
@@ -248,6 +266,7 @@
 				{
 					"name":"IpProtocol",
 					"description":"Virtual Server: IP Protocol",
+					"help":"The IP Protocol of the Virtual Server (e.g. tcp, udp)",
 					"type":"string",
 					"default":"tcp",
 					"required":false,
@@ -258,6 +277,7 @@
 				{
 					"name":"ConnectionLimit",
 					"description":"Virtual Server: Virtual Server Connection Limit (0=unlimited)",
+					"help":"The connection limit for the virtual server.  A value of '0' means no limit",
 					"type":"string",
 					"default":"0",
 					"required":false,
@@ -268,56 +288,62 @@
 				{
 					"name":"ProfileClientProtocol",
 					"description":"Virtual Server: Client-side L4 Protocol Profile",
+					"help":"The client-side protocol profile.  This field supports the 'create:' format for customization",
 					"type":"string",
 					"default":"/Common/tcp-wan-optimized",
 					"required":false,
-					"display":"large",
+					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
 					"name":"ProfileServerProtocol",
 					"description":"Virtual Server: Server-side L4 Protocol Profile",
+					"help":"The server-side protocol profile.  This field supports the 'create:' format for customization",
 					"type":"string",
 					"default":"/Common/tcp-lan-optimized",
 					"required":false,
-					"display":"large",
+					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
 					"name":"ProfileHTTP",
 					"description":"Virtual Server: HTTP Profile",
+					"help":"The HTTP protocol profile.  This field supports the 'create:' format for customization",
 					"type":"string",
 					"default":"/Common/http",
 					"required":false,
-					"display":"large",
+					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
 					"name":"ProfileOneConnect",
 					"description":"Virtual Server: OneConnect Profile",
+					"help":"The oneconnect profile.  This field supports the 'create:' format for customization",
 					"type":"string",
 					"default":"/Common/oneconnect",
 					"required":false,
-					"display":"large",
+					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
 					"name":"ProfileCompression",
 					"description":"Virtual Server: Compression Profile",
+					"help":"The compression profile.  This field supports the 'create:' format for customization",
 					"type":"string",
 					"default":"/Common/httpcompression",
 					"required":false,
-					"display":"large",
+					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},
 				{
 					"name":"ProfileAnalytics",
 					"description":"Virtual Server: Analytics Profile",
+					"help":"The analytics profile",				
 					"type":"string",
 					"default":"",
 					"required":false,
@@ -328,16 +354,18 @@
 				{
 					"name":"ProfileRequestLogging",
 					"description":"Virtual Server: Request Logging Profile",
+					"help":"The request logging profile.  This field supports the 'create:' format for customization",
 					"type":"string",
 					"default":"",
 					"required":false,
-					"display":"large",
+					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},				
 				{
 					"name":"ProfileDefaultPersist",
 					"description":"Virtual Server: Default Persistence Profile",
+					"help":"The default persistence profile",
 					"type":"string",
 					"default":"/Common/cookie",
 					"required":false,
@@ -348,6 +376,7 @@
 				{
 					"name":"ProfileFallbackPersist",
 					"description":"Virtual Server: Fallback Persistence Profile",
+					"help":"The fallback persistence profile",
 					"type":"string",
 					"default":"/Common/source_addr",
 					"required":false,
@@ -358,6 +387,7 @@
 				{
 					"name":"SNATConfig",
 					"description":"Virtual Server: SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)",
+					"help":"The SNAT option to use.  Specifiy 'automap','/Common/<existing_snat_pool_name>','partition-default','create:<ip1,>....<ipX>'.  The partition-default option references a SNAT pool created by Cisco APIC as part of the APIC partition",
 					"type":"string",
 					"default":"automap",
 					"required":false,
@@ -368,16 +398,18 @@
 				{
 					"name":"ProfileServerSSL",
 					"description":"Virtual Server: Server SSL Profile",
+					"help":"The server-ssl profile.  This field supports the 'create:' format for customization",
 					"type":"string",
 					"default":"",
 					"required":false,
-					"display":"large",
+					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_005"
 				},
 				{
 					"name":"ProfileClientSSL",
 					"description":"Virtual Server: Client SSL Profile",
+					"help":"The path to an existing Client-SSL profile.  If specified this value overrides Client-SSL profile creation",
 					"type":"string",
 					"default":"",
 					"required":false,
@@ -388,6 +420,7 @@
 				{
 					"name":"ProfileClientSSLCert",
 					"description":"Virtual Server: Client SSL Certificate",
+					"help":"The path to an existing SSL Certificate.  If the work 'auto' is specfied the value /Common/<iapp_name>.crt will be substituted",
 					"type":"string",
 					"default":"/Common/default.crt",
 					"required":false,
@@ -398,6 +431,7 @@
 				{
 					"name":"ProfileClientSSLKey",
 					"description":"Virtual Server: Client SSL Key",
+					"help":"The path to an existing SSL Key.  If the work 'auto' is specfied the value /Common/<iapp_name>.key will be substituted",
 					"type":"string",
 					"default":"/Common/default.key",
 					"required":false,
@@ -408,6 +442,7 @@
 				{
 					"name":"ProfileClientSSLChain",
 					"description":"Virtual Server: Client SSL Certificate Chain",
+					"help":"The path to the SSL Certicate Chain bundle",
 					"type":"string",
 					"default":"/Common/ca-bundle.crt",
 					"required":false,
@@ -418,6 +453,7 @@
 				{
 					"name":"ProfileClientSSLCipherString",
 					"description":"Virtual Server: Client SSL Cipher String",
+					"help":"The SSL Cipher String (https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html)",
 					"type":"string",
 					"default":"DEFAULT:!SSLV3",
 					"required":false,
@@ -426,8 +462,35 @@
 					"minver":"0.3_001"
 				},
 				{
+					"name":"ProfileSecurityLogProfiles",
+					"description":"Virtual Server: Security Logging Profiles",
+					"help":"A comma seperated list of existing security logging profiles",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"0.3_008"					
+				},
+				{
+					"name":"ProfileSecurityIPBlacklist",
+					"description":"Virtual Server: IP Blacklist Profile",
+					"help":"Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.",
+					"type":"choice",
+					"default":"none",
+					"choices":[
+						"none",
+						"enabled-block",
+						"enabled-log"
+						],
+					"required":false,
+					"modes":[1,2,3,4],
+					"minver":"0.3_008"					
+				},				
+				{
 					"name":"OptionSourcePort",
 					"description":"Virtual Server: Source Port Behavior",
+					"help":"The source port translation behavior",
 					"type":"choice",
 					"default":"preserve",
 					"choices":[
@@ -442,6 +505,7 @@
 				{
 					"name":"OptionConnectionMirroring",
 					"description":"Virtual Server: Connection Mirroring",
+					"help":"The connection mirroring behavior",
 					"type":"boolean",
 					"default":false,
 					"required":false,
@@ -452,6 +516,7 @@
 				{
 					"name":"Irules",
 					"description":"Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)",
+					"help":"A comma seperated list of existing iRules to attach to the virtual server.  Ordering is preserved.",
 					"type":"string",
 					"default":"",
 					"required":false,
@@ -468,6 +533,7 @@
 				{
 					"name":"statsTLS",
 					"description":"TLS/SSL: Stats Reporting",
+					"help":"TLS/SSL Statistics reporting.  The auto option will enable this feature if a client-ssl profile is attached, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
@@ -483,6 +549,7 @@
 				{
 					"name":"statsHTTP",
 					"description":"HTTP: Stats Reporting",
+					"help":"HTTP Statistics reporting.  The auto option will enable this feature if a http profile is attached, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
@@ -498,6 +565,7 @@
 				{
 					"name":"insertXForwardedFor",
 					"description":"HTTP: Insert X-Forwarded-For Header",
+					"help":"Insert the X-Forwarded-For header.  The auto option will enable this feature if a http profile is attached, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
@@ -513,6 +581,7 @@
 				{
 					"name":"redirectToHTTPS",
 					"description":"HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect",
+					"help":"Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a client-ssl profile is configured, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
@@ -528,6 +597,7 @@
 				{
 					"name":"sslEasyCipher",
 					"description":"TLS/SSL: Easy Cipher String (overrides VS section setting)",
+					"help":"Easily configure TLS/SSL Cipher Strings.  This setting overrides the value in the Virtual Server section",
 					"type":"choice",
 					"default":"disabled",
 					"choices":[
@@ -546,6 +616,7 @@
 				{
 					"name":"securityEnableHSTS",
 					"description":"HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)",
+					"help":"Enabled insertion of the Strict-Transport-Security HTTP header.  The preload and subdomain options can be omitted or included based on this selection.  This setting also modifies creation of the HTTP->HTTPS redirect option to perform a 301 HTTP redirect",
 					"type":"choice",
 					"default":"disabled",
 					"required":false,
@@ -559,7 +630,67 @@
 					"display":"xlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
-				}
+				},
+				{
+					"name":"easyL4Firewall",
+					"description":"Security: Firewall: Configure L4 Firewall Policy",
+					"help":"Configure a AFM L4 Firewall policy.  The 'base' option creates a policy that allows traffic to the Virtual Server with optional Blacklist and Source addresses specified in the following fields.  The base+ip_blacklist options also configure an IP Intelligence Blacklist policy in either blocking or logging mode",
+					"type":"choice",
+					"default":"auto",
+					"required":false,
+					"choices":[
+						"auto",
+						"base",
+						"base+ip_blacklist_block",
+						"base+ip_blacklist_log",
+						"disabled"
+					],
+					"display":"xlarge",
+					"modes":[1,2,3,4],
+					"minver":"0.3_008"
+				},
+				{
+					"name":"easyL4FirewallBlacklist",
+					"description":"Security: Firewall: Static Blacklisted Addresses (CIDR Format)",
+					"help":"A list of CIDR formatted blacklisted IP/Network ranges.  Packets sourced from these networks will be dropped",
+					"type":"table",
+					"modes":[1,2,3,4],
+					"minver":"0.3_008",
+					"fields":[
+						{
+							"name":"CIDRRange",
+							"description":"CIDR Block:",
+							"help":"CIDR Range",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"large",
+							"modes":[1,2,3,4],
+							"minver":"0.3_008"
+						}
+					]
+				},
+				{
+					"name":"easyL4FirewallSourceList",
+					"description":"Security: Firewall: Static Allowed Source Addresses (CIDR Format)",
+					"help":"A list of CIDR formatted allowed IP/Network ranges.  Packets sourced from these networks will be allowed",
+					"type":"table",
+					"modes":[1,2,3,4],
+					"minver":"0.3_008",
+					"fields":[
+						{
+							"name":"CIDRRange",
+							"description":"CIDR Block:",
+							"help":"CIDR Range",
+							"type":"string",
+							"default":"0.0.0.0/0",
+							"required":false,
+							"display":"large",
+							"modes":[1,2,3,4],
+							"minver":"0.3_008"
+						}
+					]
+				}				
 			]
 		},
 		{

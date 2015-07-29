@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_007</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_008</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -13,7 +13,7 @@
 <tr>
   <td>iapp.strictUpdates</td>
   <td>$iapp__strictUpdates</td>
-  <td>Control Strict Updates mode</td>
+  <td>Control Strict Updates mode (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211)</td>
   <td>[1, 2, 3, 4]</td>
   <td>boolean</td>
   <td></td>
@@ -22,7 +22,7 @@
 <tr>
   <td>iapp.appStats</td>
   <td>$iapp__appStats</td>
-  <td>iApp: Statistics Handler Creation</td>
+  <td>Control whether Virtual Server/Pool statistics handlers are created in Standalone or BIG-IQ Cloud mode</td>
   <td>[1, 2]</td>
   <td>boolean</td>
   <td></td>
@@ -32,7 +32,7 @@
 <tr>
   <td>pool.addr</td>
   <td>$pool__addr</td>
-  <td>Virtual Server: Address</td>
+  <td>The destination address of the Virtual Server</td>
   <td>[1, 2, 3, 4]</td>
   <td>ipaddr</td>
   <td></td>
@@ -41,7 +41,7 @@
 <tr>
   <td>pool.mask</td>
   <td>$pool__mask</td>
-  <td>Virtual Server: Mask</td>
+  <td>The destination network mask of the Virtual Server</td>
   <td>[1, 2, 3, 4]</td>
   <td>ipaddr</td>
   <td></td>
@@ -50,7 +50,7 @@
 <tr>
   <td>pool.port</td>
   <td>$pool__port</td>
-  <td>Virtual Server: Port</td>
+  <td>The L4 port the Virtual Server listens on.  '*' is supported</td>
   <td>[1, 2, 3, 4]</td>
   <td>port</td>
   <td></td>
@@ -59,7 +59,7 @@
 <tr>
   <td>pool.Name</td>
   <td>$pool__Name</td>
-  <td>Pool: Name</td>
+  <td>The name of the Pool.  Is no value is specified the name will be set to <iapp_name>_pool</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -68,7 +68,7 @@
 <tr>
   <td>pool.Description</td>
   <td>$pool__Description</td>
-  <td>Virtual Server: Description</td>
+  <td>The description string configured in the Pool</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -77,7 +77,7 @@
 <tr>
   <td>pool.Monitor</td>
   <td>$pool__Monitor</td>
-  <td>Pool: Health Monitor</td>
+  <td>The path to a preconfigured Pool Health Monitor</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -86,7 +86,7 @@
 <tr>
   <td>pool.LbMethod</td>
   <td>$pool__LbMethod</td>
-  <td>Pool: Load Balancing Method</td>
+  <td>The pool Load Balancing Method (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305)</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>dynamic-ratio-member,
@@ -112,7 +112,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.MemberDefaultPort</td>
   <td>$pool__MemberDefaultPort</td>
-  <td>Pool: Member Default Port</td>
+  <td>The L4 port to used when a pool member is added via a Dynamic Endpoint Insertion notication from Cisco APIC</td>
   <td>[3]</td>
   <td>string</td>
   <td></td>
@@ -122,7 +122,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.Members.IPAddress</td>
   <td>$pool.Members__IPAddress</td>
-  <td>IP:</td>
+  <td>IP Address of the Pool Member</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -131,7 +131,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.Members.Port</td>
   <td>$pool.Members__Port</td>
-  <td>Port:</td>
+  <td>L4 port of the Pool Member</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -140,7 +140,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.Members.ConnectionLimit</td>
   <td>$pool.Members__ConnectionLimit</td>
-  <td>Connection Limit:</td>
+  <td>The Connection Limit for the Pool Member.  '0' denotes unlimited connections</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -149,7 +149,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.Members.Ratio</td>
   <td>$pool.Members__Ratio</td>
-  <td>Ratio:</td>
+  <td>The Ratio weight for the Pool Member.  Used with 'ratio' based Load Balancing Methods</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -158,7 +158,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.Members.State</td>
   <td>$pool.Members__State</td>
-  <td>State:</td>
+  <td>The administrative state of the Pool Member upon creation</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>enabled,
@@ -170,7 +170,7 @@ disabled</td>
 <tr>
   <td>vs.Name</td>
   <td>$vs__Name</td>
-  <td>Virtual Server: Name</td>
+  <td>The name of the Virtual Server.  If no value is specified the name will be set to <iapp_name>_vs</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -179,7 +179,7 @@ disabled</td>
 <tr>
   <td>vs.Description</td>
   <td>$vs__Description</td>
-  <td>Virtual Server: Description</td>
+  <td>The description string configured in the Virtual Server</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -188,7 +188,7 @@ disabled</td>
 <tr>
   <td>vs.SourceAddress</td>
   <td>$vs__SourceAddress</td>
-  <td>Virtual Server: Source Address</td>
+  <td>The source address filter for the Virtual Server</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -197,7 +197,7 @@ disabled</td>
 <tr>
   <td>vs.IpProtocol</td>
   <td>$vs__IpProtocol</td>
-  <td>Virtual Server: IP Protocol</td>
+  <td>The IP Protocol of the Virtual Server (e.g. tcp, udp)</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -206,7 +206,7 @@ disabled</td>
 <tr>
   <td>vs.ConnectionLimit</td>
   <td>$vs__ConnectionLimit</td>
-  <td>Virtual Server: Virtual Server Connection Limit (0=unlimited)</td>
+  <td>The connection limit for the virtual server.  A value of '0' means no limit</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -215,7 +215,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileClientProtocol</td>
   <td>$vs__ProfileClientProtocol</td>
-  <td>Virtual Server: Client-side L4 Protocol Profile</td>
+  <td>The client-side protocol profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -224,7 +224,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileServerProtocol</td>
   <td>$vs__ProfileServerProtocol</td>
-  <td>Virtual Server: Server-side L4 Protocol Profile</td>
+  <td>The server-side protocol profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -233,7 +233,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileHTTP</td>
   <td>$vs__ProfileHTTP</td>
-  <td>Virtual Server: HTTP Profile</td>
+  <td>The HTTP protocol profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -242,7 +242,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileOneConnect</td>
   <td>$vs__ProfileOneConnect</td>
-  <td>Virtual Server: OneConnect Profile</td>
+  <td>The oneconnect profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -251,7 +251,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileCompression</td>
   <td>$vs__ProfileCompression</td>
-  <td>Virtual Server: Compression Profile</td>
+  <td>The compression profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -260,7 +260,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileAnalytics</td>
   <td>$vs__ProfileAnalytics</td>
-  <td>Virtual Server: Analytics Profile</td>
+  <td>The analytics profile</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -269,7 +269,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileRequestLogging</td>
   <td>$vs__ProfileRequestLogging</td>
-  <td>Virtual Server: Request Logging Profile</td>
+  <td>The request logging profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -278,7 +278,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileDefaultPersist</td>
   <td>$vs__ProfileDefaultPersist</td>
-  <td>Virtual Server: Default Persistence Profile</td>
+  <td>The default persistence profile</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -287,7 +287,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileFallbackPersist</td>
   <td>$vs__ProfileFallbackPersist</td>
-  <td>Virtual Server: Fallback Persistence Profile</td>
+  <td>The fallback persistence profile</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -296,7 +296,7 @@ disabled</td>
 <tr>
   <td>vs.SNATConfig</td>
   <td>$vs__SNATConfig</td>
-  <td>Virtual Server: SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)</td>
+  <td>The SNAT option to use.  Specifiy 'automap','/Common/<existing_snat_pool_name>','partition-default','create:<ip1,>....<ipX>'.  The partition-default option references a SNAT pool created by Cisco APIC as part of the APIC partition</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -305,7 +305,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileServerSSL</td>
   <td>$vs__ProfileServerSSL</td>
-  <td>Virtual Server: Server SSL Profile</td>
+  <td>The server-ssl profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -314,7 +314,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileClientSSL</td>
   <td>$vs__ProfileClientSSL</td>
-  <td>Virtual Server: Client SSL Profile</td>
+  <td>The path to an existing Client-SSL profile.  If specified this value overrides Client-SSL profile creation</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -323,7 +323,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileClientSSLCert</td>
   <td>$vs__ProfileClientSSLCert</td>
-  <td>Virtual Server: Client SSL Certificate</td>
+  <td>The path to an existing SSL Certificate.  If the work 'auto' is specfied the value /Common/<iapp_name>.crt will be substituted</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -332,7 +332,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileClientSSLKey</td>
   <td>$vs__ProfileClientSSLKey</td>
-  <td>Virtual Server: Client SSL Key</td>
+  <td>The path to an existing SSL Key.  If the work 'auto' is specfied the value /Common/<iapp_name>.key will be substituted</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -341,7 +341,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileClientSSLChain</td>
   <td>$vs__ProfileClientSSLChain</td>
-  <td>Virtual Server: Client SSL Certificate Chain</td>
+  <td>The path to the SSL Certicate Chain bundle</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -350,16 +350,36 @@ disabled</td>
 <tr>
   <td>vs.ProfileClientSSLCipherString</td>
   <td>$vs__ProfileClientSSLCipherString</td>
-  <td>Virtual Server: Client SSL Cipher String</td>
+  <td>The SSL Cipher String (https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html)</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
 <tr>
+  <td>vs.ProfileSecurityLogProfiles</td>
+  <td>$vs__ProfileSecurityLogProfiles</td>
+  <td>A comma seperated list of existing security logging profiles</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_008</td>
+</tr>
+<tr>
+  <td>vs.ProfileSecurityIPBlacklist</td>
+  <td>$vs__ProfileSecurityIPBlacklist</td>
+  <td>Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>choice</td>
+  <td>none,
+enabled-block,
+enabled-log</td>
+  <td>0.3_008</td>
+</tr>
+<tr>
   <td>vs.OptionSourcePort</td>
   <td>$vs__OptionSourcePort</td>
-  <td>Virtual Server: Source Port Behavior</td>
+  <td>The source port translation behavior</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>preserve,
@@ -370,7 +390,7 @@ change</td>
 <tr>
   <td>vs.OptionConnectionMirroring</td>
   <td>$vs__OptionConnectionMirroring</td>
-  <td>Virtual Server: Connection Mirroring</td>
+  <td>The connection mirroring behavior</td>
   <td>[1, 2, 3, 4]</td>
   <td>boolean</td>
   <td></td>
@@ -379,7 +399,7 @@ change</td>
 <tr>
   <td>vs.Irules</td>
   <td>$vs__Irules</td>
-  <td>Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)</td>
+  <td>A comma seperated list of existing iRules to attach to the virtual server.  Ordering is preserved.</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -389,7 +409,7 @@ change</td>
 <tr>
   <td>feature.statsTLS</td>
   <td>$feature__statsTLS</td>
-  <td>TLS/SSL: Stats Reporting</td>
+  <td>TLS/SSL Statistics reporting.  The auto option will enable this feature if a client-ssl profile is attached, otherwise disable</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>auto,
@@ -400,7 +420,7 @@ disabled</td>
 <tr>
   <td>feature.statsHTTP</td>
   <td>$feature__statsHTTP</td>
-  <td>HTTP: Stats Reporting</td>
+  <td>HTTP Statistics reporting.  The auto option will enable this feature if a http profile is attached, otherwise disable</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>auto,
@@ -411,7 +431,7 @@ disabled</td>
 <tr>
   <td>feature.insertXForwardedFor</td>
   <td>$feature__insertXForwardedFor</td>
-  <td>HTTP: Insert X-Forwarded-For Header</td>
+  <td>Insert the X-Forwarded-For header.  The auto option will enable this feature if a http profile is attached, otherwise disable</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>auto,
@@ -422,7 +442,7 @@ disabled</td>
 <tr>
   <td>feature.redirectToHTTPS</td>
   <td>$feature__redirectToHTTPS</td>
-  <td>HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect</td>
+  <td>Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a client-ssl profile is configured, otherwise disable</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>auto,
@@ -433,7 +453,7 @@ disabled</td>
 <tr>
   <td>feature.sslEasyCipher</td>
   <td>$feature__sslEasyCipher</td>
-  <td>TLS/SSL: Easy Cipher String (overrides VS section setting)</td>
+  <td>Easily configure TLS/SSL Cipher Strings.  This setting overrides the value in the Virtual Server section</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>compatible,
@@ -447,7 +467,7 @@ disabled</td>
 <tr>
   <td>feature.securityEnableHSTS</td>
   <td>$feature__securityEnableHSTS</td>
-  <td>HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)</td>
+  <td>Enabled insertion of the Strict-Transport-Security HTTP header.  The preload and subdomain options can be omitted or included based on this selection.  This setting also modifies creation of the HTTP->HTTPS redirect option to perform a 301 HTTP redirect</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>disabled,
@@ -456,6 +476,39 @@ enabled-preload,
 enabled-subdomain,
 enabled-preload-subdomain</td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>feature.easyL4Firewall</td>
+  <td>$feature__easyL4Firewall</td>
+  <td>Configure a AFM L4 Firewall policy.  The 'base' option creates a policy that allows traffic to the Virtual Server with optional Blacklist and Source addresses specified in the following fields.  The base+ip_blacklist options also configure an IP Intelligence Blacklist policy in either blocking or logging mode</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>choice</td>
+  <td>auto,
+base,
+base+ip_blacklist_block,
+base+ip_blacklist_log,
+disabled</td>
+  <td>0.3_008</td>
+</tr>
+<tr><td colspan=7><b>Table: easyL4FirewallBlacklist</b></td></tr>
+<tr>
+  <td>feature.easyL4FirewallBlacklist.CIDRRange</td>
+  <td>$feature.easyL4FirewallBlacklist__CIDRRange</td>
+  <td>CIDR Range</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_008</td>
+</tr>
+<tr><td colspan=7><b>Table: easyL4FirewallSourceList</b></td></tr>
+<tr>
+  <td>feature.easyL4FirewallSourceList.CIDRRange</td>
+  <td>$feature.easyL4FirewallSourceList__CIDRRange</td>
+  <td>CIDR Range</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_008</td>
 </tr>
 <tr><td colspan=7><b>Section: extensions</b></td></tr>
 <tr>

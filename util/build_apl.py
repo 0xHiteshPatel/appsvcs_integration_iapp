@@ -81,6 +81,7 @@ for section in data["sections"]:
 		if field["type"] != "table":
 			process_field(field, section["name"], "")
 		else:
+			text.append("\t%s.%s \"%s\"" % (section["name"], field["name"], field["description"]))
 			print "\ttable %s {" % field["name"]
 			for table_field in field["fields"]:
 				process_field(table_field, "%s.%s" % (section["name"], field["name"]), "\t")

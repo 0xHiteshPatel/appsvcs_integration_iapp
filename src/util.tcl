@@ -6,16 +6,19 @@ proc debug { string } {
 }
 
 # Figure out which type of environment we are executing in.
-# Return: list $mode $folder $partition $routedomainid
+# Return: list $mode $folder $partition $routedomainid $newdeploy
 # Modes: 1 = Standalone
 #        2 = BIG-IQ Cloud
 #        3 = Cisco APIC
 #        4 = VMware NSX
 proc get_mode { } {
   set folder [tmsh::pwd]
+  set app $tmsh::app_name
   set partition [lindex [split $folder /] 1]
   set routedomainid 0
-  debug "\[get_mode\] starting folder=$folder partition=$partition routedomainid=$routedomainid"
+  set newdeploy [catch {tmsh::get_config sys application service /$partition/$app.app/$app}]
+
+  debug "\[get_mode\] starting folder=$folder partition=$partition routedomainid=$routedomainid newdeploy=$newdeploy"
   
   # Check for a partition that starts with apic_ and return APIC mode (3) and RD if found
   if { [string match -nocase "apic_*" $partition] } {
@@ -43,7 +46,7 @@ proc get_mode { } {
 
   # Default is Standalone mode
   debug "\[get_mode\]\[standalone\] no integration vendor found, assuming Standalone deployment mode (1)"    
-  return [list 1 $folder $partition $routedomainid]
+  return [list 1 $folder $partition $routedomainid $newdeploy]
 }
 
 # Create a specfic option command and return it
@@ -121,7 +124,7 @@ proc is_valid_profile_option { obj option } {
 }
 
 # Process a string in the format key1=val1[;keyX=valX] and return an array 
-# Input $string = string to process
+# Input: $string = string to process
 # Return: array { key1 {val1} ... keyX{valX}}
 proc process_kvp_string { string } {
   #debug "\[process_kvp_string\] processing string: $string"
@@ -134,4 +137,112 @@ proc process_kvp_string { string } {
     #debug "\[process_kvp_string\] pair=$pair key=$key val=$val"
   }
   return [array get ret]
+}
+
+# Create an object name
+# Input: $append = string to append
+# Return: $string
+proc create_obj_name { append } {
+  return [format "%s/%s_%s" $::app_path $::app $append]
+}
+
+# Safely change a variable to a new value.  Updates the var value and modifies the ASO with the new value
+# Input: $name = name of variable
+#       $value = new value of the variable
+# Return: none
+proc change_var { name value } {
+  debug "\[change_var\] updating variable $name to $value"
+  set varcmd [format "sys application service %s/%s variables modify \{ %s \{ value \"%s\" \} \}" $::app_path $::app $name $value]
+  tmsh::modify $varcmd
+  set [subst ::$name] $value
+  return
+}
+
+# Check to see if an incoming variable is different than whats stored in the ASO.
+# Input: $name = name of variable
+# Return: 1=value is different; 0=value not different OR not a redeploy
+proc is_new_value { name } {
+  if { $::newdeploy } {
+    return 0
+  }
+  set varvalue [get_var $name]
+  debug "\[is_new_value\] name=$name asovalue=$varvalue varvalue=[set [subst ::$name]]"
+  if { [set [subst ::$name]] == $varvalue } {
+    return 0
+  } 
+  return 1
+}
+
+# Get the variable value in the ASO.
+# Input: $name = name of variable
+# Return: $string = value of variable
+proc get_var { name } {
+  set varcmd [format "sys application service %s/%s variables \{ %s \{ value \} \}" $::app_path $::app $name]
+  set varobj [tmsh::get_config $varcmd]
+  set varvalue [lindex [lindex [lindex [lindex [lindex $varobj 0] 4] 1] 1] 1]
+  debug "\[get_var\] name=$name value=$varvalue"
+  return $varvalue
+}
+
+# Safely handle the removal of a virtual server option on redeployment
+# Input: $name = name of variable    
+#        $checkvalue = the string that disables the option
+#        $option = TMSH name of the option
+# Return: 1=Option removed; 0=no action taken
+proc handle_opt_remove_on_redeploy { name checkvalue option } {
+  if { [set [subst ::$name]] == $checkvalue && \
+       [is_new_value $name] && \
+       $::redeploy } {
+        debug "\[handle_opt_remove_on_redeploy\] $name $checkvalue on redeploy, setting $option to none"
+        set cmd [format "ltm virtual %s/%s %s none" $::app_path $::vs__Name $option]
+        debug "\[handle_opt_remove_on_redeploy\] TMSH MODIFY: $cmd"
+        tmsh::modify $cmd
+        return 1
+  }
+  return 0
+}
+
+# Check whether a specified module is provisioned and at what levels
+# Adapted from original code including the F5 iApp TCL helper library
+# Input: $module = name of the module
+# Output: $level = integer representation of the provisioning level.  See levels array below
+proc is_provisioned { module } {
+  array set levels {
+    none      0
+    minimum   1
+    nominal   2
+    dedicated 3
+  }
+
+  set obj [tmsh::get_config sys provision $module]
+  if { [catch {
+      set level [tmsh::get_field_value [lindex $obj 0] level]
+  }]} { set level none }
+
+  return [expr { $levels($level) >= 1 }]
+}
+
+# Consume an APL table and return a list containing the values of the var specified in $key
+# Input: $table = the raw APL table
+#        $key = the name of the variable to add to the return list
+# Output: $retlist = A list of strings 
+proc single_column_table_to_list { table key } {
+  set retlist {}
+  foreach row $table {
+    #debug "row=$row"
+    array unset column
+
+    # extract the iApp table data - borrowed from f5.lbaas.tmpl
+    foreach column_data [lrange [split [join $row] "\n"] 1 end-1] {
+      set name [lindex $column_data 0]
+      set column($name) [lrange $column_data 1 end]
+      #debug " col=$name val=$column($name)"
+    }
+    if { [info exists column($key)] && [string length $column($key)] > 0 } {
+      lappend retlist "$column($key)"
+      #debug "  lappend $column($key)"
+    }
+    
+  }
+  return $retlist
 }

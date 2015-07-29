@@ -5,7 +5,7 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(012)"
+set IMPLVERSION "0.3(013)"
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -27,9 +27,13 @@ set mode [lindex $modeinfo 0]
 set folder [lindex $modeinfo 1]
 set partition [lindex $modeinfo 2]
 set rd [lindex $modeinfo 3]
+set newdeploy [lindex $modeinfo 4]
 set app_path [format "/%s/%s.app" $partition $app]
 
-debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd"
+set redeploy 0
+if { ! $newdeploy } { set redeploy 1 }
+
+debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd newdeploy=$newdeploy redeploy=$redeploy"
 
 set asodescr [format "Deployed by appsvcs_integration_v%s_%s in %s mode on %s" $IMPLVERSION $PRESVERSION $modenames($mode) [clock format $startTime -format "%D %H:%M:%S"]]
 debug "\[set_aso_description\] setting ASO description=$asodescr"
@@ -247,6 +251,44 @@ if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $
   set feature__insertXForwardedFor enabled
 }
 
+# Process feature__easyL4Firewall options
+if { [is_provisioned afm] } {
+  switch [string tolower $feature__easyL4Firewall] {
+    auto {
+      debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block"
+      set feature__easyL4Firewall enabled
+      change_var vs__ProfileSecurityIPBlacklist enabled-block
+    }
+    base { 
+      debug "\[create_virtual\]\[feature__easyL4Firewall\] found base flag, setting feature to enabled, vs__ProfileSecurityIPBlacklist to disabled"
+      set feature__easyL4Firewall enabled
+      change_var vs__ProfileSecurityIPBlacklist disabled
+    }
+    base+ip_blacklist_block { 
+      debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block"
+      set feature__easyL4Firewall enabled
+      change_var vs__ProfileSecurityIPBlacklist enabled-block
+    }
+    base+ip_blacklist_log { 
+      debug "\[create_virtual\]\[feature__easyL4Firewall\] found base+ipblacklist_log option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-log"
+      set feature__easyL4Firewall enabled
+      change_var vs__ProfileSecurityIPBlacklist enabled-log
+    }
+    default { 
+      if { [get_var feature__easyL4Firewall] == "auto"} {
+        change_var vs__ProfileSecurityIPBlacklist disabled
+      }
+      set feature__easyL4Firewall disabled 
+    }
+  }
+} else {
+  debug "\[create_virtual\]\[feature__easyL4Firewall\] AFM not provisioned, skipping"
+  if { $feature__easyL4Firewall != "auto" } {
+    change_var feature__easyL4Firewall disabled
+  }
+  set feature__easyL4Firewall disabled
+}
+
 # Check for HTTP Strict Transport Security (HSTS) option.  We do this here 
 # so the irule can be easily appended to the existing iRule list
 if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
@@ -330,6 +372,88 @@ array set vs_options {
 array set vs_options_custom {
  "vs__Irules" " rules \{ %s \}"
  "vs__ProfileDefaultPersist" " persist replace-all-with \{ %s \}"
+ "vs__ProfileSecurityLogProfiles" " security-log-profiles replace-all-with \{ %s \}"
+}
+
+# Process the vs__ProfileSecurityIPBlacklist option.
+set ipi_create 1
+switch [string tolower $vs__ProfileSecurityIPBlacklist] {
+  enabled-block { set ipi_action "drop" }
+  enabled-log { set ipi_action "accept" }
+  default { 
+    set ipi_create 0 
+    set vs__ProfileSecurityIPBlacklist none
+  }
+}
+
+handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intelligence-policy"
+
+if { $ipi_create } {
+  debug "\[create_virtual\]\[ip_blacklist\] ipi_action=$ipi_action, creating IPI policy"
+  set ipi_name [create_obj_name "ip_blacklist"]
+  set ipi_cmd [format "security ip-intelligence policy %s default-action %s default-log-blacklist-hit-only yes" $ipi_name $ipi_action]
+  debug "\[create_virtual\]\[ip_blacklist\] TMSH CREATE: $ipi_cmd"
+  tmsh::create $ipi_cmd
+  set vs__ProfileSecurityIPBlacklist $ipi_name
+  array set vs_options [list vs__ProfileSecurityIPBlacklist ip-intelligence-policy]
+} 
+
+
+# Process the feature__easyL4Firewall option
+handle_opt_remove_on_redeploy feature__easyL4Firewall "disabled" "fw-enforced-policy"
+
+if { $feature__easyL4Firewall == "enabled" } {
+  debug "\[create_virtual\]\[l4_firewall\] creating FW policy"
+
+  set cidr_blacklist [single_column_table_to_list $feature__easyL4FirewallBlacklist "CIDRRange"]
+  debug "\[create_virtual\]\[l4_firewall\] cidr_blacklist=$cidr_blacklist"
+
+  set cidr_sourcelist [single_column_table_to_list $feature__easyL4FirewallSourceList "CIDRRange"]
+  debug "\[create_virtual\]\[l4_firewall\] cidr_sourcelist=$cidr_sourcelist"
+
+  if { [llength $cidr_blacklist] > 0 } {
+    debug "\[create_virtual\]\[l4_firewall\] creating static blacklist address-list"
+    set feature_easyL4Firewall_blacklistcmd [format "security firewall address-list %s/afm_staticBlacklist addresses replace-all-with { %s }" \
+     $app_path [join $cidr_blacklist " "]]
+
+    debug "\[create_virtual\]\[l4_firewall\] TMSH CREATE: $feature_easyL4Firewall_blacklistcmd"
+    tmsh::create $feature_easyL4Firewall_blacklistcmd
+    set feature_easyL4Firewall_blacklisttmpl [format "staticBlacklist { action drop source { address-lists replace-all-with { %s/afm_staticBlacklist } } }" $app_path]
+  } else {
+    set feature_easyL4Firewall_blacklisttmpl ""
+  }
+
+  if { [llength $cidr_sourcelist] > 0 } {
+    debug "\[create_virtual\]\[l4_firewall\] creating source address-list"
+    set feature_easyL4Firewall_srclistcmd [format "security firewall address-list %s/afm_sourceList addresses replace-all-with { %s }" \
+     $app_path [join $cidr_sourcelist " "]]
+
+    debug "\[create_virtual\]\[l4_firewall\] TMSH CREATE: $feature_easyL4Firewall_srclistcmd"
+    tmsh::create $feature_easyL4Firewall_srclistcmd
+  } else {
+    debug "\[create_virtual\]\[l4_firewall\] creating DEFAULT source address-list"
+    set feature_easyL4Firewall_srclistcmd [format "security firewall address-list %s/afm_sourceList addresses replace-all-with { 0.0.0.0/0 }" $app_path]
+
+    debug "\[create_virtual\]\[l4_firewall\] TMSH CREATE: $feature_easyL4Firewall_srclistcmd"
+    tmsh::create $feature_easyL4Firewall_srclistcmd
+  }
+  set feature_easyL4Firewall_srclist [format "%s/afm_sourceList" $app_path]
+
+  set fw_name [create_obj_name "firewall"]
+  set fw_cmd [format ""]
+  set fw_tmpl {
+%insertfile:include/feature_easyL4Firewall.tmpl%
+  };
+
+  set tmpl_map [list %NAME%             $fw_name \
+                     %IP_PROTOCOL%      $vs__IpProtocol \
+                     %STATIC_BLACKLIST% $feature_easyL4Firewall_blacklisttmpl \
+                     %SOURCE_LIST%      $feature_easyL4Firewall_srclist ]
+
+  set fw_policy [string map $tmpl_map $fw_tmpl]
+  debug "\[create_virtual\]\[l4_firewall\] TMSH CREATE: $fw_policy"
+  tmsh::create $fw_policy
+  array set vs_options [list fw_name fw-enforced-policy]  
 }
 
 # Process the vs_options array

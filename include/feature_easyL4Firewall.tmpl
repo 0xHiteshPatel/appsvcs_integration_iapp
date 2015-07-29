@@ -1,0 +1,24 @@
+security firewall policy %NAME% {
+    rules replace-all-with {
+        %STATIC_BLACKLIST%
+        allowFrom {
+            action accept
+            ip-protocol %IP_PROTOCOL%
+            source {
+                address-lists replace-all-with {
+                    %SOURCE_LIST%
+                }
+            }
+        }
+        defaultDeny {
+            action drop
+            ip-protocol %IP_PROTOCOL%
+            log yes
+            source {
+                addresses replace-all-with {
+                    0.0.0.0/0 { }
+                }
+            }
+        }
+    }
+}
