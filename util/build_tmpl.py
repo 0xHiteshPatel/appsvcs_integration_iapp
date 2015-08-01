@@ -9,12 +9,15 @@ def get_info(basedir):
 		impl_minor = ""
 		pres_rev = ""
 		for line in impl:
-			implmatch = re.match( r'^set IMPLVERSION \"(.*)\((.*)\)\"', line)
+			implmajormatch = re.match( r'^set IMPLMAJORVERSION \"(.*)\"', line)
+			implminormatch = re.match( r'^set IMPLMINORVERSION \"(.*)\"', line)
 			#presmatch = re.match( r'^set PRESVERSION \"(.*)\"', line)
 			
-			if implmatch:
-				impl_major = implmatch.group(1)
-				impl_minor = implmatch.group(2)
+			if implmajormatch:
+				impl_major = implmajormatch.group(1)
+
+			if implminormatch:
+				impl_minor = implminormatch.group(1)
 
 			#if presmatch:
 			#	pres_rev = presmatch.group(1)

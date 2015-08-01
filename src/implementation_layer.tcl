@@ -5,7 +5,9 @@
 
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLVERSION "0.3(013)"
+set IMPLMAJORVERSION "0.3"
+set IMPLMINORVERSION "014"
+set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
 %insertfile:src/util.tcl%
@@ -29,11 +31,12 @@ set partition [lindex $modeinfo 2]
 set rd [lindex $modeinfo 3]
 set newdeploy [lindex $modeinfo 4]
 set app_path [format "/%s/%s.app" $partition $app]
+set template_name [format "appsvcs_integration_v%s_%s" $IMPLMAJORVERSION $PRESVERSION]
 
 set redeploy 0
 if { ! $newdeploy } { set redeploy 1 }
 
-debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd newdeploy=$newdeploy redeploy=$redeploy"
+debug "\[modeinfo\] mode=$mode folder=$folder partition=$partition rd=$rd newdeploy=$newdeploy redeploy=$redeploy template_name=$template_name"
 
 set asodescr [format "Deployed by appsvcs_integration_v%s_%s in %s mode on %s" $IMPLVERSION $PRESVERSION $modenames($mode) [clock format $startTime -format "%D %H:%M:%S"]]
 debug "\[set_aso_description\] setting ASO description=$asodescr"
@@ -41,7 +44,7 @@ tmsh::modify sys application service /$partition/$app.app/$app description [form
 
 # Define various global values
 set allVars {
-%PRESENTATION_TCL_ALLVARS% 
+%PRESENTATION_TCL_ALLVARS%
  app_stats }
 
 array set table_defaults {

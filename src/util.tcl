@@ -26,7 +26,7 @@ proc get_mode { } {
     set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
     set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
     debug "\[get_mode\]\[apic\] rdobjs=$rdobjs routedomainid=$routedomainid"
-    return [list 3 $folder $partition $routedomainid]
+    return [list 3 $folder $partition $routedomainid $newdeploy]
   }
 
   # Check for an $app name that is formatted like this:
@@ -34,14 +34,14 @@ proc get_mode { } {
   # and return NSX mode (4) 
   if { [regexp -nocase {^edge-[0-9]+_[0-9]+_virtualserver-[0-9]+-serviceprofile-[0-9]+$} $::app] } {
     debug "\[get_mode\]\[nsx\] app name matches NSX regexp, assuming NSX deployment mode (4)"
-    return [list 4 $folder $partition $routedomainid]    
+    return [list 4 $folder $partition $routedomainid $newdeploy]    
   }
 
   # If we get here we can safely assume that this is either a Standalone or BIG-IQ Cloud mode deployment
   # The only way we currently have to check for BIG-IQ Cloud mode is to see if app_stats was sent
   if { [info exists ::app_stats] } {
     debug "\[get_mode\]\[bigiq\] all other modes checked for and app_stats set, assuming BIG-IQ Cloud deployment mode (2)"
-    return [list 2 $folder $partition $routedomainid]
+    return [list 2 $folder $partition $routedomainid $newdeploy]
   }
 
   # Default is Standalone mode
@@ -151,6 +151,9 @@ proc create_obj_name { append } {
 #       $value = new value of the variable
 # Return: none
 proc change_var { name value } {
+  if { $::mode != 1 } {
+    return ""
+  }
   debug "\[change_var\] updating variable $name to $value"
   set varcmd [format "sys application service %s/%s variables modify \{ %s \{ value \"%s\" \} \}" $::app_path $::app $name $value]
   tmsh::modify $varcmd
@@ -162,6 +165,10 @@ proc change_var { name value } {
 # Input: $name = name of variable
 # Return: 1=value is different; 0=value not different OR not a redeploy
 proc is_new_value { name } {
+  if { $::mode != 1 } {
+    return 0
+  }
+  
   if { $::newdeploy } {
     return 0
   }
@@ -177,6 +184,10 @@ proc is_new_value { name } {
 # Input: $name = name of variable
 # Return: $string = value of variable
 proc get_var { name } {
+  if { $::mode != 1 } {
+    return ""
+  }
+
   set varcmd [format "sys application service %s/%s variables \{ %s \{ value \} \}" $::app_path $::app $name]
   set varobj [tmsh::get_config $varcmd]
   set varvalue [lindex [lindex [lindex [lindex [lindex $varobj 0] 4] 1] 1] 1]
