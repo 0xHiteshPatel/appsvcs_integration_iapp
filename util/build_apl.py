@@ -1,6 +1,7 @@
 import json
 import sys
 import glob
+import os
 
 from pprint import pprint
 
@@ -49,10 +50,13 @@ def process_field (field, section, tab):
   			print "\t\t%s\"%s\"" % (tab, templist[-1])
 		print "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist":
+		if os.sep != "/":
+			field["glob"] = field["glob"].replace("/","\\")
+			
 		files = glob.glob(field["glob"])
 		filenames = ["disabled"]
 		for filename in files:
-			name_parts = filename.split('/')
+			name_parts = filename.split(os.sep)
 			file_parts = name_parts[1].split('.')
 			filenames.append(file_parts[0])
 

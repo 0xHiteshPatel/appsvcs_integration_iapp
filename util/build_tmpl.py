@@ -2,6 +2,7 @@ import re
 import json
 import sys
 import glob
+import os
 
 def get_info(basedir):
 	allvars = []
@@ -73,7 +74,8 @@ def process_file(fin, fout, basedir, prepend):
 def create_files_include(files, outfile, prefix):
 	with open(outfile, "wt") as out:	
 		for filename in files:
-			name_parts = filename.split('/')
+			print " processing file %s" % filename
+			name_parts = filename.split(os.sep)
 			file_parts = name_parts[1].split('.')
 			just_name = file_parts[0]
 			with open(filename) as infile:
@@ -92,15 +94,15 @@ print "Got info: %s" % version
 outfile = "%s/appsvcs_integration_v%s-%s_%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"])
 print "Writing to file: %s" % outfile
 print "Processing ASM policies (asm_policies/*.xml)..."
-asm_policies = glob.glob("asm_policies/*.xml")
+asm_policies = glob.glob(os.path.join('asm_policies','*.xml'))
 
 if len(asm_policies) == 0:
 	print "  no policies found"
-	with open("tmp/asm.build","wt") as out:
+	with open(os.path.join('tmp','asm.build'),"wt") as out:
 		out.write("\n")
 	out.close()
 else:
-	create_files_include(asm_policies, "tmp/asm.build", "asm_policy" )
+	create_files_include(asm_policies, os.path.join('tmp','asm.build'), "asm_policy" )
 
 with open(outfile,"wt") as out:
 	with open("%s/src/master.template" % basedir) as main_template:
@@ -109,8 +111,3 @@ with open(outfile,"wt") as out:
 		
 out.close()
 main_template.close()
-
-
-
-
-
