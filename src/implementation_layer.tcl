@@ -403,7 +403,9 @@ if { $ipi_create } {
 
 
 # Process the feature__easyL4Firewall option
-handle_opt_remove_on_redeploy feature__easyL4Firewall "disabled" "fw-enforced-policy"
+if { [is_provisioned afm] } {
+  handle_opt_remove_on_redeploy feature__easyL4Firewall "disabled" "fw-enforced-policy"
+}
 
 if { $feature__easyL4Firewall == "enabled" } {
   debug "\[create_virtual\]\[l4_firewall\] creating FW policy"
