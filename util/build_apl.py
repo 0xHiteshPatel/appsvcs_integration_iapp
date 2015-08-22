@@ -1,5 +1,6 @@
 import json
 import sys
+import glob
 
 from pprint import pprint
 
@@ -41,12 +42,25 @@ def process_field (field, section, tab):
 		print "\t%sstring %s%s%s%s" % (tab, field["name"], reqstr, dispstr, defstr)
 	elif field["type"] == "choice":
 		print "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
-		#for choice in field["choices"]:
 		templist = field["choices"]
 		for choice in templist[:-1]:
   			print "\t\t%s\"%s\"," % (tab, choice)
 		else:
   			print "\t\t%s\"%s\"" % (tab, templist[-1])
+		print "\t%s}" % tab
+	elif field["type"] == "dynamic_filelist":
+		files = glob.glob(field["glob"])
+		filenames = ["disabled"]
+		for filename in files:
+			name_parts = filename.split('/')
+			file_parts = name_parts[1].split('.')
+			filenames.append(file_parts[0])
+
+		print "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+		for choice in filenames[:-1]:
+  			print "\t\t%s\"%s\"," % (tab, choice)
+		else:
+  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
 		print "\t%s}" % tab
 	else:
 		print "Invalid type: %s field=%s section=%s" % (field["type"], field["name"], section["name"])

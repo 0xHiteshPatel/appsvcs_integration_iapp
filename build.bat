@@ -13,5 +13,6 @@ echo Assembling template...
 python util\build_tmpl.py "%cd%"
 
 del tmp\apl.build
+del tmp\asm.build
 rmdir tmp
 

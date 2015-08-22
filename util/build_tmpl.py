@@ -1,6 +1,7 @@
 import re 
 import json
 import sys
+import glob
 
 def get_info(basedir):
 	allvars = []
@@ -49,21 +50,36 @@ def get_info(basedir):
 
 def process_file(fin, fout, basedir, prepend):
 	print "%sfound insertfile, file=%s" % (prepend, fin.name)
+	ret = []
 	for line in fin:
 		line = re.sub(r'%IMPLVERSION_MAJOR%', version["impl_major"], line)
 		line = re.sub(r'%IMPLVERSION_MINOR%', version["impl_minor"], line)
 		line = re.sub(r'%PRESENTATION_REV%', version["pres_rev"], line)
 		line = re.sub(r'%PRESENTATION_TCL_ALLVARS%', version["allvars"], line)
 			
-		match = re.match( r'.*%insertfile:(.*)%.*', line)
+		match = re.match( r'(.*)\%insertfile:(.*)\%(.*)', line)
 		if match:
-			with open ("%s/%s" % (basedir, match.group(1)), "r") as insertfile:
-				process_file(insertfile, fout, basedir, '%s ' % prepend)
-				insertdata = insertfile.read()
+			with open ("%s/%s" % (basedir, match.group(2)), "r") as insertfile:
+				insert = process_file(insertfile, fout, basedir, '%s ' % prepend)
+				#insertdata = insertfile.read()
 				insertfile.close()
-				line = re.sub(r'%insertfile:(.*)%', insertdata, line)
-			
-		fout.write(line)
+				#line = "%s%s%s" % (match.group(1), re.sub(r'(%insertfile:.*%)', insertdata, line), match.group(3))
+				line = "%s%s%s" % (match.group(1), ''.join(insert), match.group(3))
+		
+		#fout.write(line)
+		ret.append(line)
+	return ret
+
+def create_files_include(files, outfile, prefix):
+	with open(outfile, "wt") as out:	
+		for filename in files:
+			name_parts = filename.split('/')
+			file_parts = name_parts[1].split('.')
+			just_name = file_parts[0]
+			with open(filename) as infile:
+				data = infile.read()
+				out.write("set %s_%s_data {%s}\n\n" % (prefix, just_name, data))
+	out.close()
 
 if len(sys.argv) != 2:
 	print "Usage: %s <base directory>" % sys.argv[0]
@@ -75,9 +91,21 @@ version = get_info(basedir)
 print "Got info: %s" % version
 outfile = "%s/appsvcs_integration_v%s-%s_%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"])
 print "Writing to file: %s" % outfile
+print "Processing ASM policies (asm_policies/*.xml)..."
+asm_policies = glob.glob("asm_policies/*.xml")
+
+if len(asm_policies) == 0:
+	print "  no policies found"
+	with open("tmp/asm.build","wt") as out:
+		out.write("\n")
+	out.close()
+else:
+	create_files_include(asm_policies, "tmp/asm.build", "asm_policy" )
+
 with open(outfile,"wt") as out:
 	with open("%s/src/master.template" % basedir) as main_template:
-		process_file(main_template, out, basedir, "")
+		final = process_file(main_template, out, basedir, "")
+		out.write(''.join(final))
 		
 out.close()
 main_template.close()

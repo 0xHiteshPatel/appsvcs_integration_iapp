@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "0.3"
-set IMPLMINORVERSION "014"
+set IMPLMINORVERSION "015"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -722,6 +722,8 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
   debug "\[create_stats\] TMSH CREATE iCall handler"
   tmsh::create sys icall handler periodic publish_stats interval 60 script publish_stats
 }
+
+%insertfile:include/feature_easyASMPolicy.tcl%
 
 # Call the custom_extensions_end proc to allow site-specific customizations
 custom_extensions_end

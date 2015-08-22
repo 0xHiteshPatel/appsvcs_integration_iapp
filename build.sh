@@ -14,4 +14,5 @@ python util/build_tmpl.py `pwd`
 cp tmp/doc.build ./OPTIONS.md
 rm tmp/apl.build
 rm tmp/doc.build
+rm tmp/asm.build
 rmdir tmp

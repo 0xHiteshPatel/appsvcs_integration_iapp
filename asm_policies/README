@@ -1,0 +1,5 @@
+To include ASM policies in your template export the Compact version of the policy from an 
+ASM device and save the file in this directory with a ".xml" extension.  When the template
+is built the .xml files in this directory will be dynamically included in the template.  
+
+The name of the policy with match the filename without the ".xml" extension

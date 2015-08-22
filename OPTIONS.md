@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_008</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_009</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -509,6 +509,15 @@ disabled</td>
   <td>string</td>
   <td></td>
   <td>0.3_008</td>
+</tr>
+<tr>
+  <td>feature.easyASMPolicy</td>
+  <td>$feature__easyASMPolicy</td>
+  <td>The ASM policy name to deploy.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>dynamic_filelist</td>
+  <td></td>
+  <td>0.3_009</td>
 </tr>
 <tr><td colspan=7><b>Section: extensions</b></td></tr>
 <tr>

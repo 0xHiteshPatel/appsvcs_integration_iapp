@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"008",
+	"pres_revision":"009",
 	"sections":[
 		{
 			"name":"intro",
@@ -690,7 +690,17 @@
 							"minver":"0.3_008"
 						}
 					]
-				}				
+				},
+				{
+					"name":"easyASMPolicy",
+					"description":"Security: WAF: Policy Name",
+					"help":"The ASM policy name to deploy.",
+					"type":"dynamic_filelist",
+					"glob":"asm_policies/*.xml",
+					"modes":[1,2,3,4],
+					"minver":"0.3_009",
+					"required":false
+				}								
 			]
 		},
 		{
