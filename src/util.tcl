@@ -257,3 +257,33 @@ proc single_column_table_to_list { table key } {
   }
   return $retlist
 }
+
+# Process a string in the format <option>=<value>[;<option2>=<value2>] and return a 
+# properly formatted TMSH string.  If $tmsh is specified than options will be verified
+# using the object in $template.  This works for things like profiles, but not virtual 
+# servers.  Specifying no value for $tmsh turns off checking
+# Input: $option_str = string to process
+#        $tmsh = the portion of the tmsh command get a list of all-properties
+#        $template = the object name to use as a list of available options
+proc process_options_string { option_str tmsh template } {
+  debug "\[process_options_string\] processing string $option_str"
+  set ret ""
+
+  # Get all the options passed in array format
+  array set options [process_kvp_string $option_str]
+
+  # Get the supported options for a profile type according to the 'default' key in the create_supported array
+  set profileobj [lindex [tmsh::get_config ltm $tmsh $template all-properties] 0]
+  foreach {option value} [array get options] {
+    if { [string length $tmsh] > 0 } {
+      if { [is_valid_profile_option $profileobj $option] == 0 } {
+        error "The option \"$option\" for $tmsh is not valid"
+      }
+    }
+
+    append ret [format "%s \"%s\" " $option $value]
+  }
+  array unset options
+  debug "\[process_options_string\] returning \"$ret\""
+  return $ret
+}

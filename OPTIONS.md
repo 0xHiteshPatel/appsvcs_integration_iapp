@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_009</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_010</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -357,6 +357,15 @@ disabled</td>
   <td>0.3_001</td>
 </tr>
 <tr>
+  <td>vs.ProfileClientSSLAdvOptions</td>
+  <td>$vs__ProfileClientSSLAdvOptions</td>
+  <td>The options to set in the created Client-SSL profile.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_010</td>
+</tr>
+<tr>
   <td>vs.ProfileSecurityLogProfiles</td>
   <td>$vs__ProfileSecurityLogProfiles</td>
   <td>A comma seperated list of existing security logging profiles</td>
@@ -404,6 +413,24 @@ change</td>
   <td>string</td>
   <td></td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>vs.AdvOptions</td>
+  <td>$vs__AdvOptions</td>
+  <td>The options to set in the created Virtual Server.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_010</td>
+</tr>
+<tr>
+  <td>vs.AdvProfiles</td>
+  <td>$vs__AdvProfiles</td>
+  <td>A comma-seperated list of profiles to link to the Virtual Server: <profile_name>[,<profile_name>]</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_010</td>
 </tr>
 <tr><td colspan=7><b>Section: feature</b></td></tr>
 <tr>

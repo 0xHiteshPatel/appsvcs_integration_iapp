@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "0.3"
-set IMPLMINORVERSION "015"
+set IMPLMINORVERSION "016"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -120,6 +120,11 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
   if { [string length $vs__ProfileClientSSLCipherString] > 0 } {
       debug "\[create_client_ssl\]  adding cipher string"
       append cmd [format " ciphers \"%s\"" $vs__ProfileClientSSLCipherString]
+  }
+
+  if { [string length $vs__ProfileClientSSLAdvOptions] > 0 } {
+    debug "\[create_client_ssl\]  processing advanced options string"
+    append cmd [format " %s" [process_options_string $vs__ProfileClientSSLAdvOptions "profile client-ssl" "/Common/clientssl"]]
   }
 
   debug "\[create_client_ssl\]  TMSH CREATE: $cmd"
@@ -473,6 +478,11 @@ foreach {optionvar optioncmd} [array get vs_options_custom] {
   append cmd [generic_add_option "create_virtual\]\[options_custom" [set [subst $optionvar]] "" $optioncmd 1]
 }
 
+if { [string length $vs__AdvOptions] > 0 } {
+  debug "\[create_virtual\]\[adv_options\] processing advanced options string"
+  append cmd [process_options_string $vs__AdvOptions "" ""]
+}
+
 set snatcmd ""
 # Add SNAT options
 if { [string length $vs__SNATConfig] > 0 } {
@@ -624,8 +634,12 @@ if { $clientssl == 2 } {
 
 # Process the vs_profiles array to build the profiles command
 foreach {optionvar optioncmd} [array get vs_profiles] {
-  #debug "\[create_virtual\]\[profiles\] var=$optionvar cmd=$optioncmd"
   append vsprofiles [generic_add_option "create_virtual\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
+}
+
+if { [string length $vs__AdvProfiles] > 0 } {
+  debug "\[create_virtual\]\[adv_profiles\] process advanced profile string" 
+  append vsprofiles [format " %s" [generic_add_option "create_virtual\]\[adv_profiles" $vs__AdvProfiles "" "%s" 1]]    
 }
 
 append vsprofiles " \}"

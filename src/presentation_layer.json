@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"009",
+	"pres_revision":"010",
 	"sections":[
 		{
 			"name":"intro",
@@ -462,6 +462,17 @@
 					"minver":"0.3_001"
 				},
 				{
+					"name":"ProfileClientSSLAdvOptions",
+					"description":"Virtual Server: Client SSL Advanced Options",
+					"help":"The options to set in the created Client-SSL profile.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"0.3_010"
+				},
+				{
 					"name":"ProfileSecurityLogProfiles",
 					"description":"Virtual Server: Security Logging Profiles",
 					"help":"A comma seperated list of existing security logging profiles",
@@ -523,7 +534,29 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
-				}
+				},
+				{
+					"name":"AdvOptions",
+					"description":"Virtual Server: Advanced Options",
+					"help":"The options to set in the created Virtual Server.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"0.3_010"
+				},
+				{
+					"name":"AdvProfiles",
+					"description":"Virtual Server: Advanced Profiles",
+					"help":"A comma-seperated list of profiles to link to the Virtual Server: <profile_name>[,<profile_name>]",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"0.3_010"
+				}	
 			]
 		},
 		{
