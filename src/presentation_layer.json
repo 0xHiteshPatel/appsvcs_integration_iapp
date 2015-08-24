@@ -762,6 +762,7 @@
 					"description":"Security: WAF: Policy Name",
 					"help":"The ASM policy name to deploy.",
 					"type":"dynamic_filelist",
+					"default":"disabled",
 					"glob":"asm_policies/*.xml",
 					"modes":[1,2,3,4],
 					"minver":"0.3_009",

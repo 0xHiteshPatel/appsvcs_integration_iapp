@@ -1,5 +1,5 @@
 # Process the feature__easyASMPolicy option
-if { $feature__easyASMPolicy ne "disabled" } { 
+if { [string length $feature__easyASMPolicy] > 0 && $feature__easyASMPolicy ne "disabled" } { 
   if { ![is_provisioned asm]} {
     error "The ASM module is not provisioned on this device"
   }
