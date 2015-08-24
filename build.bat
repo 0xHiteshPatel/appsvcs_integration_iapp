@@ -10,7 +10,7 @@ echo Generating docs...
 python util/build_doc.py src\presentation_layer.json > OPTIONS.md
 
 echo Assembling template...
-python util\build_tmpl.py "%cd%"
+python util\build_tmpl.py "%cd%" "%1"
 
 del tmp\apl.build
 del tmp\asm.build

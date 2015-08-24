@@ -1,7 +1,7 @@
 cli admin-partitions {
     update-partition Common
 }
-sys application template /Common/appsvcs_integration_v%IMPLVERSION_MAJOR%_%PRESENTATION_REV% {
+sys application template /Common/appsvcs_integration_v%IMPLVERSION_MAJOR%_%PRESENTATION_REV%%NAME_APPEND% {
     actions {
         definition {
             html-help {
