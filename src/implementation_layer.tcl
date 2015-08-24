@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "0.3"
-set IMPLMINORVERSION "017"
+set IMPLMINORVERSION "018"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -236,6 +236,11 @@ foreach {optionvar optioncmd} [array get pool_options] {
   append cmd [generic_add_option "create_pool\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
 }
 
+if { [string length $pool__AdvOptions] > 0 } {
+  debug "\[create_pool\]\[adv_options\] processing advanced options string"
+  append cmd [format " %s" [process_options_string $pool__AdvOptions "" ""]]
+}
+
 debug "\[create_pool\] TMSH CREATE: $cmd"
 tmsh::create $cmd
 
@@ -379,9 +384,9 @@ array set vs_options {
 
 # Set virtual server options we support.  This array allows specifcation of the specific TMSH command format
 array set vs_options_custom {
- "vs__Irules" " rules \{ %s \}"
- "vs__ProfileDefaultPersist" " persist replace-all-with \{ %s \}"
- "vs__ProfileSecurityLogProfiles" " security-log-profiles replace-all-with \{ %s \}"
+ "vs__Irules" " rules \{ %s \} "
+ "vs__ProfileDefaultPersist" " persist replace-all-with \{ %s \} "
+ "vs__ProfileSecurityLogProfiles" " security-log-profiles replace-all-with \{ %s \} "
 }
 
 # Process the vs__ProfileSecurityIPBlacklist option.
@@ -482,7 +487,7 @@ foreach {optionvar optioncmd} [array get vs_options_custom] {
 
 if { [string length $vs__AdvOptions] > 0 } {
   debug "\[create_virtual\]\[adv_options\] processing advanced options string"
-  append cmd [process_options_string $vs__AdvOptions "" ""]
+  append cmd [format " %s" [process_options_string $vs__AdvOptions "" ""]]
 }
 
 set snatcmd ""

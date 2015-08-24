@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_011</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_012</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -165,6 +165,15 @@ weighted-least-connections-member</td>
 drain-disabled,
 disabled</td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>pool.AdvOptions</td>
+  <td>$pool__AdvOptions</td>
+  <td>The options to set in the created Pool.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_012</td>
 </tr>
 <tr><td colspan=7><b>Section: vs</b></td></tr>
 <tr>
