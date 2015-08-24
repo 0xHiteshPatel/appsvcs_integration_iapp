@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_010</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_011</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -384,6 +384,33 @@ disabled</td>
 enabled-block,
 enabled-log</td>
   <td>0.3_008</td>
+</tr>
+<tr>
+  <td>vs.ProfileAccess</td>
+  <td>$vs__ProfileAccess</td>
+  <td>The APM Access Policy to configure</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_011</td>
+</tr>
+<tr>
+  <td>vs.ProfileConnectivity</td>
+  <td>$vs__ProfileConnectivity</td>
+  <td>The APM Connectivity Policy to configure</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_011</td>
+</tr>
+<tr>
+  <td>vs.ProfilePerRequest</td>
+  <td>$vs__ProfilePerRequest</td>
+  <td>The APM Per-Request Policy to configure</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_011</td>
 </tr>
 <tr>
   <td>vs.OptionSourcePort</td>

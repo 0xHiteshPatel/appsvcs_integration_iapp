@@ -374,6 +374,7 @@ array set vs_options {
  "vs__OptionSourcePort" "source-port"
  "vs__OptionConnectionMirroring" "mirror"
  "vs__ProfileFallbackPersist" "fallback-persistence"
+ "vs__ProfilePerRequest" "per-flow-request-access-policy"
 }
 
 # Set virtual server options we support.  This array allows specifcation of the specific TMSH command format
@@ -394,6 +395,7 @@ switch [string tolower $vs__ProfileSecurityIPBlacklist] {
   }
 }
 
+handle_opt_remove_on_redeploy vs__ProfilePerRequest "" "per-flow-request-access-policy"
 handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intelligence-policy"
 
 if { $ipi_create } {
@@ -603,8 +605,16 @@ if { [string length $vs__ProfileServerProtocol] > 0 && $vs__ProfileClientProtoco
   debug "\[create_virtual\]\[proto_profiles\] serverside protocol name=$vs__ProfileServerProtocol context=$serverContext"
 }
 
-# Set virtual server profiles we support.  The format expected is: profiles replace-all-with { <profile1> <profile2> }.  
+
+# Set virtual server profiles we support.  The tmsh format expected is: 
+#    profiles replace-all-with { <profile1> [ { context [clientside|serverside|all] } ] <profile2> } 
 # To achieve this while re-using generic_add_option() we simply pass the var name with a blank option string
+# Profiles that specify a proxy context can be specified in the vs_profiles_contextual array with the value
+#   specifying the proxy context
+array set vs_profiles_contextual {
+   "vs__ProfileConnectivity" "clientside"
+}
+
 array set vs_profiles {
  "vs__ProfileHTTP" ""
  "vs__ProfileOneConnect" ""
@@ -612,6 +622,7 @@ array set vs_profiles {
  "vs__ProfileAnalytics" ""
  "vs__ProfileRequestLogging" ""
  "vs__ProfileServerSSL" ""
+ "vs__ProfileAccess" ""
 }
 
 # Save the base profile string for later use by feature__redirectToHTTPS
@@ -630,6 +641,12 @@ if { $clientssl == 1 } {
 if { $clientssl == 2 } {
   set vs_profiles(vs__ProfileClientSSL) ""
   debug "\[create_virtual\]\[client_ssl_specified\] name=$vs__ProfileClientSSL"
+}
+
+# Process the vs_profiles_contextual array first to make sure profiles that require a proxy
+# context are added first
+foreach {optionvar optioncmd} [array get vs_profiles_contextual] {
+  append vsprofiles [generic_add_option "create_virtual\]\[options" [set [subst $optionvar]] "" " %s { context $optioncmd } " 0]
 }
 
 # Process the vs_profiles array to build the profiles command
