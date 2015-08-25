@@ -273,9 +273,9 @@ proc process_options_string { option_str tmsh template } {
   array set options [process_kvp_string $option_str]
 
   # Get the supported options for a profile type according to the 'default' key in the create_supported array
-  set profileobj [lindex [tmsh::get_config ltm $tmsh $template all-properties] 0]
   foreach {option value} [array get options] {
     if { [string length $tmsh] > 0 } {
+      set profileobj [lindex [tmsh::get_config ltm $tmsh $template all-properties] 0]
       if { [is_valid_profile_option $profileobj $option] == 0 } {
         error "The option \"$option\" for $tmsh is not valid"
       }
