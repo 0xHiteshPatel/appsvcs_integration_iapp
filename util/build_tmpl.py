@@ -49,7 +49,7 @@ def get_info(basedir):
 			'allvars':allvarsstr
 			}
 
-def process_file(fin, fout, basedir, prepend):
+def process_file(fin, fout, basedir, name_append, prepend):
 	print "%sfound insertfile, file=%s" % (prepend, fin.name)
 	ret = []
 	for line in fin:
@@ -57,11 +57,12 @@ def process_file(fin, fout, basedir, prepend):
 		line = re.sub(r'%IMPLVERSION_MINOR%', version["impl_minor"], line)
 		line = re.sub(r'%PRESENTATION_REV%', version["pres_rev"], line)
 		line = re.sub(r'%PRESENTATION_TCL_ALLVARS%', version["allvars"], line)
+		line = re.sub(r'%NAME_APPEND%', name_append, line)
 			
 		match = re.match( r'(.*)\%insertfile:(.*)\%(.*)', line)
 		if match:
 			with open ("%s/%s" % (basedir, match.group(2)), "r") as insertfile:
-				insert = process_file(insertfile, fout, basedir, '%s ' % prepend)
+				insert = process_file(insertfile, fout, basedir, name_append, '%s ' % prepend)
 				#insertdata = insertfile.read()
 				insertfile.close()
 				#line = "%s%s%s" % (match.group(1), re.sub(r'(%insertfile:.*%)', insertdata, line), match.group(3))
@@ -83,22 +84,29 @@ def create_files_include(files, outfile, prefix):
 				out.write("set %s_%s_data {%s}\n\n" % (prefix, just_name, data))
 	out.close()
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
 	print "Usage: %s <base directory>" % sys.argv[0]
 	quit(0)
 
 basedir = sys.argv[1]
 
+if len(sys.argv) == 3 and len(sys.argv[2]) > 0:
+	name_append = "_%s" % sys.argv[2]
+	print "Appending \"%s\" to template name" % name_append
+else:
+	name_append = ""
+
+
 version = get_info(basedir)
 print "Got info: %s" % version
-outfile = "%s/appsvcs_integration_v%s-%s_%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"])
+outfile = "%s/appsvcs_integration_v%s-%s_%s%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"], name_append)
 print "Writing to file: %s" % outfile
 print "Processing ASM policies (asm_policies/*.xml)..."
 asm_policies = glob.glob(os.path.join('asm_policies','*.xml'))
 
 if len(asm_policies) == 0:
 	print "  no policies found"
-	with open(os.path.join('tmp','asm.build'),"wt") as out:
+	with open(os.path.join(basedir, 'tmp','asm.build'),"wt") as out:
 		out.write("\n")
 	out.close()
 else:
@@ -106,7 +114,7 @@ else:
 
 with open(outfile,"wt") as out:
 	with open("%s/src/master.template" % basedir) as main_template:
-		final = process_file(main_template, out, basedir, "")
+		final = process_file(main_template, out, basedir, name_append, "")
 		out.write(''.join(final))
 		
 out.close()
