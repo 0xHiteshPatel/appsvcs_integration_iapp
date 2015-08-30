@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_012</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_013</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -27,6 +27,24 @@
   <td>boolean</td>
   <td></td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>iapp.mode</td>
+  <td>$iapp__mode</td>
+  <td>The mode to use during deployment.  The default setting of auto determines the mode automatically.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_013</td>
+</tr>
+<tr>
+  <td>iapp.routeDomain</td>
+  <td>$iapp__routeDomain</td>
+  <td>The route domain to use during deployment.  Setting to 'auto' determines the Route Domain automatically using the partition default-route-domain.  In APIC mode we determine the RD from the config since it doesn't set default-route-domain</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_013</td>
 </tr>
 <tr><td colspan=7><b>Section: pool</b></td></tr>
 <tr>

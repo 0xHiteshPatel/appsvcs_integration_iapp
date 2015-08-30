@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"012",
+	"pres_revision":"013",
 	"sections":[
 		{
 			"name":"intro",
@@ -39,7 +39,29 @@
 					"display":"large",
 					"modes":[1,2],
 					"minver":"0.3_001"
-				}
+				},
+				{
+					"name":"mode",
+					"description":"iApp: Mode",
+					"help":"The mode to use during deployment.  The default setting of auto determines the mode automatically.",
+					"type":"string",
+					"default":"auto",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"0.3_013"
+				},					
+				{
+					"name":"routeDomain",
+					"description":"iApp: Route Domain",
+					"help":"The route domain to use during deployment.  Setting to 'auto' determines the Route Domain automatically using the partition default-route-domain.  In APIC mode we determine the RD from the config since it doesn't set default-route-domain",
+					"type":"string",
+					"default":"auto",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"0.3_013"
+				}						
 			]
 		},
 		{

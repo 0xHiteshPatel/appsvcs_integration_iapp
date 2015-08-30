@@ -15,10 +15,28 @@ proc get_mode { } {
   set folder [tmsh::pwd]
   set app $tmsh::app_name
   set partition [lindex [split $folder /] 1]
-  set routedomainid 0
   set newdeploy [catch {tmsh::get_config sys application service /$partition/$app.app/$app}]
+  debug "\[get_mode\] starting folder=$folder partition=$partition newdeploy=$newdeploy"
 
-  debug "\[get_mode\] starting folder=$folder partition=$partition routedomainid=$routedomainid newdeploy=$newdeploy"
+  # Set the routedomain to the partition default-route-domain
+  if { [string tolower $::iapp__routeDomain] eq "auto"} {
+    set obj [tmsh::get_config auth partition $partition default-route-domain]
+    set routedomainid [tmsh::get_field_value [lindex $obj 0] default-route-domain]
+    debug "\[get_mode\]\[set_route_domain\] Using partition default-route-domain; routedomainid=$routedomainid"
+  } else { 
+    set routedomainid $::iapp__routeDomain
+    debug "\[get_mode\]\[set_route_domain\] Using route domain override; routedomainid=$routedomainid"
+  }
+
+  # Check for a mode override in $iapp__mode variable
+  if { [string tolower $::iapp__mode] ne "auto" } {
+    if { $::iapp__mode > 0 && $::iapp__mode < 4 } {
+      debug "\[get_mode\]\[mode_override\] Mode override detected.  Setting mode to $::iapp__mode"
+      return [list $::iapp__mode $folder $partition $routedomainid $newdeploy]
+    } else {
+      error "The mode override specified is invalid."
+    }
+  }
   
   # Check for a partition that starts with apic_ and return APIC mode (3) and RD if found
   if { [string match -nocase "apic_*" $partition] } {
