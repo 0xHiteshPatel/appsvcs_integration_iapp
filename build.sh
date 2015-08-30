@@ -9,7 +9,7 @@ echo "Generating docs..."
 python util/build_doc.py src/presentation_layer.json > tmp/doc.build
 
 echo "Assembling template..."
-python util/build_tmpl.py `pwd` $1
+python util/build_tmpl.py "`pwd`" $1
 
 cp tmp/doc.build ./OPTIONS.md
 rm tmp/apl.build
