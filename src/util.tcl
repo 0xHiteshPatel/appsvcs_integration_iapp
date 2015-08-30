@@ -199,8 +199,14 @@ proc get_var { name } {
 # Input: $name = name of variable    
 #        $checkvalue = the string that disables the option
 #        $option = TMSH name of the option
+#        $module = the BIG-IP module that enables the option
 # Return: 1=Option removed; 0=no action taken
-proc handle_opt_remove_on_redeploy { name checkvalue option } {
+proc handle_opt_remove_on_redeploy { name checkvalue option module } {
+  if { ! [is_provisioned $module] } {
+    debug "\[handle_opt_remove_on_redeploy\] $name, $module not provisioned, skipping"
+    return 0
+  }
+
   if { [set [subst ::$name]] == $checkvalue && \
        [is_new_value $name] && \
        $::redeploy } {

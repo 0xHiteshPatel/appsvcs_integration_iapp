@@ -400,8 +400,8 @@ switch [string tolower $vs__ProfileSecurityIPBlacklist] {
   }
 }
 
-handle_opt_remove_on_redeploy vs__ProfilePerRequest "" "per-flow-request-access-policy"
-handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intelligence-policy"
+handle_opt_remove_on_redeploy vs__ProfilePerRequest "" "per-flow-request-access-policy" "apm"
+handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intelligence-policy" "ltm"
 
 if { $ipi_create } {
   debug "\[create_virtual\]\[ip_blacklist\] ipi_action=$ipi_action, creating IPI policy"
@@ -415,9 +415,7 @@ if { $ipi_create } {
 
 
 # Process the feature__easyL4Firewall option
-if { [is_provisioned afm] } {
-  handle_opt_remove_on_redeploy feature__easyL4Firewall "disabled" "fw-enforced-policy"
-}
+handle_opt_remove_on_redeploy feature__easyL4Firewall "disabled" "fw-enforced-policy" "afm"
 
 if { $feature__easyL4Firewall == "enabled" } {
   debug "\[create_virtual\]\[l4_firewall\] creating FW policy"
