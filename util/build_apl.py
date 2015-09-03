@@ -66,6 +66,23 @@ def process_field (field, section, tab):
 		else:
   			print "\t\t%s\"%s\"" % (tab, filenames[-1])
 		print "\t%s}" % tab
+	elif field["type"] == "dynamic_filelist_multi":
+		if os.sep != "/":
+			field["glob"] = field["glob"].replace("/","\\")
+			
+		files = glob.glob(field["glob"])
+		filenames = []
+		for filename in files:
+			name_parts = filename.split(os.sep)
+			file_parts = name_parts[1].split('.')
+			filenames.append(file_parts[0])
+
+		print "\t%smultichoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+		for choice in filenames[:-1]:
+  			print "\t\t%s\"%s\"," % (tab, choice)
+		else:
+  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
+		print "\t%s}" % tab	
 	else:
 		print "Invalid type: %s field=%s section=%s" % (field["type"], field["name"], section["name"])
 		sys.exit()

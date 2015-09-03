@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_013</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_014</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -467,6 +467,15 @@ change</td>
   <td>string</td>
   <td></td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>vs.BundledIrules</td>
+  <td>$vs__BundledIrules</td>
+  <td>The bundled iRules to deploy.  Ordering is preserved</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>dynamic_filelist_multi</td>
+  <td></td>
+  <td>0.3_014</td>
 </tr>
 <tr>
   <td>vs.AdvOptions</td>

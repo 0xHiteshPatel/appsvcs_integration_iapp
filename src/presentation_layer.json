@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"013",
+	"pres_revision":"014",
 	"sections":[
 		{
 			"name":"intro",
@@ -600,6 +600,16 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
+				},
+				{
+					"name":"BundledIrules",
+					"description":"Virtual Server: Bundled iRules",
+					"help":"The bundled iRules to deploy.  Ordering is preserved",
+					"type":"dynamic_filelist_multi",
+					"glob":"irules/*.irule",
+					"modes":[1,2,3,4],
+					"minver":"0.3_014",
+					"required":false
 				},
 				{
 					"name":"AdvOptions",

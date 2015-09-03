@@ -471,6 +471,34 @@ if { $feature__easyL4Firewall == "enabled" } {
   array set vs_options [list fw_name fw-enforced-policy]  
 }
 
+# Process bundled iRules
+if { [string length $vs__BundledIrules] > 0 } { 
+
+%insertfile:tmp/irules.build%
+
+  set bundledirule_map [list %APP_PATH%      $app_path \
+                             %APP_NAME%      $app \
+                             %VS_NAME%       $vs__Name \
+                             %POOL_NAME%     $pool__Name \
+                             %PARTITION%     $partition ]
+
+  foreach bundledirule $vs__BundledIrules {
+    debug "\[create_virtual\]\[bundled_irule\] deploying bundled iRule $bundledirule"
+    set bundled_irule_varname [format "irule_include_%s_data" $bundledirule]
+
+    set bundled_irule_src [string map $bundledirule_map [set [subst $bundled_irule_varname]]]
+
+    set bundledirulecmd [format "ltm rule %s/%s \{%s\}" $app_path $bundledirule $bundled_irule_src]
+    #debug "\[create_virtual\]\[bundled_irule\] TMSH CREATE: $bundledirulecmd"
+    tmsh::create $bundledirulecmd
+    if { [string length $vs__Irules] > 0 } {
+      append vs__Irules ","
+    }
+    append vs__Irules [format "%s/%s" $app_path $bundledirule]
+  }
+  debug "\[create_virtual\]\[bundled_irule\] vs__Irules modified to \"$vs__Irules\""
+}
+
 # Process the vs_options array
 foreach {optionvar optioncmd} [array get vs_options] {
   #debug "\[create_virtual\]\[options\] var=$optionvar cmd=$optioncmd"

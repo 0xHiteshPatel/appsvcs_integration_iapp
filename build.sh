@@ -14,5 +14,6 @@ python util/build_tmpl.py "`pwd`" $1
 cp tmp/doc.build ./OPTIONS.md
 rm tmp/apl.build
 rm tmp/doc.build
+rm tmp/irules.build
 rm tmp/asm.build
 rmdir tmp

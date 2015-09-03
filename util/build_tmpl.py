@@ -101,6 +101,19 @@ version = get_info(basedir)
 print "Got info: %s" % version
 outfile = "%s/appsvcs_integration_v%s-%s_%s%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"], name_append)
 print "Writing to file: %s" % outfile
+
+print "Processing iRules (irules/*.irule)..."
+irules = glob.glob(os.path.join('irules','*.irule'))
+
+if len(irules) == 0:
+	print "  no iRules found"
+	with open(os.path.join(basedir, 'tmp','irules.build'),"wt") as out:
+		out.write("\n")
+	out.close()
+else:
+	create_files_include(irules, os.path.join('tmp','irules.build'), "irule_include" )
+
+
 print "Processing ASM policies (asm_policies/*.xml)..."
 asm_policies = glob.glob(os.path.join('asm_policies','*.xml'))
 
@@ -111,6 +124,7 @@ if len(asm_policies) == 0:
 	out.close()
 else:
 	create_files_include(asm_policies, os.path.join('tmp','asm.build'), "asm_policy" )
+
 
 with open(outfile,"wt") as out:
 	with open("%s/src/master.template" % basedir) as main_template:

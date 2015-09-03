@@ -1,0 +1,18 @@
+To include iRules in your template save the file in this directory with a ".irule" extension.  
+When the template is built the .irule files in this directory will be dynamically included 
+in the template.  
+
+The name of the irule in the template will match the filename without the ".irule" extension
+
+Any bundled iRules that are selected for deployment will be appended AFTER any iRules included 
+in the $vs__iRules variable
+
+The following variables will be dynamically substituted on deployment with the relevant values:
+
+ Variable      |   Description
+------------------------------------------------------------------
+%APP_PATH%     | The full path to the iApp (Ex: /Common/myiApp.app)
+%APP_NAME%     | The iApp name 
+%VS_NAME%      | The name of the deployed virtual server
+%POOL_NAME%    | The name of the deployed pool
+%PARTITION%    | The partition we deployed under
