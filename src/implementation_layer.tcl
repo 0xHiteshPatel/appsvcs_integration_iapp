@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "0.3"
-set IMPLMINORVERSION "021"
+set IMPLMINORVERSION "022"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -565,9 +565,16 @@ append cmd $snatcmd
 # Process feature__insertXForwardedFor
 if { $feature__insertXForwardedFor eq "enabled"} {
   if { [regexp -nocase {^create:} $vs__ProfileHTTP] } {
-    error "HTTP Profile customization cannot be used with the 'HTTP: Insert X-Forwarded-For Header'.  Add 'insert-xforwarded-for=enabled' option instead"
+    if { ! [regexp -nocase {insert-xforwarded-for=enabled} $vs__ProfileHTTP] } {
+      debug "\[create_virtual\]\[feature_insertXForwardedFor\] Appending insert-xforwarded-for=enabled to existing HTTP profile customization string"
+      append vs__ProfileHTTP ";insert-xforwarded-for=enabled"
+    } else {
+      debug "\[create_virtual\]\[feature_insertXForwardedFor\] insert-xforwarded-for=enabled alredy in HTTP profile customization string... doing nothing"
+    }
+  } else {
+    debug "\[create_virtual\]\[feature_insertXForwardedFor\] Creating HTTP profile customization string \"create:insert-xforwarded-for=enabled;defaults-from=$vs__ProfileHTTP\""
+    set vs__ProfileHTTP [format "create:insert-xforwarded-for=enabled;defaults-from=%s" $vs__ProfileHTTP]
   }
-  set vs__ProfileHTTP [format "create:insert-xforwarded-for=enabled;defaults-from=%s" $vs__ProfileHTTP]
 }
 
 # Process the create: option for profiles in the array below.  
