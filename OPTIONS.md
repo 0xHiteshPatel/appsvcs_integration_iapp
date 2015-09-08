@@ -404,7 +404,7 @@ disabled</td>
 <tr>
   <td>vs.ProfileSecurityIPBlacklist</td>
   <td>$vs__ProfileSecurityIPBlacklist</td>
-  <td>Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.</td>
+  <td>Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.  A pre-exsiting policy may be specified by entering it's full path (ex: /Common/my_ipi_policy)</td>
   <td>[1, 2, 3, 4]</td>
   <td>editchoice</td>
   <td></td>

@@ -519,7 +519,7 @@
 				{
 					"name":"ProfileSecurityIPBlacklist",
 					"description":"Virtual Server: IP Blacklist Profile",
-					"help":"Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.",
+					"help":"Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.  A pre-exsiting policy may be specified by entering it's full path (ex: /Common/my_ipi_policy)",
 					"type":"editchoice",
 					"default":"none",
 					"choices":[
