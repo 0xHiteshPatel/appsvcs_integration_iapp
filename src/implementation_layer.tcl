@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "0.3"
-set IMPLMINORVERSION "020"
+set IMPLMINORVERSION "021"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -264,35 +264,52 @@ if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $
   set feature__insertXForwardedFor enabled
 }
 
+# Process the vs__ProfileSecurityIPBlacklist option.
+set ipi_mode 1
+switch -glob [string tolower $vs__ProfileSecurityIPBlacklist] {
+  enabled-block { set ipi_action "drop" }
+  enabled-log   { set ipi_action "accept" }
+  none          { set ipi_mode 0 }
+  /*            { set ipi_mode 2 }
+  default { 
+    set ipi_create 0 
+    set vs__ProfileSecurityIPBlacklist none
+  }
+}
+
 # Process feature__easyL4Firewall options
+set afm_auto_ipistring ""
 if { [is_provisioned afm] } {
   switch [string tolower $feature__easyL4Firewall] {
     auto {
-      debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block"
+      debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block (or user-specific IPI policy if specified)"
       set feature__easyL4Firewall enabled
-      change_var vs__ProfileSecurityIPBlacklist enabled-block
+      set afm_auto_ipistring "enabled-block"
     }
     base { 
       debug "\[create_virtual\]\[feature__easyL4Firewall\] found base flag, setting feature to enabled, vs__ProfileSecurityIPBlacklist to disabled"
       set feature__easyL4Firewall enabled
-      change_var vs__ProfileSecurityIPBlacklist disabled
+      set afm_auto_ipistring "disabled"
     }
     base+ip_blacklist_block { 
       debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block"
       set feature__easyL4Firewall enabled
-      change_var vs__ProfileSecurityIPBlacklist enabled-block
+      set afm_auto_ipistring "enabled-block"
     }
     base+ip_blacklist_log { 
       debug "\[create_virtual\]\[feature__easyL4Firewall\] found base+ipblacklist_log option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-log"
       set feature__easyL4Firewall enabled
-      change_var vs__ProfileSecurityIPBlacklist enabled-log
+      set afm_auto_ipistring "enabled-log"
     }
     default { 
       if { [get_var feature__easyL4Firewall] == "auto"} {
-        change_var vs__ProfileSecurityIPBlacklist disabled
+        set afm_auto_ipistring "disabled"
       }
       set feature__easyL4Firewall disabled 
     }
+  }
+  if { $ipi_mode < 2 } {
+    change_var vs__ProfileSecurityIPBlacklist $afm_auto_ipistring
   }
 } else {
   debug "\[create_virtual\]\[feature__easyL4Firewall\] AFM not provisioned, skipping"
@@ -389,21 +406,11 @@ array set vs_options_custom {
  "vs__ProfileSecurityLogProfiles" " security-log-profiles replace-all-with \{ %s \} "
 }
 
-# Process the vs__ProfileSecurityIPBlacklist option.
-set ipi_create 1
-switch [string tolower $vs__ProfileSecurityIPBlacklist] {
-  enabled-block { set ipi_action "drop" }
-  enabled-log { set ipi_action "accept" }
-  default { 
-    set ipi_create 0 
-    set vs__ProfileSecurityIPBlacklist none
-  }
-}
-
 handle_opt_remove_on_redeploy vs__ProfilePerRequest "" "per-flow-request-access-policy" "apm"
 handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intelligence-policy" "ltm"
 
-if { $ipi_create } {
+# Process the vs__ProfileSecurityIPBlacklist option according to $ipi_mode set above
+if { $ipi_mode == 1 } {
   debug "\[create_virtual\]\[ip_blacklist\] ipi_action=$ipi_action, creating IPI policy"
   set ipi_name [create_obj_name "ip_blacklist"]
   set ipi_cmd [format "security ip-intelligence policy %s default-action %s default-log-blacklist-hit-only yes" $ipi_name $ipi_action]
@@ -413,6 +420,10 @@ if { $ipi_create } {
   array set vs_options [list vs__ProfileSecurityIPBlacklist ip-intelligence-policy]
 } 
 
+if { $ipi_mode == 2 } {
+  debug "\[create_virtual\]\[ip_blacklist\] adding existing IPI policy $vs__ProfileSecurityIPBlacklist"
+  array set vs_options [list vs__ProfileSecurityIPBlacklist ip-intelligence-policy]
+}
 
 # Process the feature__easyL4Firewall option
 handle_opt_remove_on_redeploy feature__easyL4Firewall "disabled" "fw-enforced-policy" "afm"

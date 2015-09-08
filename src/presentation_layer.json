@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"014",
+	"pres_revision":"015",
 	"sections":[
 		{
 			"name":"intro",
@@ -520,7 +520,7 @@
 					"name":"ProfileSecurityIPBlacklist",
 					"description":"Virtual Server: IP Blacklist Profile",
 					"help":"Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.",
-					"type":"choice",
+					"type":"editchoice",
 					"default":"none",
 					"choices":[
 						"none",
@@ -529,7 +529,7 @@
 						],
 					"required":false,
 					"modes":[1,2,3,4],
-					"minver":"0.3_008"					
+					"minver":"0.3_015"					
 				},
 				{
 					"name":"ProfileAccess",
@@ -743,7 +743,7 @@
 				{
 					"name":"easyL4Firewall",
 					"description":"Security: Firewall: Configure L4 Firewall Policy",
-					"help":"Configure a AFM L4 Firewall policy.  The 'base' option creates a policy that allows traffic to the Virtual Server with optional Blacklist and Source addresses specified in the following fields.  The base+ip_blacklist options also configure an IP Intelligence Blacklist policy in either blocking or logging mode",
+					"help":"Configure a AFM L4 Firewall policy.  The 'base' option creates a policy that allows traffic to the Virtual Server with optional Blacklist and Source addresses specified in the following fields.  The base+ip_blacklist options also configure an IP Intelligence Blacklist policy in either blocking or logging mode.  The auto mode is equivalent to the base+ip_blacklist_block option with the exception that if a user-specfic IPI policy is specified it will be preserved",
 					"type":"choice",
 					"default":"auto",
 					"required":false,

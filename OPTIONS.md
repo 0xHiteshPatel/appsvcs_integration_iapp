@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_014</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_015</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -406,11 +406,9 @@ disabled</td>
   <td>$vs__ProfileSecurityIPBlacklist</td>
   <td>Configuration for the IP Intelligence Dynamic IP Blacklist.  An existing subscription is required for this feature.</td>
   <td>[1, 2, 3, 4]</td>
-  <td>choice</td>
-  <td>none,
-enabled-block,
-enabled-log</td>
-  <td>0.3_008</td>
+  <td>editchoice</td>
+  <td></td>
+  <td>0.3_015</td>
 </tr>
 <tr>
   <td>vs.ProfileAccess</td>
@@ -570,7 +568,7 @@ enabled-preload-subdomain</td>
 <tr>
   <td>feature.easyL4Firewall</td>
   <td>$feature__easyL4Firewall</td>
-  <td>Configure a AFM L4 Firewall policy.  The 'base' option creates a policy that allows traffic to the Virtual Server with optional Blacklist and Source addresses specified in the following fields.  The base+ip_blacklist options also configure an IP Intelligence Blacklist policy in either blocking or logging mode</td>
+  <td>Configure a AFM L4 Firewall policy.  The 'base' option creates a policy that allows traffic to the Virtual Server with optional Blacklist and Source addresses specified in the following fields.  The base+ip_blacklist options also configure an IP Intelligence Blacklist policy in either blocking or logging mode.  The auto mode is equivalent to the base+ip_blacklist_block option with the exception that if a user-specfic IPI policy is specified it will be preserved</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>auto,

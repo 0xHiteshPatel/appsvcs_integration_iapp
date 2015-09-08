@@ -49,6 +49,14 @@ def process_field (field, section, tab):
 		else:
   			print "\t\t%s\"%s\"" % (tab, templist[-1])
 		print "\t%s}" % tab
+	elif field["type"] == "editchoice":
+		print "\t%seditchoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+		templist = field["choices"]
+		for choice in templist[:-1]:
+  			print "\t\t%s\"%s\"," % (tab, choice)
+		else:
+  			print "\t\t%s\"%s\"" % (tab, templist[-1])
+		print "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist":
 		if os.sep != "/":
 			field["glob"] = field["glob"].replace("/","\\")
