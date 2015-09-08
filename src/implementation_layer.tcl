@@ -191,8 +191,9 @@ if { $nummembers == 0 } {
     set state $column(State)
     set ratio $column(Ratio)
     
-    # Add a route domain if it wasn't included
-    if {![has_routedomain $ip]} {
+    # Add a route domain if it wasn't included and we don't already have a node object created
+    set node_status [catch {tmsh::get_config ltm node /Common/$ip}]
+    if { $node_status == 1 && ![has_routedomain $ip]} {
       set ip "$ip%$rd"
     }
 

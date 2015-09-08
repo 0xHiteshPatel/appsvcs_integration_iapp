@@ -186,8 +186,8 @@
 					"fields":[
 						{
 							"name":"IPAddress",
-							"description":"IP:",
-							"help":"IP Address of the Pool Member",
+							"description":"IP/Node Name:",
+							"help":"IP Address OR Node Name of the Pool Member",
 							"type":"string",
 							"default":"10.0.0.100",
 							"required":true,
@@ -217,7 +217,6 @@
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
-
 						{
 							"name":"Ratio",
 							"description":"Ratio:",

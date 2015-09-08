@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_015</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_016</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -140,7 +140,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.Members.IPAddress</td>
   <td>$pool.Members__IPAddress</td>
-  <td>IP Address of the Pool Member</td>
+  <td>IP Address OR Node Name of the Pool Member</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
