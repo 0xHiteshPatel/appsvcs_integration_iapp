@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "0.3"
-set IMPLMINORVERSION "022"
+set IMPLMINORVERSION "023"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -484,7 +484,7 @@ if { $feature__easyL4Firewall == "enabled" } {
 }
 
 # Process bundled iRules
-if { [string length $vs__BundledIrules] > 0 } { 
+if { [string length $vs__BundledIrules] > 0 && ![string match *no\ bundled\ items* $vs__BundledIrules]} { 
 
 %insertfile:tmp/irules.build%
 

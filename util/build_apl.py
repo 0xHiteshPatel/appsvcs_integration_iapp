@@ -69,10 +69,15 @@ def process_field (field, section, tab):
 			filenames.append(file_parts[0])
 
 		print "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
-		for choice in filenames[:-1]:
-  			print "\t\t%s\"%s\"," % (tab, choice)
-		else:
-  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
+
+		if len(files) > 0:
+			for choice in filenames[:-1]:
+	  			print "\t\t%s\"%s\"," % (tab, choice)
+			else:
+	  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
+	  	else:
+	  		print "\t\t%s\"disabled\"" % tab
+
 		print "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist_multi":
 		if os.sep != "/":
@@ -86,10 +91,13 @@ def process_field (field, section, tab):
 			filenames.append(file_parts[0])
 
 		print "\t%smultichoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
-		for choice in filenames[:-1]:
-  			print "\t\t%s\"%s\"," % (tab, choice)
-		else:
-  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
+		if len(files) > 0:
+			for choice in filenames[:-1]:
+	  			print "\t\t%s\"%s\"," % (tab, choice)
+			else:
+	  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
+	  	else:
+	  		print "\t\t%s\"** no bundled items **\"" % tab
 		print "\t%s}" % tab	
 	else:
 		print "Invalid type: %s field=%s section=%s" % (field["type"], field["name"], section["name"])
