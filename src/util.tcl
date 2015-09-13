@@ -202,7 +202,7 @@ proc is_new_value { name } {
 # Input: $name = name of variable
 # Return: $string = value of variable
 proc get_var { name } {
-  if { $::mode != 1 } {
+  if { $::mode != 1 || $::newdeploy == 1} {
     return ""
   }
 
