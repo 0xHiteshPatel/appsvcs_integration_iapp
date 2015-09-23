@@ -1,6 +1,6 @@
 {
-	"tmpl_majorversion":"0.3",
-	"pres_revision":"016",
+	"tmpl_majorversion":"1.0",
+	"pres_revision":"001",
 	"sections":[
 		{
 			"name":"intro",
@@ -614,7 +614,7 @@
 				{
 					"name":"BundledIrules",
 					"description":"Virtual Server: Bundled iRules",
-					"help":"The bundled iRules to deploy.  Ordering is preserved",
+					"help":"The bundled iRules to deploy.  Ordering is preserved.  See irules/README for more info.",
 					"type":"dynamic_filelist_multi",
 					"glob":"irules/*.irule",
 					"modes":[1,2,3,4],
@@ -813,7 +813,7 @@
 				{
 					"name":"easyASMPolicy",
 					"description":"Security: WAF: Policy Name",
-					"help":"The ASM policy name to deploy.",
+					"help":"The bundled ASM policy name to deploy.  See asm_policies/README for more info.",
 					"type":"dynamic_filelist",
 					"glob":"asm_policies/*.xml",
 					"modes":[1,2,3,4],

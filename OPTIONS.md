@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_016</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v1.0_001</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -478,7 +478,7 @@ change</td>
 <tr>
   <td>vs.BundledIrules</td>
   <td>$vs__BundledIrules</td>
-  <td>The bundled iRules to deploy.  Ordering is preserved</td>
+  <td>The bundled iRules to deploy.  Ordering is preserved.  See irules/README for more info.</td>
   <td>[1, 2, 3, 4]</td>
   <td>dynamic_filelist_multi</td>
   <td></td>
@@ -610,7 +610,7 @@ disabled</td>
 <tr>
   <td>feature.easyASMPolicy</td>
   <td>$feature__easyASMPolicy</td>
-  <td>The ASM policy name to deploy.</td>
+  <td>The bundled ASM policy name to deploy.  See asm_policies/README for more info.</td>
   <td>[1, 2, 3, 4]</td>
   <td>dynamic_filelist</td>
   <td></td>
