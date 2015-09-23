@@ -9,7 +9,7 @@ Deployment Control:
  - Deployment mode override
  - Route Domain support
 
-L4-7 Functionality
+L4-7 Functionality:
  Statistics:
   - TLS/SSL
   - HTTP
@@ -26,6 +26,10 @@ L4-7 Functionality
  HTTP/HTTPS L7 Security:
   - HTTP Strict Transport Security Header Insertion
   - Web Application Firewall (ASM) policy bundling/deployment
+
+Custom Extensions:
+ - Extensibility through custom TCL scripting
+   - See include/custom_extensions.tcl for more info
 
 Virtual Server Options:
  - Administrative Attributes:
