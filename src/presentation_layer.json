@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"0.3",
-	"pres_revision":"015",
+	"pres_revision":"016",
 	"sections":[
 		{
 			"name":"intro",
@@ -530,6 +530,17 @@
 					"modes":[1,2,3,4],
 					"minver":"0.3_015"					
 				},
+				{
+					"name":"ProfileSecurityDoS",
+					"description":"Virtual Server: Security: DoS Profile",
+					"help":"The DoS Protection Policy to configure",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"0.3_016"					
+				},				
 				{
 					"name":"ProfileAccess",
 					"description":"Virtual Server: Access Profile",

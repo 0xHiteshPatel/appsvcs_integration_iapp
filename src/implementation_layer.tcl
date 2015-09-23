@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "0.3"
-set IMPLMINORVERSION "024"
+set IMPLMINORVERSION "025"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -673,6 +673,7 @@ array set vs_profiles {
  "vs__ProfileRequestLogging" ""
  "vs__ProfileServerSSL" ""
  "vs__ProfileAccess" ""
+ "vs__ProfileSecurityDoS" ""
 }
 
 # Save the base profile string for later use by feature__redirectToHTTPS

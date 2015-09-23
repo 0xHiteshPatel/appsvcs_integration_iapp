@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v0.3_015</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v0.3_016</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -409,6 +409,15 @@ disabled</td>
   <td>editchoice</td>
   <td></td>
   <td>0.3_015</td>
+</tr>
+<tr>
+  <td>vs.ProfileSecurityDoS</td>
+  <td>$vs__ProfileSecurityDoS</td>
+  <td>The DoS Protection Policy to configure</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_016</td>
 </tr>
 <tr>
   <td>vs.ProfileAccess</td>
