@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v1.0_001</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v1.0_002</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -172,6 +172,15 @@ weighted-least-connections-member</td>
   <td>string</td>
   <td></td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>pool.Members.PriorityGroup</td>
+  <td>$pool.Members__PriorityGroup</td>
+  <td>The Priority Group for the Pool Member.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.0_002</td>
 </tr>
 <tr>
   <td>pool.Members.State</td>

@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"1.0",
-	"pres_revision":"001",
+	"pres_revision":"002",
 	"sections":[
 		{
 			"name":"intro",
@@ -228,6 +228,17 @@
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
+						{
+							"name":"PriorityGroup",
+							"description":"Priority Group:",
+							"help":"The Priority Group for the Pool Member.",
+							"type":"string",
+							"default":"0",
+							"required":true,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"1.0_002"
+						},						
 						{
 							"name":"State",
 							"description":"State:",

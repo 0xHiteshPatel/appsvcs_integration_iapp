@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.0"
-set IMPLMINORVERSION "001"
+set IMPLMINORVERSION "002"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -54,6 +54,7 @@ array set table_defaults {
         Port 80
         ConnectionLimit 0
         Ratio 1
+        PriorityGroup 0
     }
 }
 array set pool_state {
@@ -190,7 +191,8 @@ if { $nummembers == 0 } {
     set connlimit $column(ConnectionLimit)
     set state $column(State)
     set ratio $column(Ratio)
-    
+    set prigrp $column(PriorityGroup)
+
     # Add a route domain if it wasn't included and we don't already have a node object created
     set node_status [catch {tmsh::get_config ltm node /Common/$ip}]
     if { $node_status == 1 && ![has_routedomain $ip]} {
@@ -204,7 +206,7 @@ if { $nummembers == 0 } {
       set ip $column(Port)
       debug "\[create_pool\]\[member_str\]  fixing ip=$ip port=$port"
     }
-    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit ratio=$ratio state=$state"
+    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit ratio=$ratio prigrp=$prigrp state=$state"
     
     # If we don't get a port in the pool member table than use the template value for pool__MemberDefaultPort
     if { [string length $port] == 0} {
@@ -217,7 +219,7 @@ if { $nummembers == 0 } {
       }
     }
 
-    append memberstr [format " %s:%s \{ connection-limit %s ratio %s %s\} " $ip $port $connlimit $ratio $::pool_state($state)]
+    append memberstr [format " %s:%s \{ connection-limit %s ratio %s priority-group %s %s\} " $ip $port $connlimit $ratio $prigrp $::pool_state($state)]
   }
   append memberstr " \} "
 }
