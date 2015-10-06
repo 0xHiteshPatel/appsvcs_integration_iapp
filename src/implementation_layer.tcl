@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "001"
+set IMPLMINORVERSION "002"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -138,6 +138,12 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
     set clientssl 2
   } else {
     set clientssl 0
+    if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__ProfileClientSSLCert] == 0 } {
+      error "A client-ssl key was specified without a client-ssl certifcate"
+    }
+    if { [string length $vs__ProfileClientSSLKey] == 0 && [string length $vs__ProfileClientSSLCert] > 0 } {
+      error "A client-ssl certifcate was specified without a client-ssl key"
+    }
     debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
   }
 }
