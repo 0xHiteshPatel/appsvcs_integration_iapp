@@ -1,6 +1,6 @@
 {
-	"tmpl_majorversion":"1.0",
-	"pres_revision":"002",
+	"tmpl_majorversion":"1.1dev",
+	"pres_revision":"001",
 	"sections":[
 		{
 			"name":"intro",
