@@ -1,5 +1,5 @@
 Application Services Integration iApp
-Release v1.0_001
+Release v1.1dev_002
 
 Supported Features
 
@@ -100,6 +100,7 @@ Pool Options:
    - Port
    - Connection Limit
    - Ratio
+   - Priority Groups
    - Administrative State
  - Advanced Option Support
    - Access to any TMSH configurable attribute
