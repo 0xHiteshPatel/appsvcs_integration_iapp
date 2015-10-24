@@ -14,5 +14,7 @@ python util\build_tmpl.py "%cd%" "%1"
 
 del tmp\apl.build
 del tmp\asm.build
+del tmp\irules.build
+
 rmdir tmp
 
