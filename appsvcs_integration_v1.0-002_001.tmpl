@@ -15,7 +15,7 @@ sys application template /Common/appsvcs_integration_v1.0_001 {
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.0"
-set IMPLMINORVERSION "001"
+set IMPLMINORVERSION "002"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "001"
 
@@ -652,6 +652,12 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
     set clientssl 2
   } else {
     set clientssl 0
+    if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__ProfileClientSSLCert] == 0 } {
+      error "A client-ssl key was specified without a client-ssl certifcate"
+    }
+    if { [string length $vs__ProfileClientSSLKey] == 0 && [string length $vs__ProfileClientSSLCert] > 0 } {
+      error "A client-ssl certifcate was specified without a client-ssl key"
+    }
     debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
   }
 }
@@ -1488,6 +1494,10 @@ set logprefix "\[appsvcs_postdeploy_asm\]\[$app\]"
 set systemTime [clock seconds]
 puts "$logprefix Starting at [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S]"
 
+if { [file exists $filename] == 0 } {
+	puts "$logprefix Policy file not found, exiting (this is normal on the secondary device)"
+	exit 0
+}
 
 tmsh::cd $app_path
 puts "$logprefix Setting iCall handler to inactive..."
@@ -1566,10 +1576,10 @@ section iapp {
 }
 
 section pool {
-	string addr required display "large" validator "IpAddress" default "172.16.0.231"
+	string addr required display "large" validator "IpAddress" default ""
 	string mask required display "large" validator "IpAddress" default "255.255.255.255"
 	string port required display "small" validator "PortNumber" default "443"
-	string Name required display "xxlarge" default "my_pool"
+	string Name display "xxlarge" default ""
 	string Description display "xxlarge" default "pooldescr"
 	string Monitor display "large" default "/Common/http"
 	choice LbMethod display "xxlarge" default "round-robin" {
@@ -1594,7 +1604,7 @@ section pool {
 	}
 	string MemberDefaultPort display "small" default "80"
 	table Members {
-		string IPAddress required display "large" default "10.0.0.100"
+		string IPAddress required display "large" default ""
 		string Port required display "small" default "80"
 		string ConnectionLimit required display "medium" default "0"
 		string Ratio required display "small" default "1"
@@ -1608,7 +1618,7 @@ section pool {
 }
 
 section vs {
-	string Name required display "xxlarge" default "my_virtualserver"
+	string Name display "xxlarge" default ""
 	string Description display "xxlarge" default "vsdescr"
 	string SourceAddress display "large" default "0.0.0.0/0"
 	string IpProtocol display "small" default "tcp"
@@ -1628,7 +1638,7 @@ section vs {
 	string ProfileClientSSLCert display "large" default "/Common/default.crt"
 	string ProfileClientSSLKey display "large" default "/Common/default.key"
 	string ProfileClientSSLChain display "large" default "/Common/ca-bundle.crt"
-	string ProfileClientSSLCipherString display "xxlarge" default "DEFAULT:!SSLV3"
+	string ProfileClientSSLCipherString display "xxlarge" default "DEFAULT"
 	string ProfileClientSSLAdvOptions display "xxlarge" default ""
 	string ProfileSecurityLogProfiles display "xxlarge" default ""
 	editchoice ProfileSecurityIPBlacklist display "large"  default "none" {
