@@ -9,6 +9,10 @@ set logprefix "\[appsvcs_postdeploy_asm\]\[$app\]"
 set systemTime [clock seconds]
 puts "$logprefix Starting at [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S]"
 
+if { [file exists $filename] == 0 } {
+	puts "$logprefix Policy file not found, exiting (this is normal on the secondary device)"
+	exit 0
+}
 
 tmsh::cd $app_path
 puts "$logprefix Setting iCall handler to inactive..."
