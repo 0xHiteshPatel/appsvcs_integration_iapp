@@ -107,7 +107,7 @@
 					"help":"The name of the Pool.  Is no value is specified the name will be set to <iapp_name>_pool",
 					"type":"string",
 					"default":"",
-					"required":true,
+					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
@@ -268,7 +268,7 @@
 					"help":"The name of the Virtual Server.  If no value is specified the name will be set to <iapp_name>_vs",
 					"type":"string",
 					"default":"",
-					"required":true,
+					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
