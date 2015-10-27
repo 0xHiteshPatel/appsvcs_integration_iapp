@@ -28,11 +28,12 @@ tmsh::modify asm policy ${app}_asm_policy active
 puts "$logprefix Deleting file $filename..."
 file delete $filename
 
+set policy_name [format "appsvcs_asm__%s" $vs_name]
 puts "$logprefix Creating L7 policy and attaching ASM policy $app_path/asm_policy to virtualserver $app_path/$vs_name..."
 tmsh::begin_transaction
-tmsh::create ltm policy appsvcs_asm__my_virtualserver controls replace-all-with \{ asm \} requires replace-all-with \{ http \} strategy /Common/first-match  rules replace-all-with \{ default \{ ordinal 1 actions replace-all-with \{ 1 \{ asm enable policy ${app_path}/${app}_asm_policy \} \} \} \}
-tmsh::modify ltm virtual my_virtualserver profiles add \{ /Common/websecurity \{ \} \}
-tmsh::modify ltm virtual my_virtualserver policies add \{ appsvcs_asm__my_virtualserver \}
+tmsh::create ltm policy $policy_name controls replace-all-with \{ asm \} requires replace-all-with \{ http \} strategy /Common/first-match  rules replace-all-with \{ default \{ ordinal 1 actions replace-all-with \{ 1 \{ asm enable policy ${app_path}/${app}_asm_policy \} \} \} \}
+tmsh::modify ltm virtual $vs_name profiles add \{ /Common/websecurity \{ \} \}
+tmsh::modify ltm virtual $vs_name policies add \{ $policy_name \}
 tmsh::commit_transaction
 
 tmsh::modify sys application service $aso strict-updates enabled
