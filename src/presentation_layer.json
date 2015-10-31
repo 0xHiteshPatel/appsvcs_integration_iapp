@@ -4,7 +4,7 @@
 	"sections":[
 		{
 			"name":"intro",
-			"description":"F5 Application Services Integration iApp v%IMPLVERSION_MAJOR%_%PRESENTATION_REV% (Community Edition)",
+			"description":"F5 Application Services Integration iApp v%IMPLVERSION_MAJOR%(%IMPLVERSION_MINOR%)_%PRESENTATION_REV% (Community Edition)",
 			"fields":[
 				{
 					"name":"hello",
