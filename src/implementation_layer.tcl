@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.0"
-set IMPLMINORVERSION "003"
+set IMPLMINORVERSION "004"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -163,6 +163,7 @@ debug "\[create_pool\] name=$pool__Name"
 
 # Setup the members portion of the command my processing the pool__Members APL table
 set nummembers [llength $pool__Members]
+set truenummembers 0
 set numcolumns [llength [lindex [lindex $pool__Members 0] 0]]
 
 if { $nummembers == 0 } {
@@ -197,6 +198,15 @@ if { $nummembers == 0 } {
     set state $column(State)
     set ratio $column(Ratio)
     
+    # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
+    # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
+    if { $ip == "0.0.0.0" } {
+      debug "\[create_pool\]\[member_str\]  ip=0.0.0.0, skipping"
+      continue
+    } else {
+      incr truenummembers
+    }
+
     # Add a route domain if it wasn't included and we don't already have a node object created
     set node_status [catch {tmsh::get_config ltm node /Common/$ip}]
     if { $node_status == 1 && ![has_routedomain $ip]} {
@@ -227,6 +237,13 @@ if { $nummembers == 0 } {
   }
   append memberstr " \} "
 }
+
+# Check to see if we really have any pool members after table processing
+if { $truenummembers == 0 } {
+  debug "\[create_pool\]\[member_str\]  no true pool members found after table was processed, setting to none"
+  set memberstr " members none"
+}
+
 debug "\[create_pool\]\[member_str\]  memberstr=$memberstr"
 
 # Setup the base pool create command
