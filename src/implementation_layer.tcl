@@ -202,7 +202,7 @@ if { $nummembers == 0 } {
 
     # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
-    if { $ip == "0.0.0.0" } {
+    if { [string match 0.0.0.0* $ip] } {
       debug "\[create_pool\]\[member_str\]  ip=0.0.0.0, skipping"
       continue
     } else {
