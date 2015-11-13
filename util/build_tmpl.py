@@ -3,6 +3,7 @@ import json
 import sys
 import glob
 import os
+import argparse
 
 def get_info(basedir):
 	allvars = []
@@ -84,22 +85,29 @@ def create_files_include(files, outfile, prefix):
 				out.write("set %s_%s_data {%s}\n\n" % (prefix, just_name, data))
 	out.close()
 
-if len(sys.argv) < 2:
-	print "Usage: %s <base directory>" % sys.argv[0]
-	quit(0)
+parser = argparse.ArgumentParser(description='Script to assemble the appsvcs_integration_iapp BIG-IP iApp template')
+parser.add_argument("basedir", help="The base directory for the build")
+parser.add_argument("-a", "--append", help="A string to append to the base template name")
+parser.add_argument("-r", "--roottmpl", help="The root template file to use (default: <basedir>/src/master.template", default="src/master.template")
+parser.add_argument("-o", "--outfile", help="The name of the output file")
+args = parser.parse_args()
 
-basedir = sys.argv[1]
+basedir = args.basedir
 
-if len(sys.argv) == 3 and len(sys.argv[2]) > 0:
-	name_append = "_%s" % sys.argv[2]
+if args.append:
+	name_append = "_%s" % args.append
 	print "Appending \"%s\" to template name" % name_append
 else:
 	name_append = ""
 
-
 version = get_info(basedir)
 print "Got info: %s" % version
-outfile = "%s/appsvcs_integration_v%s-%s_%s%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"], name_append)
+
+if not args.outfile:
+	outfile = "%s/appsvcs_integration_v%s-%s_%s%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"], name_append)
+else:
+	outfile = "%s/%s" % (basedir, args.outfile)
+
 print "Writing to file: %s" % outfile
 
 print "Processing iRules (irules/*.irule)..."
@@ -126,8 +134,10 @@ else:
 	create_files_include(asm_policies, os.path.join('tmp','asm.build'), "asm_policy" )
 
 
+root_template = "%s/%s" % (basedir, args.roottmpl)
+
 with open(outfile,"wt") as out:
-	with open("%s/src/master.template" % basedir) as main_template:
+	with open(root_template) as main_template:
 		final = process_file(main_template, out, basedir, name_append, "")
 		out.write(''.join(final))
 		
