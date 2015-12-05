@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.0"
-set IMPLMINORVERSION "004"
+set IMPLMINORVERSION "005"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -200,7 +200,7 @@ if { $nummembers == 0 } {
     
     # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
-    if { $ip == "0.0.0.0" } {
+    if { [string match 0.0.0.0* $ip] } {
       debug "\[create_pool\]\[member_str\]  ip=0.0.0.0, skipping"
       continue
     } else {
@@ -517,9 +517,15 @@ if { [string length $vs__BundledIrules] > 0 && ![string match *no\ bundled\ item
                              %POOL_NAME%     $pool__Name \
                              %PARTITION%     $partition ]
 
+  set vs__BundledIrules [string map {"," " " ";" " "} $vs__BundledIrules]
+
   foreach bundledirule $vs__BundledIrules {
     debug "\[create_virtual\]\[bundled_irule\] deploying bundled iRule $bundledirule"
     set bundled_irule_varname [format "irule_include_%s_data" $bundledirule]
+
+    if {! [info exists [subst $bundled_irule_varname]]} {
+      error "A bundled iRule named '$bundledirule' was not found in the template"
+    }
 
     set bundled_irule_src [string map $bundledirule_map [set [subst $bundled_irule_varname]]]
 
