@@ -12,6 +12,10 @@ if { [string length $feature__easyASMPolicy] > 0 && $feature__easyASMPolicy ne "
 
 %insertfile:tmp/asm.build%
 
+  if {! [info exists [subst $asm_policy_varname]]} {
+    error "A bundled ASM policy named '$asm_policyname' was not found in the template"
+  }
+
   set outfile [open [format "/var/tmp/appsvcs_asm_%s.xml" $::app] w]
   puts $outfile [set [subst $asm_policy_varname]]
   close $outfile
