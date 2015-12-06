@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"1.1dev",
-	"pres_revision":"001",
+	"pres_revision":"002",
 	"sections":[
 		{
 			"name":"intro",
@@ -253,7 +253,17 @@
 							"required":false,
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
-						}
+						},
+						{
+							"name":"AdvOptions",
+							"description":"Adv Options:",
+							"help":"The Advanced Options for the Pool Member.",
+							"type":"string",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						}					
 					]
 				},
 				{
@@ -653,6 +663,17 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_010"
+				},
+				{
+					"name":"AdvPolicies",
+					"description":"Virtual Server: Advanced Policies",
+					"help":"A comma-seperated list of policies to link to the Virtual Server: <policy_name>[,<policy_name>]",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"1.1_001"
 				}	
 			]
 		},
@@ -792,7 +813,6 @@
 							"description":"CIDR Block:",
 							"help":"CIDR Range",
 							"type":"string",
-							"default":"",
 							"required":false,
 							"display":"large",
 							"modes":[1,2,3,4],

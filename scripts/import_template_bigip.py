@@ -84,7 +84,7 @@ resp = s.get(template_exist_url)
 
 # Check to see if authentication succeeded
 if resp.status_code == 401:
-	print "[error] Authentication failed: %s" % (resp.json())
+	print "[error] Authentication failed: %s" % (resp)
 	sys.exit(1)
 
 # The template exists and the -o argument (overwrite) was not specified.  Print error and exit
@@ -146,6 +146,3 @@ if not args.dontsave:
 		sys.exit(1)
 	else:
 		print "[success] Config saved"
-
-
-

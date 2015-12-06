@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v1.1dev_001</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v1.1dev_002</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -192,6 +192,15 @@ weighted-least-connections-member</td>
 drain-disabled,
 disabled</td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>pool.Members.AdvOptions</td>
+  <td>$pool.Members__AdvOptions</td>
+  <td>The Advanced Options for the Pool Member.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
 </tr>
 <tr>
   <td>pool.AdvOptions</td>
@@ -510,6 +519,15 @@ change</td>
   <td>string</td>
   <td></td>
   <td>0.3_010</td>
+</tr>
+<tr>
+  <td>vs.AdvPolicies</td>
+  <td>$vs__AdvPolicies</td>
+  <td>A comma-seperated list of policies to link to the Virtual Server: <policy_name>[,<policy_name>]</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
 </tr>
 <tr><td colspan=7><b>Section: feature</b></td></tr>
 <tr>

@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "004"
+set IMPLMINORVERSION "005"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -55,6 +55,7 @@ array set table_defaults {
         ConnectionLimit 0
         Ratio 1
         PriorityGroup 0
+        AdvOptions ""
     }
 }
 array set pool_state {
@@ -199,7 +200,8 @@ if { $nummembers == 0 } {
     set state $column(State)
     set ratio $column(Ratio)
     set prigrp $column(PriorityGroup)
-
+    set options [lindex $column(AdvOptions) 0]
+    
     # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
     if { [string match 0.0.0.0* $ip] } {
@@ -222,7 +224,7 @@ if { $nummembers == 0 } {
       set ip $column(Port)
       debug "\[create_pool\]\[member_str\]  fixing ip=$ip port=$port"
     }
-    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit ratio=$ratio prigrp=$prigrp state=$state"
+    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit ratio=$ratio prigrp=$prigrp state=$state advoptions=$options"
     
     # If we don't get a port in the pool member table than use the template value for pool__MemberDefaultPort
     if { [string length $port] == 0} {
@@ -235,7 +237,12 @@ if { $nummembers == 0 } {
       }
     }
 
-    append memberstr [format " %s:%s \{ connection-limit %s ratio %s priority-group %s %s\} " $ip $port $connlimit $ratio $prigrp $::pool_state($state)]
+    if { [string length $options] > 0 } {
+      debug "\[create_pool\]\[member_str\]\[adv_options\] processing member advanced options string"
+      set options [format " %s" [process_options_string $options "" ""]]
+    }
+
+    append memberstr [format " %s:%s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $ip $port $connlimit $ratio $prigrp $options $::pool_state($state)]
   }
   append memberstr " \} "
 }
@@ -291,7 +298,7 @@ if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $
 }
 
 # Process the vs__ProfileSecurityIPBlacklist option.
-set ipi_mode 1
+set ipi_mode 0
 switch -glob [string tolower $vs__ProfileSecurityIPBlacklist] {
   enabled-block { set ipi_action "drop" }
   enabled-log   { set ipi_action "accept" }
@@ -308,14 +315,14 @@ set afm_auto_ipistring ""
 if { [is_provisioned afm] } {
   switch [string tolower $feature__easyL4Firewall] {
     auto {
-      debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block (or user-specific IPI policy if specified)"
+      debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled"
       set feature__easyL4Firewall enabled
-      set afm_auto_ipistring "enabled-block"
+      set afm_auto_ipistring "none"
     }
     base { 
       debug "\[create_virtual\]\[feature__easyL4Firewall\] found base flag, setting feature to enabled, vs__ProfileSecurityIPBlacklist to disabled"
       set feature__easyL4Firewall enabled
-      set afm_auto_ipistring "disabled"
+      set afm_auto_ipistring "none"
     }
     base+ip_blacklist_block { 
       debug "\[create_virtual\]\[feature__easyL4Firewall\] found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block"
@@ -329,7 +336,7 @@ if { [is_provisioned afm] } {
     }
     default { 
       if { [get_var feature__easyL4Firewall] == "auto"} {
-        set afm_auto_ipistring "disabled"
+        set afm_auto_ipistring "none"
       }
       set feature__easyL4Firewall disabled 
     }
@@ -746,6 +753,15 @@ debug "\[create_virtual\]\[profiles\] final string=$vsprofiles"
 
 # Add the profile string to the TMSH command
 append cmd $vsprofiles
+
+# Process the $vs__AdvPolicies option
+if { [string length $vs__AdvPolicies] > 0 } {
+  debug "\[create_virtual\]\[adv_policies\] process advanced policies string" 
+  # Add the polcies string to the TMSH command
+  set vspolicies [format " policies replace-all-with \{ %s \} " [generic_add_option "create_virtual\]\[adv_policies" $vs__AdvPolicies "" "%s" 1]] 
+  debug "\[create_virtual\]\[policies\] final string=$vspolicies"
+  append cmd $vspolicies
+}
 
 # Create the virtual server
 debug "\[create_virtual\]  TMSH CREATE: $cmd"
