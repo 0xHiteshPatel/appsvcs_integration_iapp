@@ -237,7 +237,12 @@ if { $nummembers == 0 } {
       }
     }
 
-    if { [string length $options] > 0 } {
+    # iCR does not like table columns with empty values.  Workaround this by allow use of keyword 'none' and NOOP
+    if { [string tolower $options] == "none" } {
+      set options ""
+    }
+
+    if { [string length $options] > 0} {
       debug "\[create_pool\]\[member_str\]\[adv_options\] processing member advanced options string"
       set options [format " %s" [process_options_string $options "" ""]]
     }

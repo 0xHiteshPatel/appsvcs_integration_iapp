@@ -1,0 +1,21 @@
+{
+	"name":"my_https_sample",
+	"parent":"sample_https.json",
+	"strings":[
+                { "pool__addr":"172.16.0.230" },
+		{ "vs__ProfileClientProtocol":"create:nagle=disabled;defaults-from=/Common/tcp-wan-optimized" },
+                { "vs__ProfileClientSSLCert":"/Common/default.crt" },
+                { "vs__ProfileClientSSLKey":"/Common/default.key" }
+
+	],
+        "tables":[
+                {
+                        "name":"pool__Members",
+                        "columnNames": [ "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+                        "rows" : [
+                                { "row": [ "10.0.0.100", "80", "0", "1", "0", "enabled", "none"]  },
+                                { "row": [ "10.0.0.102", "80", "0", "1", "0", "disabled", "none"] }
+                        ]
+                }
+        ]
+}

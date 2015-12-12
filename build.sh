@@ -23,7 +23,7 @@ python util/build_tmpl.py $BUILDOPT "`pwd`"
 python util/build_tmpl.py $BUILDOPT -o parts/iapp.tcl -r src/implementation_only.template "`pwd`"  > /dev/null
 python util/build_tmpl.py $BUILDOPT -o parts/iapp.apl -r tmp/apl.build "`pwd`"  > /dev/null
 
-cp tmp/doc.build ./OPTIONS.md
+cp tmp/doc.build ./OPTIONS.html
 rm tmp/apl.build
 rm tmp/doc.build
 rm tmp/irules.build

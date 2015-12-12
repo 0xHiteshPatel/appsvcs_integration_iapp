@@ -1,0 +1,20 @@
+{
+	"parent":"sample_defaults.json",
+	"strings":[
+		{ "pool__port":"443" },
+		{ "vs__ProfileClientSSLChain":"/Common/ca-bundle.crt" },
+		{ "vs__ProfileClientSSLCipherString":"" },
+		{ "pool__Monitor":"/Common/http" },
+		{ "vs__ProfileHTTP":"/Common/http" },
+		{ "vs__ProfileOneConnect":"/Common/oneconnect" },
+		{ "vs__ProfileCompression":"/Common/httpcompression" },
+		{ "vs__ProfileDefaultPersist":"/Common/cookie" },
+		{ "vs__ProfileFallbackPersist":"/Common/source_addr" },
+		{ "vs__ProfileClientSSLAdvOptions":"" },
+		{ "feature__insertXForwardedFor":"enabled" },
+		{ "feature__redirectToHTTPS":"enabled" },
+		{ "feature__sslEasyCipher":"tls1.1+1.2" }
+	]
+}
+
+

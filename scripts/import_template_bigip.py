@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # import_template_bigip.py -- Import an iApp template to a BIG-IP system using the iControl-REST API
-# Documentation: see import_template_bigip.README
+# Documentation: see README.import_template_bigip
 import requests
 try:
 	requests.packages.urllib3.disable_warnings()
