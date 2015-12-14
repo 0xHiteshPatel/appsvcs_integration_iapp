@@ -94,8 +94,8 @@ def debug(msg):
 
 # Setup and process arguments
 parser = argparse.ArgumentParser(description='Script to deploy an iApp to a BIG-IP device')
-parser.add_argument("json_template",        help="The JSON iApp definition file")
-parser.add_argument("-i", "--host",     help="The IP/Hostname of the BIG-IP device")
+parser.add_argument("host",             help="The IP/Hostname of the BIG-IP device")
+parser.add_argument("json_template",    help="The JSON iApp definition file")
 parser.add_argument("-u", "--username", help="The BIG-IP username")
 parser.add_argument("-p", "--password", help="The BIG-IP password")
 parser.add_argument("-d", "--dontsave", help="Don't automatically save the config", action="store_true")

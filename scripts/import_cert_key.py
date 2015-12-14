@@ -27,11 +27,7 @@ def search_dict(obj, partition, name):
 	return False
 
 def upload_file(filename, name):
-	bash_url        = "https://%s/mgmt/tm/util/bash" % (args.host)
 	upload_url      = "https://%s/mgmt/shared/file-transfer/uploads/%s" % (args.host, name)
-	# create_payload = { "command":"run",
-	# 				   "utilCmdArgs":"-c 'if [ ! -d /var/config/rest/downloads/tmp ] ; then mkdir /var/config/rest/downloads/tmp ; chmod 755 /var/config/rest/downloads/tmp ; fi'"
-	# 				 }
 
 	# Read in the file
 	with open(filename) as fh:    
@@ -39,15 +35,6 @@ def upload_file(filename, name):
 
 	# Get the length of the file for the Content-Range header
 	length = len(data) - 1
-
-	# # Check that the tmp directory exists
-	# # https://devcentral.f5.com/questions/run-mkdir-over-icontrol-rest-for-disappearing-var-config-rest-downloads-tmp
-	# resp = s.post(bashurl, data=json.dumps(create_payload))
-	# check_auth(resp)
-		
-	# if resp.status_code != requests.codes.ok:
-	# 	print "[error] tmp directory not present: %s" % (resp.text)
-	# 	sys.exit(1)
 
 	# Upload the file
 	headers = { "Content-Range":"0-%d/%d" % (length, length) }
@@ -116,8 +103,10 @@ key_url        = "https://%s/mgmt/tm/sys/crypto/key" % (args.host)
 certsearch_url = "%s?$select=name,partition" % (cert_url)
 keysearch_url  = "%s?$select=name,partition" % (key_url)
 save_url       = "https://%s/mgmt/tm/sys/config" % (args.host)
-certname      = "%s-%s.crt" % (uuid.uuid4(), args.name)
-keyname       = "%s-%s.key" % (uuid.uuid4(), args.name)
+certname       = "%s.crt" % (args.name)
+keyname        = "%s.key" % (args.name)
+certnameuuid   = "%s-%s" % (uuid.uuid4(), certname)
+keynameuuid    = "%s-%s" % (uuid.uuid4(), keyname)
 
 # Set various payloads
 
@@ -143,7 +132,7 @@ if (keyexist or certexist) and not args.overwrite:
 	sys.exit(1)
 
 if args.cert:
-	certpath = upload_file(args.cert, certname)
+	certpath = upload_file(args.cert, certnameuuid)
 	result = install_file("cert", "/%s/%s" % (args.partition, args.name), certpath)
 	print result["msg"]
 	del_result = delete_file(certpath)
@@ -152,7 +141,7 @@ if args.cert:
 		sys.exit(1)
 
 if args.key:
-	keypath = upload_file(args.key, keyname)
+	keypath = upload_file(args.key, keynameuuid)
 	result = install_file("key", "/%s/%s" % (args.partition, args.name), keypath)
 	print result["msg"]
 	del_result = delete_file(keypath)
