@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v1.1dev_003</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v1.1dev_004</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -140,7 +140,7 @@ weighted-least-connections-member</td>
 <tr>
   <td>pool.Pools.Monitor</td>
   <td>$pool.Pools__Monitor</td>
-  <td>The path to a preconfigured Pool Health Monitor</td>
+  <td>The pool monitor(s) and minimum number of monitors that have to pass can be specified using a string of the format '[<monitor index>[,<monitor index>][;<minimum # healthy>]]'.  For example '0,1,2;2' would associate the monitors with indexes 0, 1 and 2 and require at least 2 pass.  If no value is specified no monitor is associated with the pool</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -234,6 +234,44 @@ disabled</td>
   <td>pool.Members.AdvOptions</td>
   <td>$pool.Members__AdvOptions</td>
   <td>The Advanced Options for the Pool Member.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr><td colspan=7><b>Section: monitor</b></td></tr>
+<tr><td colspan=7><b>Table: Monitors</b></td></tr>
+<tr>
+  <td>monitor.Monitors.Index</td>
+  <td>$monitor.Monitors__Index</td>
+  <td>The Index of this Monitor</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>number</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>monitor.Monitors.Name</td>
+  <td>$monitor.Monitors__Name</td>
+  <td>The Name of the Monitor to create or associate.  To associate an existing monitor specify the full path to the existing monitor object (e.g. '/Common/http')</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>monitor.Monitors.Type</td>
+  <td>$monitor.Monitors__Type</td>
+  <td>The Type of this Monitor.  To determine the available types on a BIG-IP system execute 'tmsh create ltm monitor ?' from the CLI</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>monitor.Monitors.Options</td>
+  <td>$monitor.Monitors__Options</td>
+  <td>The options to set in the created Monitor.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>

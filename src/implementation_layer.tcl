@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "006"
+set IMPLMINORVERSION "007"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -65,6 +65,12 @@ array set table_defaults {
       LbMethod ""
       Monitor ""
       AdvOptions none
+    }
+    Monitors {
+      Index -1
+      Name ""
+      Type ""
+      Options ""
     }
 }
 array set pool_state {
@@ -156,6 +162,74 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
     }
     debug "\[proc_client_ssl\] ssl cert & key not specified... skipped Client-SSL profile creation"
   }
+}
+
+# Create Monitors
+debug "\[create_monitors\] monCount=[llength $monitor__Monitors]"
+
+set monIdx 0
+array set monNames {}
+array set monCreate {}
+foreach monRow $monitor__Monitors {
+  set cmd ""
+  debug "\[create_monitors\]\[monitors\] monRow=$monRow"
+
+  array set column_defaults [subst $::table_defaults(Monitors)]
+  array unset column
+
+  # extract the iApp table data - borrowed from f5.lbaas.tmpl
+  foreach column_data [lrange [split [join $monRow] "\n"] 1 end-1] {
+      set name [lindex $column_data 0]
+      set column($name) [lrange $column_data 1 end]
+      #debug [format "column_data name=%s val=%s" $name $column($name)]
+  }
+
+  # fill in any empty table values - borrowed from f5.lbaas.tmpl
+  foreach name [array names column_defaults] {
+      if { ![info exists column($name)] || $column($name) eq "" } {
+          set column($name) $column_defaults($name)
+          debug "\[create_monitors\]\[monitors\]\[$monIdx\]  value for $name not found... setting to default of $column_defaults($name)"
+      }
+  }
+
+  # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
+  # If a Index is not specified then skip this row in the table
+  if { $column(Index) < 0 } {
+    debug "\[create_monitors\]\[monitors\]\[$monIdx\] no index value found, skipping row"
+    continue
+  } elseif { [info exists monNames($column(Index))] } {
+    error "A monitor with Index of \"$column(Index)\" was already specified"
+  } else {
+    if {[string length $column(Name)] > 0 } {
+      if { [string match "/*" $column(Name)] } {
+        set monNames($column(Index)) $column(Name)
+        set monCreate($column(Index)) 0
+      } else {
+        set monNames($column(Index)) [format "%s/%s" $app_path $column(Name)]
+        set monCreate($column(Index)) 1
+      }
+    } else {
+      set monNames($column(Index)) [format "%s/monitor_%s" $app_path $column(Index)]
+      set monCreate($column(Index)) 1
+    }
+  }
+
+  if { $monCreate($column(Index)) == 1 } {
+    if { [string length $column(Type)] <= 0 } {
+      error "A Monitor Type was not specified for monitor with Index $column(Index)"
+    }
+
+    set cmd [format "ltm monitor %s %s " $column(Type) $monNames($monIdx)]
+    if { [string length $column(Options)] > 0 } {
+      debug "\[create_monitors\]\[monitors\]\[$monIdx\]\[options\] processing options string"
+      append cmd [format " %s" [process_options_string [lindex $column(Options) 0] "" ""]]
+    }
+
+    debug "\[create_monitors\]\[monitors\]\[$monIdx\] TMSH CREATE: $cmd"
+    tmsh::create $cmd
+  }
+
+  incr monIdx
 }
 
 # Call the custom_extensions_before_pool proc to allow site-specific customizations
@@ -312,8 +386,55 @@ foreach poolRow $pool__Pools {
   set name $column(Name)
   set descr $column(Description)
   set lbmethod $column(LbMethod)
-  set monitor $column(Monitor)
   set advoptions $column(AdvOptions)
+
+  # We support multiple monitors and the ability to specify the minimum number of monitors that need
+  # to pass for the pool to be considered healthy.  The format of the Monitor string from the Pool table is:
+  #    (<monitor index>[,<monitor index>][;<minimum healthy>])
+  #      For example:  0,1,2;3  specifies that this pool should associate the monitors created with
+  #                             monitor index 0, 1 and 2 and that all 3 monitors need to pass for the
+  #                             pool to be considered available.
+  #
+  # If no value is specifed no monitor is associated with the pool
+  set monitor $column(Monitor)
+  if { [string length $monitor] > 0 } {
+    # Monitor info entered
+    if { [string match "*\;*" $monitor] } {
+      # Min monitors specified
+      set monitor [lindex $monitor 0]
+      set monparts [split $monitor \;]
+      if { [llength $monparts] == 2 } {
+        # Set the minimum number of monitors and list of monitors to associate
+        set monmin [lindex $monparts 1]
+        set monlist [split [lindex $monparts 0] ,]
+      } 
+    } else {
+      # Min monitors NOT specified, assume ALL monitors should pass and create list of monitors
+      set monmin -1
+      set monlist [split [lindex $column(Monitor) 0] ,]
+    }
+
+    # Get the names of the monitors that were created above (array keyed by monitor index) and
+    # check to make sure all monitors specified were actually created
+    set monmapped {}
+    foreach mon $monlist {
+      if { [info exists monNames($mon)] } {
+        lappend monmapped $monNames($mon)
+      } else {
+        error "The monitor index '$mon' specified in pool index '$poolIdx' does not exist"
+      }
+    }
+
+    # Setup our command
+    if { $monmin > 0 } {
+      set monitorcmd [format "monitor min %s of { %s }" $monmin [join $monmapped " "]]
+    } else {
+      set monitorcmd [format "monitor \"%s\"" [join $monmapped " and "]]
+    }
+  } else {
+    # No monitor specified, set to none
+    set monitorcmd "monitor none"
+  }
 
   # iCR does not like table columns with empty values.  Workaround this by allow use of keyword 'none' and NOOP  
   if { [string tolower $advoptions] == "none" } {
@@ -321,12 +442,11 @@ foreach poolRow $pool__Pools {
   }
 
   # Setup the base pool create command
-  set cmd [format "ltm pool %s/%s %s " $app_path $name $memberstr]
+  set cmd [format "ltm pool %s/%s %s %s " $app_path $name $memberstr $monitorcmd]
 
   array set pool_options {
     "lbmethod" "load-balancing-mode"
     "descr" "description"
-    "monitor" "monitor"
   }
 
   foreach {optionvar optioncmd} [array get pool_options] {

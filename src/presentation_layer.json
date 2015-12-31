@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"1.1dev",
-	"pres_revision":"003",
+	"pres_revision":"004",
 	"sections":[
 		{
 			"name":"intro",
@@ -186,10 +186,10 @@
 						},	
 						{
 							"name":"Monitor",
-							"description":"Monitor:",
-							"help":"The path to a preconfigured Pool Health Monitor",
+							"description":"Monitor(s):",
+							"help":"The pool monitor(s) and minimum number of monitors that have to pass can be specified using a string of the format '[<monitor index>[,<monitor index>][;<minimum # healthy>]]'.  For example '0,1,2;2' would associate the monitors with indexes 0, 1 and 2 and require at least 2 pass.  If no value is specified no monitor is associated with the pool",
 							"type":"string",
-							"default":"/Common/http",
+							"default":"",
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
@@ -318,6 +318,66 @@
 							"modes":[1,2,3,4],
 							"minver":"1.1_001"
 						}					
+					]
+				}
+			]
+		},
+		{
+			"name":"monitor",
+			"description":"Pool Monitor(s) Configuration",
+			"fields":[
+				{
+					"name":"Monitors",
+					"description":"Monitor: Monitor Table",
+					"help":"The monitors to create/associate.  Note that monitor index must be >0 and sequential.",
+					"type":"table",
+					"modes":[1,2,3,4],
+					"minver":"1.1_001",
+					"fields": [
+						{
+							"name":"Index",
+							"description":"Index:",
+							"help":"The Index of this Monitor",
+							"type":"number",
+							"default":"0",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},
+						{
+							"name":"Name",
+							"description":"Name:",
+							"help":"The Name of the Monitor to create or associate.  To associate an existing monitor specify the full path to the existing monitor object (e.g. '/Common/http')",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},
+						{
+							"name":"Type",
+							"description":"Type:",
+							"help":"The Type of this Monitor.  To determine the available types on a BIG-IP system execute 'tmsh create ltm monitor ?' from the CLI",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},		
+						{
+							"name":"Options",
+							"description":"Options:",
+							"help":"The options to set in the created Monitor.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						}				
 					]
 				}
 			]
