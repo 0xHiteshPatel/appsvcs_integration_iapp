@@ -225,6 +225,12 @@ proc handle_opt_remove_on_redeploy { name checkvalue option module } {
     return 0
   }
 
+  set vsobj [lindex [tmsh::get_config ltm virtual $::app_path/$::vs__Name all-properties] 0]
+  if { [is_valid_profile_option $vsobj $option] == 0 } {
+    debug "\[handle_opt_remove_on_redeploy\] $name, $option not available, skipping"
+    return 0
+  }
+
   if { [set [subst ::$name]] == $checkvalue && \
        [is_new_value $name] && \
        $::redeploy } {
