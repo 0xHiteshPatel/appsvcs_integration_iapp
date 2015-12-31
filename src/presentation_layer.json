@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"1.1dev",
-	"pres_revision":"002",
+	"pres_revision":"003",
 	"sections":[
 		{
 			"name":"intro",
@@ -61,7 +61,7 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_013"
-				}						
+				}
 			]
 		},
 		{
@@ -102,69 +102,112 @@
 					"minver":"0.3_001"
 				},
 				{
-					"name":"Name",
-					"description":"Pool: Name",
-					"help":"The name of the Pool.  Is no value is specified the name will be set to <iapp_name>_pool",
-					"type":"string",
-					"default":"",
-					"required":false,
-					"display":"xxlarge",
+					"name":"DefaultPoolIndex",
+					"description":"Virtual Server: Default Pool Index",
+					"help":"The index of the pool to use as the default pool for the Virtual Server",
+					"type":"number",
+					"default":"0",
+					"display":"small",
+					"required":true,
 					"modes":[1,2,3,4],
-					"minver":"0.3_001"
-				},
+					"minver":"1.1_001"
+				},				
 				{
-					"name":"Description",
-					"description":"Pool: Description",
-					"help":"The description string configured in the Pool",
-					"type":"string",
-					"default":"pooldescr",
-					"required":false,
-					"display":"xxlarge",
+					"name":"Pools",
+					"description":"Pool: Pool Table",
+					"help":"The pools to create.  Note that pool index must be >0 and sequential.",
+					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"0.3_001"
-				},
-				{
-					"name":"Monitor",
-					"description":"Pool: Health Monitor",
-					"help":"The path to a preconfigured Pool Health Monitor",
-					"type":"string",
-					"default":"/Common/http",
-					"required":false,
-					"display":"large",
-					"modes":[1,2,3,4],
-					"minver":"0.3_001"
-				},
-				{
-					"name":"LbMethod",
-					"description":"Pool: Load Balancing Method",
-					"help":"The pool Load Balancing Method (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305)",
-					"type":"choice",
-					"default":"round-robin",
-					"choices":[
-					    "dynamic-ratio-member",
-					    "dynamic-ratio-node",
-					    "fastest-app-response",
-					    "fastest-node",
-					    "least-connections-member",
-					    "least-connections-node",
-					    "least-sessions",
-					    "observed-member",
-					    "observed-node",
-					    "predictive-member",
-					    "predictive-node",
-					    "round-robin",
-					    "ratio-member",
-					    "ratio-node",
-					    "ratio-session",
-					    "ratio-least-connections-member",
-					    "ratio-least-connections-node",
-					    "weighted-least-connections-member"
-					    ],
-					"required":false,
-					"display":"xxlarge",
-					"modes":[1,2,3,4],
-					"minver":"0.3_001"
-				},
+					"minver":"1.1_001",
+					"fields": [
+						{
+							"name":"Index",
+							"description":"Index:",
+							"help":"The Pool Index of this Pool",
+							"type":"number",
+							"default":"0",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},
+						{
+							"name":"Name",
+							"description":"Name:",
+							"help":"The Name of this Pool",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},
+						{
+							"name":"Description",
+							"description":"Description:",
+							"help":"The Description of this Pool",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},		
+						{
+							"name":"LbMethod",
+							"description":"LB Method:",
+							"help":"The pool Load Balancing Method (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305)",
+							"type":"choice",
+							"default":"round-robin",
+							"choices":[
+							    "dynamic-ratio-member",
+							    "dynamic-ratio-node",
+							    "fastest-app-response",
+							    "fastest-node",
+							    "least-connections-member",
+							    "least-connections-node",
+							    "least-sessions",
+							    "observed-member",
+							    "observed-node",
+							    "predictive-member",
+							    "predictive-node",
+							    "round-robin",
+							    "ratio-member",
+							    "ratio-node",
+							    "ratio-session",
+							    "ratio-least-connections-member",
+							    "ratio-least-connections-node",
+							    "weighted-least-connections-member"
+							    ],
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},	
+						{
+							"name":"Monitor",
+							"description":"Monitor:",
+							"help":"The path to a preconfigured Pool Health Monitor",
+							"type":"string",
+							"default":"/Common/http",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},
+						{
+							"name":"AdvOptions",
+							"description":"Adv Options:",
+							"help":"The options to set in the created Pool.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"0.3_012"
+						}				
+					]
+				},				
 				{
 					"name":"MemberDefaultPort",
 					"description":"Pool: Member Default Port",
@@ -185,13 +228,24 @@
 					"minver":"0.3_001",
 					"fields":[
 						{
+							"name":"Index",
+							"description":"Pool Idx:",
+							"help":"The Pool Index this Member belongs to.  Used to support creation of multiple pools",
+							"type":"number",
+							"default":"0",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"1.1_001"
+						},
+						{
 							"name":"IPAddress",
 							"description":"IP/Node Name:",
 							"help":"IP Address OR Node Name of the Pool Member",
 							"type":"string",
 							"default":"",
-							"required":true,
-							"display":"large",
+							"required":false,
+							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
@@ -201,7 +255,7 @@
 							"help":"L4 port of the Pool Member",
 							"type":"string",
 							"default":"80",
-							"required":true,
+							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
@@ -212,7 +266,7 @@
 							"help":"The Connection Limit for the Pool Member.  '0' denotes unlimited connections",
 							"type":"string",
 							"default":"0",
-							"required":true,
+							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
@@ -223,7 +277,7 @@
 							"help":"The Ratio weight for the Pool Member.  Used with 'ratio' based Load Balancing Methods",
 							"type":"string",
 							"default":"1",
-							"required":true,
+							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
@@ -234,7 +288,7 @@
 							"help":"The Priority Group for the Pool Member.",
 							"type":"string",
 							"default":"0",
-							"required":true,
+							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"1.0_002"
@@ -265,17 +319,6 @@
 							"minver":"1.1_001"
 						}					
 					]
-				},
-				{
-					"name":"AdvOptions",
-					"description":"Pool: Advanced Options",
-					"help":"The options to set in the created Pool.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
-					"type":"string",
-					"default":"",
-					"required":false,
-					"display":"xxlarge",
-					"modes":[1,2,3,4],
-					"minver":"0.3_012"
 				}
 			]
 		},

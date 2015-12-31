@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v1.1dev_002</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v1.1dev_003</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -75,35 +75,45 @@
   <td>0.3_001</td>
 </tr>
 <tr>
-  <td>pool.Name</td>
-  <td>$pool__Name</td>
-  <td>The name of the Pool.  Is no value is specified the name will be set to <iapp_name>_pool</td>
+  <td>pool.DefaultPoolIndex</td>
+  <td>$pool__DefaultPoolIndex</td>
+  <td>The index of the pool to use as the default pool for the Virtual Server</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>number</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr><td colspan=7><b>Table: Pools</b></td></tr>
+<tr>
+  <td>pool.Pools.Index</td>
+  <td>$pool.Pools__Index</td>
+  <td>The Pool Index of this Pool</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>number</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>pool.Pools.Name</td>
+  <td>$pool.Pools__Name</td>
+  <td>The Name of this Pool</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>0.3_001</td>
+  <td>1.1_001</td>
 </tr>
 <tr>
-  <td>pool.Description</td>
-  <td>$pool__Description</td>
-  <td>The description string configured in the Pool</td>
+  <td>pool.Pools.Description</td>
+  <td>$pool.Pools__Description</td>
+  <td>The Description of this Pool</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>0.3_001</td>
+  <td>1.1_001</td>
 </tr>
 <tr>
-  <td>pool.Monitor</td>
-  <td>$pool__Monitor</td>
-  <td>The path to a preconfigured Pool Health Monitor</td>
-  <td>[1, 2, 3, 4]</td>
-  <td>string</td>
-  <td></td>
-  <td>0.3_001</td>
-</tr>
-<tr>
-  <td>pool.LbMethod</td>
-  <td>$pool__LbMethod</td>
+  <td>pool.Pools.LbMethod</td>
+  <td>$pool.Pools__LbMethod</td>
   <td>The pool Load Balancing Method (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305)</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
@@ -125,7 +135,25 @@ ratio-session,
 ratio-least-connections-member,
 ratio-least-connections-node,
 weighted-least-connections-member</td>
-  <td>0.3_001</td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>pool.Pools.Monitor</td>
+  <td>$pool.Pools__Monitor</td>
+  <td>The path to a preconfigured Pool Health Monitor</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>pool.Pools.AdvOptions</td>
+  <td>$pool.Pools__AdvOptions</td>
+  <td>The options to set in the created Pool.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>0.3_012</td>
 </tr>
 <tr>
   <td>pool.MemberDefaultPort</td>
@@ -137,6 +165,15 @@ weighted-least-connections-member</td>
   <td>0.3_001</td>
 </tr>
 <tr><td colspan=7><b>Table: Members</b></td></tr>
+<tr>
+  <td>pool.Members.Index</td>
+  <td>$pool.Members__Index</td>
+  <td>The Pool Index this Member belongs to.  Used to support creation of multiple pools</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>number</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
 <tr>
   <td>pool.Members.IPAddress</td>
   <td>$pool.Members__IPAddress</td>
@@ -201,15 +238,6 @@ disabled</td>
   <td>string</td>
   <td></td>
   <td>1.1_001</td>
-</tr>
-<tr>
-  <td>pool.AdvOptions</td>
-  <td>$pool__AdvOptions</td>
-  <td>The options to set in the created Pool.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]</td>
-  <td>[1, 2, 3, 4]</td>
-  <td>string</td>
-  <td></td>
-  <td>0.3_012</td>
 </tr>
 <tr><td colspan=7><b>Section: vs</b></td></tr>
 <tr>

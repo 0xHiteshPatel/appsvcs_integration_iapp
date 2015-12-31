@@ -15,12 +15,8 @@
 		{ "pool__addr":"" },
 		{ "pool__mask":"255.255.255.255" },
 		{ "pool__port":"" },
-		{ "pool__Name":"" },
-		{ "pool__Description":"" },
-		{ "pool__Monitor":"" },
-		{ "pool__LbMethod":"round-robin" },
+		{ "pool__DefaultPoolIndex":"0" },
 		{ "pool__MemberDefaultPort":"80" },
-		{ "pool__AdvOptions":"" },
 		{ "vs__Name":"" },
 		{ "vs__Description":"" },
 		{ "vs__SourceAddress":"0.0.0.0/0" },
@@ -70,8 +66,15 @@
 	],
 	"tables":[
 		{
+			"name":"pool__Pools",
+			"columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+			"rows" : [
+				{ "row": [ "0", "", "", "round-robin", "/Common/tcp", "none"]  }
+			]
+		},
+		{
 			"name":"pool__Members",
-			"columnNames": [ "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+			"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
 			"rows" : [ ]		
 		},
 		{

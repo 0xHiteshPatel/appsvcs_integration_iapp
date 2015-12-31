@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "005"
+set IMPLMINORVERSION "006"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -49,13 +49,22 @@ set allVars {
 
 array set table_defaults {
     Members {
+        Index 0
         State enabled
         IPAddress Error
         Port 80
         ConnectionLimit 0
         Ratio 1
         PriorityGroup 0
-        AdvOptions ""
+        AdvOptions none
+    }
+    Pools {
+      Index -1
+      Name ""
+      Description ""
+      LbMethod ""
+      Monitor ""
+      AdvOptions none
     }
 }
 array set pool_state {
@@ -150,65 +159,105 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
 }
 
 # Call the custom_extensions_before_pool proc to allow site-specific customizations
-custom_extensions_before_pool
+custom_extensions_before_pools
 
 # Create pool
 
-# Check to see if a poolName was specified... if not set to $app_pool
-if { [string length $pool__Name] == 0 } {
-    set pool__Name [format "%s_pool" $app]
-    debug "\[create_pool\] no poolName specified... setting to $pool__Name"
-}
+debug "\[create_pool\]\[pools\] poolCount=[llength $pool__Pools]"
 
-debug "\[create_pool\] name=$pool__Name"
+set poolIdx 0
+set default_pool_name ""
+array set poolIndexes {}
+foreach poolRow $pool__Pools {
+  set cmd ""
+  set nummembers 0
 
+  debug "\[create_pool\]\[pools\]\[$poolIdx\] poolRow=$poolRow"
 
-# Setup the members portion of the command my processing the pool__Members APL table
-set nummembers [llength $pool__Members]
-set truenummembers 0
-set numcolumns [llength [lindex [lindex $pool__Members 0] 0]]
+  custom_extensions_before_pool
 
-if { $nummembers == 0 } {
-  set memberstr " members none "
-  debug "\[create_pool\]\[member_str\] No pool members found... setting to none"
-} else {
+  array set column_defaults [subst $::table_defaults(Pools)]
+  array unset column
+
+  # extract the iApp table data - borrowed from f5.lbaas.tmpl
+  foreach column_data [lrange [split [join $poolRow] "\n"] 1 end-1] {
+      set name [lindex $column_data 0]
+      set column($name) [lrange $column_data 1 end]
+      #debug [format "column_data name=%s val=%s" $name $column($name)]
+  }
+
+  # fill in any empty table values - borrowed from f5.lbaas.tmpl
+  foreach name [array names column_defaults] {
+      if { ![info exists column($name)] || $column($name) eq "" } {
+          set column($name) $column_defaults($name)
+          debug "\[create_pool\]\[pools\]\[$poolIdx\]  value for $name not found... setting to default of $column_defaults($name)"
+      }
+  }
+
+  # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
+  # If a Index is not specified then skip this row in the table
+  if { $column(Index) < 0 } {
+    debug "\[create_pool\]\[pools\]\[$poolIdx\] no index value found, skipping row"
+    continue
+  } elseif { [info exists poolIndexes($column(Index))] } {
+    error "A pool with Index of \"$column(Index)\" was already specified"
+  } else {
+    set poolIndexes($column(Index)) 1
+  }
+
+  # Check to see if a poolName was specified... if not set to $app_pool_$poolIdx
+  if { [string length $column(Name)] == 0 } {
+      set column(Name) [format "%s_pool_%s" $app $poolIdx]
+      debug "\[create_pool\]\[pools\]\[$poolIdx\] no pool name specified... setting to $column(Name)"
+  }
+
+  if { $poolIdx == $pool__DefaultPoolIndex } {
+    # Set the default pool name for use later during virtual server creation
+    set default_pool_name $column(Name)
+  }
+
   set memberstr "members replace-all-with \{ "
-  debug "\[create_pool\]\[member_str\] Checking pool table... nummembers=$nummembers numcolumns=$numcolumns"
-  foreach row $pool__Members {
-    debug "\[create_pool\]\[member_str\]  row=$row"
-    array set column_defaults [subst $::table_defaults(Members)]
-    array unset column
+  foreach memberRow $pool__Members {
+    #debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  row=$memberRow"
+    array set pool_column_defaults [subst $::table_defaults(Members)]
+    array unset pool_column
 
     # extract the iApp table data - borrowed from f5.lbaas.tmpl
-    foreach column_data [lrange [split [join $row] "\n"] 1 end-1] {
-        set name [lindex $column_data 0]
-        set column($name) [lrange $column_data 1 end]
-        #debug [format "column_data name=%s val=%s" $name $column($name)]
+    foreach pool_column_data [lrange [split [join $memberRow] "\n"] 1 end-1] {
+        set name [lindex $pool_column_data 0]
+        set pool_column($name) [lrange $pool_column_data 1 end]
+        #debug [format "$poolIdx member pool_column_data name=%s val=%s" $name $pool_column($name)]
     }
 
     # fill in any empty table values - borrowed from f5.lbaas.tmpl
-    foreach name [array names column_defaults] {
-        if { ![info exists column($name)] || $column($name) eq "" } {
-            set column($name) $column_defaults($name)
-            debug "\[create_pool\]\[member_str\]  value for $name not found... setting to default of $column_defaults($name)"
+    foreach name [array names pool_column_defaults] {
+        if { ![info exists pool_column($name)] || $pool_column($name) eq "" } {
+            set pool_column($name) $pool_column_defaults($name)
+            debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  value for $name not found... setting to default of $pool_column_defaults($name)"
         }
     }
 
-    set ip $column(IPAddress)
-    set port $column(Port)
-    set connlimit $column(ConnectionLimit)
-    set state $column(State)
-    set ratio $column(Ratio)
-    set prigrp $column(PriorityGroup)
-    set options [lindex $column(AdvOptions) 0]
-    
+    set idx $pool_column(Index)
+    set ip $pool_column(IPAddress)
+    set port $pool_column(Port)
+    set connlimit $pool_column(ConnectionLimit)
+    set state $pool_column(State)
+    set ratio $pool_column(Ratio)
+    set prigrp $pool_column(PriorityGroup)
+    set options [lindex $pool_column(AdvOptions) 0]    
+
+    if { $idx != $poolIdx } {
+      debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  $idx/$ip:$port not a member of pool $poolIdx skipping"
+      continue
+    }
+
     # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
     if { [string match 0.0.0.0* $ip] } {
-      debug "\[create_pool\]\[member_str\]  ip=0.0.0.0, skipping"
+      debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  ip=0.0.0.0, skipping"
       continue
     } else {
-      incr truenummembers
+      incr nummembers
     }
 
     # Add a route domain if it wasn't included and we don't already have a node object created
@@ -222,17 +271,17 @@ if { $nummembers == 0 } {
     if {[has_routedomain $port]} {
       set port $column(IPAddress)
       set ip $column(Port)
-      debug "\[create_pool\]\[member_str\]  fixing ip=$ip port=$port"
+      debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  fixing ip=$ip port=$port"
     }
-    debug "\[create_pool\]\[member_str\]  ip=$ip port=$port connlimit=$connlimit ratio=$ratio prigrp=$prigrp state=$state advoptions=$options"
+    debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  idx=$idx ip=$ip port=$port connlimit=$connlimit ratio=$ratio prigrp=$prigrp state=$state advoptions=$options"
     
     # If we don't get a port in the pool member table than use the template value for pool__MemberDefaultPort
     if { [string length $port] == 0} {
       if { [string length $pool__MemberDefaultPort] == 0 } {
-        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, pool__MemberDefaultPort was blank, using pool__port=$pool__port"
+        debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  Pool member port was not specified, pool__MemberDefaultPort was blank, using pool__port=$pool__port"
         set port $pool__port
       } else {
-        debug "\[create_pool\]\[member_str\]  Pool member port was not specified, using pool__MemberDefaultPort=$pool__MemberDefaultPort"
+        debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  Pool member port was not specified, using pool__MemberDefaultPort=$pool__MemberDefaultPort"
         set port $pool__MemberDefaultPort
       }
     }
@@ -243,47 +292,62 @@ if { $nummembers == 0 } {
     }
 
     if { [string length $options] > 0} {
-      debug "\[create_pool\]\[member_str\]\[adv_options\] processing member advanced options string"
+      debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]\[adv_options\] processing member advanced options string"
       set options [format " %s" [process_options_string $options "" ""]]
     }
 
     append memberstr [format " %s:%s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $ip $port $connlimit $ratio $prigrp $options $::pool_state($state)]
   }
   append memberstr " \} "
+
+  # Check to see if we really have any pool members after table processing
+  if { $nummembers == 0 } {
+    debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  no true pool members found after table was processed, setting to none"
+    set memberstr " members none"
+  }
+
+  debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  memberstr=$memberstr"
+
+  set idx $column(Index)
+  set name $column(Name)
+  set descr $column(Description)
+  set lbmethod $column(LbMethod)
+  set monitor $column(Monitor)
+  set advoptions $column(AdvOptions)
+
+  # iCR does not like table columns with empty values.  Workaround this by allow use of keyword 'none' and NOOP  
+  if { [string tolower $advoptions] == "none" } {
+    set advoptions ""
+  }
+
+  # Setup the base pool create command
+  set cmd [format "ltm pool %s/%s %s " $app_path $name $memberstr]
+
+  array set pool_options {
+    "lbmethod" "load-balancing-mode"
+    "descr" "description"
+    "monitor" "monitor"
+  }
+
+  foreach {optionvar optioncmd} [array get pool_options] {
+    #debug "\[create_pool\]\[options\] var=$optionvar cmd=$optioncmd"
+    append cmd [generic_add_option "create_pool\]\[pools\]\[$poolIdx\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
+  }
+
+  if { [string length $advoptions] > 0 } {
+    debug "\[create_pool\]\[pools\]\[$poolIdx\]\[adv_options\] processing advanced options string"
+    append cmd [format " %s" [process_options_string $advoptions "" ""]]
+  }
+
+  debug "\[create_pool\]\[pools\]\[$poolIdx\] TMSH CREATE: $cmd"
+  tmsh::create $cmd
+  
+  custom_extensions_after_pool
+  incr poolIdx
 }
-
-# Check to see if we really have any pool members after table processing
-if { $truenummembers == 0 } {
-  debug "\[create_pool\]\[member_str\]  no true pool members found after table was processed, setting to none"
-  set memberstr " members none"
-}
-
-debug "\[create_pool\]\[member_str\]  memberstr=$memberstr"
-
-# Setup the base pool create command
-set cmd [format "ltm pool %s/%s %s " $app_path $pool__Name $memberstr]
-
-array set pool_options {
-  "pool__LbMethod" "load-balancing-mode"
-  "pool__Description" "description"
-  "pool__Monitor" "monitor"
-}
-
-foreach {optionvar optioncmd} [array get pool_options] {
-  #debug "\[create_pool\]\[options\] var=$optionvar cmd=$optioncmd"
-  append cmd [generic_add_option "create_pool\]\[options" [set [subst $optionvar]] $optioncmd "" 0]
-}
-
-if { [string length $pool__AdvOptions] > 0 } {
-  debug "\[create_pool\]\[adv_options\] processing advanced options string"
-  append cmd [format " %s" [process_options_string $pool__AdvOptions "" ""]]
-}
-
-debug "\[create_pool\] TMSH CREATE: $cmd"
-tmsh::create $cmd
 
 # Call the custom_extensions_after_pool proc to allow site-specific customizations
-custom_extensions_after_pool
+custom_extensions_after_pools
 
 # Call the custom_extensions_before_vs proc to allow site-specific customizations
 custom_extensions_before_vs
@@ -403,7 +467,7 @@ if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
   debug "\[create_virtual\]\[feature__securityEnableHSTS\] vs__Irules=$vs__Irules"
 }
 
-# Check to see if a vsName was specified... if not set to $app_pool
+# Check to see if a vsName was specified... if not set to $app_vs
 if { [string length $vs__Name] == 0 } {
     set vs__Name [format "%s_vs" $app]
     debug "\[create_virtual\] no vsName specified... setting to $vs__Name"
@@ -425,7 +489,6 @@ set vs_dest "$vs_dest_addr:$pool__port"
 # Set virtual server options we support.  This array assumes a format " <option> <input value>" for the TMSH command.
 array set vs_options {
  "pool__mask" "mask"
- "pool__Name" "pool"
  "vs_dest" "destination"
  "vs__IpProtocol" "ip-protocol"
  "vs__ConnectionLimit" "connection-limit"
@@ -435,6 +498,10 @@ array set vs_options {
  "vs__OptionConnectionMirroring" "mirror"
  "vs__ProfileFallbackPersist" "fallback-persistence"
  "vs__ProfilePerRequest" "per-flow-request-access-policy"
+}
+
+if { [string length $default_pool_name] > 0 } {
+  set vs_options(default_pool_name) "pool"
 }
 
 # Set virtual server options we support.  This array allows specifcation of the specific TMSH command format
@@ -528,7 +595,7 @@ if { [string length $vs__BundledIrules] > 0 && ![string match *no\ bundled\ item
   set bundledirule_map [list %APP_PATH%      $app_path \
                              %APP_NAME%      $app \
                              %VS_NAME%       $vs__Name \
-                             %POOL_NAME%     $pool__Name \
+                             %POOL_NAME%     $default_pool_name \
                              %PARTITION%     $partition ]
 
   set vs__BundledIrules [string map {"," " " ";" " "} $vs__BundledIrules]
@@ -841,7 +908,7 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
   # used to fill in variables within iCall script
   set script_map [list %APP_NAME%      $app \
                        %VS_NAME%       $vs__Name \
-                       %POOL_NAME%     $pool__Name \
+                       %POOL_NAME%     $default_pool_name \
                        %PARTITION%     $partition \
                        %HTTP_ENABLED%  $feature__statsHTTP \
                        %HTTP_PROFILE%  [format "%s" $vs__ProfileHTTP] \

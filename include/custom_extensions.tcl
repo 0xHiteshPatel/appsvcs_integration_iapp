@@ -47,6 +47,14 @@ proc custom_extensions_start {} {
   }
 }
 
+proc custom_extensions_before_pools {} {
+  debug "\[[lindex [info level 0] 0]\] entering proc"
+
+  # Call our custom_example_1 proc to dump some info to the debug log.
+  upvar custom_field1_kvp kvp_array
+  custom_example_1 [array get kvp_array]
+}
+
 proc custom_extensions_before_pool {} {
   debug "\[[lindex [info level 0] 0]\] entering proc"
 
@@ -56,6 +64,14 @@ proc custom_extensions_before_pool {} {
 }
 
 proc custom_extensions_after_pool {} {
+  debug "\[[lindex [info level 0] 0]\] entering proc"
+
+  # Call our custom_example_1 proc to dump some info to the debug log.
+  upvar custom_field1_kvp kvp_array
+  custom_example_1 [array get kvp_array]
+}
+
+proc custom_extensions_after_pools {} {
   debug "\[[lindex [info level 0] 0]\] entering proc"
 
   # Call our custom_example_1 proc to dump some info to the debug log.
