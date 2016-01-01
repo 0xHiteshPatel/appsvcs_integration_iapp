@@ -20,7 +20,8 @@ tmsh::modify sys application service $aso strict-updates disabled
 tmsh::modify sys icall handler periodic postdeploy_load_asm status inactive
 
 puts "$logprefix Loading ASM policy from $filename to ASO $aso..."
-tmsh::load asm policy ${app}_asm_policy file $filename app-service $aso
+tmsh::load asm policy ${app}_asm_policy file $filename
+tmsh::modify asm policy ${app}_asm_policy app-service $aso
 
 puts "$logprefix Setting ASM policy $app_path/asm_policy active..."
 tmsh::modify asm policy ${app}_asm_policy active
