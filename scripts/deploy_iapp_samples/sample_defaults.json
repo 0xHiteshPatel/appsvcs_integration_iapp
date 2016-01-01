@@ -69,13 +69,20 @@
 			"name":"pool__Pools",
 			"columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
 			"rows" : [
-				{ "row": [ "0", "", "", "round-robin", "/Common/tcp", "none"]  }
+				{ "row": [ "0", "", "", "round-robin", "0", "none"]  }
 			]
 		},
 		{
 			"name":"pool__Members",
 			"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
 			"rows" : [ ]		
+		},
+		{
+			"name":"monitor__Monitors",
+			"columnNames": ["Index", "Name", "Type", "Options"],
+			"rows" : [ 
+				{ "row": [ "0", "/Common/tcp", "none", "none" ] }
+			]
 		},
 		{
 			"name":"feature__easyL4FirewallBlacklist",
