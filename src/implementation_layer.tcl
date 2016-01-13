@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "007"
+set IMPLMINORVERSION "008"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -221,8 +221,9 @@ foreach monRow $monitor__Monitors {
 
     set cmd [format "ltm monitor %s %s " $column(Type) $monNames($monIdx)]
     if { [string length $column(Options)] > 0 } {
-      debug "\[create_monitors\]\[monitors\]\[$monIdx\]\[options\] processing options string"
-      append cmd [format " %s" [process_options_string [lindex $column(Options) 0] "" ""]]
+      set column(Options) [join $column(Options) " "]
+      debug "\[create_monitors\]\[monitors\]\[$monIdx\]\[options\] processing options string \"$column(Options)\""
+      append cmd [format " %s" [process_options_string $column(Options) "" ""]]
     }
 
     debug "\[create_monitors\]\[monitors\]\[$monIdx\] TMSH CREATE: $cmd"
