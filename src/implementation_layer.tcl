@@ -6,7 +6,7 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.0"
-set IMPLMINORVERSION "005"
+set IMPLMINORVERSION "006"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 
@@ -630,7 +630,7 @@ foreach {profilevar} [array names create_supported] {
   set profilestr [format "ltm profile %s %s/%s " $profilecmd $app_path $profilename]
   if { [regexp -nocase {^create:} $profileval] } {
     set defaultfound 0
-    set kvpstring [lindex [split $profileval \:] 1]
+    set kvpstring [string map {"create\:" ""} $profileval]
     debug "\[create_virtual\]\[profiles\]\[create_handler\] processing create for $profilevar=$profileval"
 
     # Get all the options passed in array format
