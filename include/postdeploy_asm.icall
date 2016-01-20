@@ -2,6 +2,8 @@ set app %APP_NAME%
 set app_path %APP_PATH%
 set partition %PARTITION%
 set vs_name %VS_NAME%
+set enable_vs %ENABLEVS%
+
 set aso "/$partition/${app}.app/$app"
 set filename "/var/tmp/appsvcs_asm_$app.xml"
 set logprefix "\[appsvcs_postdeploy_asm\]\[$app\]"
@@ -37,8 +39,14 @@ tmsh::modify ltm virtual $vs_name profiles add \{ /Common/websecurity \{ \} \}
 tmsh::modify ltm virtual $vs_name policies add \{ $policy_name \}
 tmsh::commit_transaction
 
+tmsh::delete sys icall handler periodic postdeploy_load_asm
 tmsh::modify sys application service $aso strict-updates enabled
 puts "$logprefix ASM policy deployment completed"
+
+if { $enable_vs } {
+	puts "$logprefix Re-enabling Virtual Server (block modifier was specified in deployment mode)"
+	tmsh::modify [format "ltm virtual %s/%s enabled" $app_path $vs_name]
+}
 
 set systemTime [clock seconds]
 puts "$logprefix Finished at [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S]"

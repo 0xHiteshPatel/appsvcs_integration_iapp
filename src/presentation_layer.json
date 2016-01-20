@@ -61,6 +61,23 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_013"
+				},
+				{
+					"name":"asmDeployMode",
+					"description":"iApp: ASM: Deployment Mode",
+					"help":"The behaviour to take on iApp (re)deployment for ASM policies.  The 'redeploy' options will replace the existing policy with the one packaged in the template.  The 'preserve' options keep the existing policy.  The 'block' modifier to both preserve and redeploy marks the deployed virtual server down to prevent traffic from reaching pool members until policy deployment is complete.  The 'bypass' modifier does not change the virtual server state, however, could cause traffic to bypass the policy until deployment completes.",
+					"type":"choice",
+					"default":"preserve-bypass",
+					"choices":[
+					    "preserve-bypass",
+					    "preserve-block",
+					    "redeploy-bypass",
+					    "redeploy-block"
+					    ],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3,4],
+					"minver":"1.1_001"
 				}
 			]
 		},

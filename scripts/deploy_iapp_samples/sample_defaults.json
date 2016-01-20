@@ -12,6 +12,7 @@
 		{ "iapp__appStats":"enabled" },
 		{ "iapp__mode":"auto" },
 		{ "iapp__routeDomain":"auto" },
+    	{ "iapp__asmDeployMode":"preserve-bypass" },
 		{ "pool__addr":"" },
 		{ "pool__mask":"255.255.255.255" },
 		{ "pool__port":"" },

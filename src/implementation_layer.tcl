@@ -6,9 +6,10 @@
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "009"
+set IMPLMINORVERSION "010"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
+set POSTDEPLOY_DELAY 15
 
 %insertfile:src/util.tcl%
 
