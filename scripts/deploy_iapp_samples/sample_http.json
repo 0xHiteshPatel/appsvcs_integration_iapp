@@ -15,15 +15,26 @@
 			"name":"pool__Pools",
 			"columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
 			"rows" : [
-				{ "row": [ "0", "", "", "round-robin", "0", "none"]  }
+				{ "row": [ "0", "", "", "round-robin", "0,1", "none"]  }
 			]
 		},
 		{
 			"name":"monitor__Monitors",
 			"columnNames": ["Index", "Name", "Type", "Options"],
 			"rows" : [ 
-				{ "row": [ "0", "/Common/http", "none", "none" ] }
+				{ "row": [ "0", "/Common/http", "none", "none" ] },
+				{ "row": [ "1", "/Common/tcp", "none", "none" ] }
 			]
+		},
+		{
+			"name":"l7policy__rulesMatch",
+			"columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+			"rows" : [ ]
+		},
+		{
+			"name":"l7policy__rulesAction",
+			"columnNames": ["Index","Target","Parameter"],
+			"rows" : [ ]
 		}	
 	]
 }

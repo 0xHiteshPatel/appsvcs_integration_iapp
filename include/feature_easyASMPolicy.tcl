@@ -13,7 +13,7 @@ if { [string length $feature__easyASMPolicy] > 0 && $feature__easyASMPolicy ne "
   if { $newdeploy || [expr { $redeploy && [string match redeploy* $iapp__asmDeployMode]}] } {
     set asm_policyname $feature__easyASMPolicy
     set asm_policy_varname [format "asm_policy_%s_data" $asm_policyname]
-    debug "\[create_asm\] deploying ASM policy $asm_policyname"
+    debug [list asm deploy] $asm_policyname 0
 
 %insertfile:tmp/asm.build%
 
@@ -26,14 +26,16 @@ if { [string length $feature__easyASMPolicy] > 0 && $feature__easyASMPolicy ne "
     close $outfile
   } else {
     set savecmd [format "asm policy %s/%s_asm_policy min-xml-file %s" $app_path $app $asm_filename]
-    debug "\[create_asm\] preserving existing policy... save to $asm_filename"
+    debug [list asm preserve] [format "preserving existing policy... save to %s" $asm_filename] 0
+    debug [list asm preserve tmsh_save] $savecmd 0
     tmsh::save $savecmd
   }
 
   set asm_enablevs 0
   if { [string match *\-block $iapp__asmDeployMode] } {
     set asm_cmd [format "ltm virtual %s/%s disabled" $app_path $vs__Name]
-    debug "\[create_asm\] iapp__asmDeployMode specified block mode, disabling virtual server: TMSH MODIFY $asm_cmd"
+    debug [list asm check_deploy_mode] "iapp__asmDeployMode specified block mode, disabling virtual server" 0
+    debug [list asm check_deploy_mode tmsh_modify] $asm_cmd 0
     tmsh::modify $asm_cmd
     set asm_enablevs 1
   }
@@ -50,11 +52,10 @@ if { [string length $feature__easyASMPolicy] > 0 && $feature__easyASMPolicy ne "
   set asm_icall_script_src [string map $asm_script_map $asm_icall_script_tmpl]  
   #debug "\[create_asm\] asm_icall_script_src=$asm_icall_script_src"
 
-  debug "\[create_asm\] TMSH CREATE asm deploy script"
+  debug [list asm icall_script] "creating asm deploy script" 0
   tmsh::create sys icall script postdeploy_asm definition \{ $asm_icall_script_src \}
   set asm_icall_time [clock format [expr {[clock seconds] + $::POSTDEPLOY_DELAY}] -format {%Y-%m-%d:%H:%M:%S}]
-  debug "\[create_asm\] TMSH CREATE iCall handler; executing postdeploy script at: $asm_icall_time"
+  debug [list asm icall_handler] [format "creating iCall handler; executing postdeploy script at: %s" $asm_icall_time] 0
   tmsh::create sys icall handler periodic postdeploy_load_asm first-occurrence $asm_icall_time interval 3000 last-occurrence now+10m script postdeploy_asm status active
-  debug "\[create_asm\] ASM policy deployment will complete momentarily..."
-
+  debug [list asm] "ASM policy deployment will complete momentarily..." 0
 }

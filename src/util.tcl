@@ -1,8 +1,19 @@
 # Print a timestamped debug message to /var/tmp/scriptd.out
 # Input: string
-proc debug { string } {
+# proc debug { string } {
+#   set systemTime [clock seconds]
+#   puts "\[[clock format $systemTime -format %D]\]\[[clock format $systemTime -format %H:%M:%S]\]\[$::app\] $string"
+# }
+
+proc debug { headers msg level } {
   set systemTime [clock seconds]
-  puts "\[[clock format $systemTime -format %D]\]\[[clock format $systemTime -format %H:%M:%S]\]\[$::app\] $string"
+
+  set brackets ""
+  if { [llength $headers] > 0 } {
+    set brackets [format "\[%s\]" [join $headers "\]\["]]
+  }
+  set pre [format "\[%s %s\]\[%s\]%s" [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S] $::app $brackets]
+  puts [format "%s %s" $pre [string map [list "\n" "\n$pre " ] $msg]]
 }
 
 # Figure out which type of environment we are executing in.
@@ -16,22 +27,22 @@ proc get_mode { } {
   set app $tmsh::app_name
   set partition [lindex [split $folder /] 1]
   set newdeploy [catch {tmsh::get_config sys application service /$partition/$app.app/$app}]
-  debug "\[get_mode\] starting folder=$folder partition=$partition newdeploy=$newdeploy"
+  debug [list get_mode] [format "starting folder=%s partition=%s newdeploy=%s" $folder $partition $newdeploy] 0
 
   # Set the routedomain to the partition default-route-domain
   if { [string tolower $::iapp__routeDomain] eq "auto"} {
     set obj [tmsh::get_config auth partition $partition default-route-domain]
     set routedomainid [tmsh::get_field_value [lindex $obj 0] default-route-domain]
-    debug "\[get_mode\]\[set_route_domain\] Using partition default-route-domain; routedomainid=$routedomainid"
+    debug [list get_mode set_route_domain] [format "Using partition default-route-domain; routedomainid=%s" $routedomainid] 0
   } else { 
     set routedomainid $::iapp__routeDomain
-    debug "\[get_mode\]\[set_route_domain\] Using route domain override; routedomainid=$routedomainid"
+    debug [list get_mode set_route_domain] [format "Using route domain override; routedomainid=%s" $routedomainid] 0
   }
 
   # Check for a mode override in $iapp__mode variable
   if { [string tolower $::iapp__mode] ne "auto" } {
     if { $::iapp__mode > 0 && $::iapp__mode < 4 } {
-      debug "\[get_mode\]\[mode_override\] Mode override detected.  Setting mode to $::iapp__mode"
+      debug [list get_mode mode_override] [format "Mode override detected.  Setting mode to %s" $::iapp__mode] 0
       return [list $::iapp__mode $folder $partition $routedomainid $newdeploy]
     } else {
       error "The mode override specified is invalid."
@@ -40,10 +51,10 @@ proc get_mode { } {
   
   # Check for a partition that starts with apic_ and return APIC mode (3) and RD if found
   if { [string match -nocase "apic_*" $partition] } {
-    debug "\[get_mode\]\[apic\] partition starts with apic_, assuming APIC deployment mode (3)"
+    debug [list get_mode apic] "partition starts with apic_, assuming APIC deployment mode (3)" 0
     set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
     set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
-    debug "\[get_mode\]\[apic\] rdobjs=$rdobjs routedomainid=$routedomainid"
+    debug [list get_mode apic] [format "rdobjs=%s routedomainid=%s" $rdobjs $routedomainid] 0
     return [list 3 $folder $partition $routedomainid $newdeploy]
   }
 
@@ -51,19 +62,19 @@ proc get_mode { } {
   # edge-<#>_<#>_virtualserver-<#>-serviceprofile-<#>
   # and return NSX mode (4) 
   if { [regexp -nocase {^edge-[0-9]+_[0-9]+_virtualserver-[0-9]+-serviceprofile-[0-9]+$} $::app] } {
-    debug "\[get_mode\]\[nsx\] app name matches NSX regexp, assuming NSX deployment mode (4)"
+    debug [list get_mode nsx] "app name matches NSX regexp, assuming NSX deployment mode (4)" 0
     return [list 4 $folder $partition $routedomainid $newdeploy]    
   }
 
   # If we get here we can safely assume that this is either a Standalone or BIG-IQ Cloud mode deployment
   # The only way we currently have to check for BIG-IQ Cloud mode is to see if app_stats was sent
   if { [info exists ::app_stats] } {
-    debug "\[get_mode\]\[bigiq\] all other modes checked for and app_stats set, assuming BIG-IQ Cloud deployment mode (2)"
+    debug [list get_mode bigiq] "all other modes checked for and app_stats set, assuming BIG-IQ Cloud deployment mode (2)" 0
     return [list 2 $folder $partition $routedomainid $newdeploy]
   }
 
   # Default is Standalone mode
-  debug "\[get_mode\]\[standalone\] no integration vendor found, assuming Standalone deployment mode (1)"    
+  debug [list get_mode standalone] "no integration vendor found, assuming Standalone deployment mode (1)" 0 
   return [list 1 $folder $partition $routedomainid $newdeploy]
 }
 
@@ -82,7 +93,7 @@ proc generic_add_option { debug_id input_var option_string custom_format replace
       } else {
         set cmd [format " $option_string \"%s\"" $input_var]
       }
-      debug [format "\[%s\]\[generic_add_option\] cmd=%s" $debug_id $cmd]
+      debug [lappend debug_id generic_add_option] [format "cmd=%s" $cmd] 0
   }
   return $cmd
 }
@@ -109,10 +120,10 @@ proc replace_profile { obj oldprofile newprofile } {
       set context [lindex $contextobj 1]
       #debug [format "\[replace_profile\] found profile name=$name context=$context" $name $context]
       if { $name eq $oldprofile } {
-          debug [format "\[replace_profile\] replace profile '%s' with '%s' context=%s" $name $newprofile $context]
+          debug [list replace_profile] [format "replace profile '%s' with '%s' context=%s" $name $newprofile $context] 0
           append newprofiles [format "%s { context %s } " $newprofile $context]
       } else {
-          debug [format "\[replace_profile\] preserve profile '%s' context=%s" $name $context]
+          debug [list replace_profile] [format "preserve profile '%s' context=%s" $name $context] 0
           append newprofiles [format "%s { context %s } " $name $context]
       }
   }
@@ -172,7 +183,7 @@ proc change_var { name value } {
   if { $::mode != 1 } {
     return ""
   }
-  debug "\[change_var\] updating variable $name to $value"
+  debug [list change_var] "updating variable $name to $value" 0
   set varcmd [format "sys application service %s/%s variables modify \{ %s \{ value \"%s\" \} \}" $::app_path $::app $name $value]
   tmsh::modify $varcmd
   set [subst ::$name] $value
@@ -191,7 +202,7 @@ proc is_new_value { name } {
     return 0
   }
   set varvalue [get_var $name]
-  debug "\[is_new_value\] name=$name asovalue=$varvalue varvalue=[set [subst ::$name]]"
+  debug [list is_new_value] [format "name=%s asovalue=%s varvalue=%s" $name $varvalue [set [subst ::$name]]] 0
   if { [set [subst ::$name]] == $varvalue } {
     return 0
   } 
@@ -209,7 +220,7 @@ proc get_var { name } {
   set varcmd [format "sys application service %s/%s variables \{ %s \{ value \} \}" $::app_path $::app $name]
   set varobj [tmsh::get_config $varcmd]
   set varvalue [lindex [lindex [lindex [lindex [lindex $varobj 0] 4] 1] 1] 1]
-  debug "\[get_var\] name=$name value=$varvalue"
+  debug [list get_var] [format "name=%s value=%s" $name $varvalue] 0
   return $varvalue
 }
 
@@ -221,27 +232,27 @@ proc get_var { name } {
 # Return: 1=Option removed; 0=no action taken
 proc handle_opt_remove_on_redeploy { name checkvalue option module } {
   if { ! $::redeploy } {
-    debug "\[handle_opt_remove_on_redeploy\] $name, not a redeployment, skipping"
+    debug [list handle_opt_remove_on_redeploy $name] "not a redeployment, skipping" 0
     return 0
   }
   
   if { ! [is_provisioned $module] } {
-    debug "\[handle_opt_remove_on_redeploy\] $name, $module not provisioned, skipping"
+    debug [list handle_opt_remove_on_redeploy $name] [format "%s not provisioned, skipping" $module] 0
     return 0
   }
 
   set vsobj [lindex [tmsh::get_config ltm virtual $::app_path/$::vs__Name all-properties] 0]
   if { [is_valid_profile_option $vsobj $option] == 0 } {
-    debug "\[handle_opt_remove_on_redeploy\] $name, $option not available, skipping"
+    debug [list handle_opt_remove_on_redeploy $name] [format "%s not available, skipping" $option] 0
     return 0
   }
 
   if { [set [subst ::$name]] == $checkvalue && \
        [is_new_value $name] && \
        $::redeploy } {
-        debug "\[handle_opt_remove_on_redeploy\] $name $checkvalue on redeploy, setting $option to none"
+        debug [list handle_opt_remove_on_redeploy] [format "%s %s on redeploy, setting %s to none" $name $checkvalue $option] 0
         set cmd [format "ltm virtual %s/%s %s none" $::app_path $::vs__Name $option]
-        debug "\[handle_opt_remove_on_redeploy\] TMSH MODIFY: $cmd"
+        debug [list handle_opt_remove_on_redeploy tmsh_modify] $cmd 0
         tmsh::modify $cmd
         return 1
   }
@@ -301,7 +312,7 @@ proc single_column_table_to_list { table key } {
 #        $tmsh = the portion of the tmsh command get a list of all-properties
 #        $template = the object name to use as a list of available options
 proc process_options_string { option_str tmsh template } {
-  debug "\[process_options_string\] processing string $option_str"
+  debug [list process_options_string] $option_str 0
   set ret ""
 
   # Get all the options passed in array format
@@ -319,6 +330,6 @@ proc process_options_string { option_str tmsh template } {
     append ret [format "%s \"%s\" " $option $value]
   }
   array unset options
-  debug "\[process_options_string\] returning \"$ret\""
+  debug [list process_options_string return] $ret 0
   return $ret
 }

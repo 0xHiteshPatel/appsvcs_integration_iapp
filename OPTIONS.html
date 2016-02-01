@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v1.1dev_005</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v1.1dev_006</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -602,6 +602,136 @@ change</td>
   <td>vs.AdvPolicies</td>
   <td>$vs__AdvPolicies</td>
   <td>A comma-seperated list of policies to link to the Virtual Server: <policy_name>[,<policy_name>]</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr><td colspan=7><b>Section: l7policy</b></td></tr>
+<tr>
+  <td>l7policy.strategy</td>
+  <td>$l7policy__strategy</td>
+  <td>The Matching Strategy to use for the L7 Policy.  https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>editchoice</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.defaultASM</td>
+  <td>$l7policy__defaultASM</td>
+  <td>The default ASM policy to use for the L7 Policy.  Specifying a value of 'bypass' will set all actions to bypass ASM processing unless a explicit ASM Action Target is specified</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.defaultL7DOS</td>
+  <td>$l7policy__defaultL7DOS</td>
+  <td>The default L7 DoS policy to use for the L7 Policy.  Specifying a value of 'bypass' will set all actions to bypass ASM processing unless a explicit L7 DoS Action Target is specified</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr><td colspan=7><b>Table: rulesMatch</b></td></tr>
+<tr>
+  <td>l7policy.rulesMatch.Index</td>
+  <td>$l7policy.rulesMatch__Index</td>
+  <td>The index for this match rule.  The corresponding action is configured by specifying a matching action with the same index</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesMatch.Operand</td>
+  <td>$l7policy.rulesMatch__Operand</td>
+  <td>The specific operand to use for a policy match.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>editchoice</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesMatch.Negate</td>
+  <td>$l7policy.rulesMatch__Negate</td>
+  <td>Reverses the meaning of the operation (for example, enabling Negate and specifying https as the starts-with value resolves to true if the header does not start with https).</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>choice</td>
+  <td>no,
+yes</td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesMatch.Condition</td>
+  <td>$l7policy.rulesMatch__Condition</td>
+  <td>Specifies a conditions to use for matching.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>choice</td>
+  <td>equals,
+starts-with,
+ends-with,
+contains,
+greater,
+greater-or-equal,
+less,
+less-or-equal</td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesMatch.Value</td>
+  <td>$l7policy.rulesMatch__Value</td>
+  <td>Specifies a list of values the operand is matched against.  To specify multiple values seperate with a ';'</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesMatch.CaseSensitive</td>
+  <td>$l7policy.rulesMatch__CaseSensitive</td>
+  <td>Specifies a list of values the operand is matched against.  To specify multiple values seperate with a ';'</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>choice</td>
+  <td>no,
+yes</td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesMatch.Missing</td>
+  <td>$l7policy.rulesMatch__Missing</td>
+  <td>Indicates whether a value can be missing.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>choice</td>
+  <td>no,
+yes</td>
+  <td>1.1_001</td>
+</tr>
+<tr><td colspan=7><b>Table: rulesAction</b></td></tr>
+<tr>
+  <td>l7policy.rulesAction.Index</td>
+  <td>$l7policy.rulesAction__Index</td>
+  <td>The index for this match rule.  The corresponding action is configured by specifying a matching action with the same index</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>string</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesAction.Target</td>
+  <td>$l7policy.rulesAction__Target</td>
+  <td>The specific target to use for a policy match.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>editchoice</td>
+  <td></td>
+  <td>1.1_001</td>
+</tr>
+<tr>
+  <td>l7policy.rulesAction.Parameter</td>
+  <td>$l7policy.rulesAction__Parameter</td>
+  <td>Specifies the value for the action. Possible values depend on the target.  Multiple values can be entered by seperating with a ';'</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>

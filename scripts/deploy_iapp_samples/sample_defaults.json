@@ -53,6 +53,9 @@
 		{ "vs__AdvOptions":"" },
 		{ "vs__AdvProfiles":"" },
 		{ "vs__AdvPolicies":"" },
+		{ "l7policy__strategy":"/Common/first-match"},
+		{ "l7policy__defaultASM":"bypass"},
+		{ "l7policy__defaultL7DOS":"bypass"},
 		{ "feature__statsTLS":"auto" },
 		{ "feature__statsHTTP":"auto" },
 		{ "feature__insertXForwardedFor":"auto" },
@@ -84,6 +87,16 @@
 			"rows" : [ 
 				{ "row": [ "0", "/Common/tcp", "none", "none" ] }
 			]
+		},
+		{
+			"name":"l7policy__rulesMatch",
+			"columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+			"rows" : [ ]
+		},
+		{
+			"name":"l7policy__rulesAction",
+			"columnNames": ["Index","Target","Parameter"],
+			"rows" : [ ]
 		},
 		{
 			"name":"feature__easyL4FirewallBlacklist",

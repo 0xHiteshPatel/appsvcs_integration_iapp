@@ -198,8 +198,6 @@ for string in final["strings"]:
 
 deploy_payload["tables"] = final["tables"]
 
-debug("deploy_payload=%s" % pp.pformat(deploy_payload))
-
 # Check to see if the template with the name specified in the arguments exists on the BIG-IP device
 debug("exist_url=%s" % iapp_exist_url)
 resp = s.get(iapp_exist_url)
@@ -212,6 +210,7 @@ if resp.status_code == 200 and not args.redeploy:
 # iApp deployment does not already exist, create it
 if resp.status_code == 404:
  	# Send the REST call to create the template and print outcome
+	debug("deploy_payload=%s" % json.dumps(deploy_payload))
 	resp = s.post(iapp_url, data=json.dumps(deploy_payload))
 	debug("deploy resp=%s" % (pp.pformat(json.loads(resp.text))))
 	if resp.status_code != requests.codes.ok:
@@ -226,6 +225,7 @@ else:
 	del deploy_payload["trafficGroup"]
 	deploy_payload["execute-action"] = "definition"
 
+	debug("redeploy_payload=%s" % json.dumps(deploy_payload))
 	resp = s.put(iapp_exist_url, data=json.dumps(deploy_payload))
 	debug("redeploy resp=%s" % (pp.pformat(json.loads(resp.text))))
 	if resp.status_code != requests.codes.ok:

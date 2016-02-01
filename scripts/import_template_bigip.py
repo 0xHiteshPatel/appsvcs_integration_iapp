@@ -36,7 +36,7 @@ args = parser.parse_args()
 
 # Create request session, set credentials, allow self-signed SSL cert
 s = requests.session()
-s.auth = (args.username,args.password)
+s.auth = (args.username, args.password)
 s.verify = False
 
 # Set our REST urls
