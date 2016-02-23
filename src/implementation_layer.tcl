@@ -557,7 +557,7 @@ foreach l7p_matchRow $l7policy__rulesMatch {
   # Set our tmsh modifiers
   if { [string tolower $column(Negate)] == "no" } { set column(Negate) "" }
   if { [string tolower $column(Negate)] == "yes" } { set column(Negate) "not" }
-  if { [string tolower $column(Missing)] == "no" } { set column(Missing) "not missing" }
+  if { [string tolower $column(Missing)] == "no" } { set column(Missing) "" }
   if { [string tolower $column(Missing)] == "yes" } { set column(Missing) "missing" }
   if { [string tolower $column(CaseSensitive)] == "no" } { set column(CaseSensitive) "case-insensitive" }
   if { [string tolower $column(CaseSensitive)] == "yes" } { set column(CaseSensitive) "case-sensitive" }
@@ -651,8 +651,15 @@ foreach l7p_actionRow $l7policy__rulesAction {
      }
     4 { 
       set l7p_rule_targettmp [format "%s %s %s" [lindex $l7p_action_targets 0] [lindex $l7p_action_targets 1] [lindex $l7p_action_targets 2]]
-      set l7p_rule_parameters [split [lindex $l7p_action_targets 3] ,]
+      set l7p_rule_parameters [psplit [lindex $l7p_action_targets 3] ,]
+
+      # Fix the list in the case that we got a reserved character
+      if { [llength $column(Parameter)] == 1 } {
+        set column(Parameter) [lindex $column(Parameter) 0]
+      }
       set l7p_rule_values [split $column(Parameter) ,]
+      debug [list l7policy action $l7p_actionIdx val_list] $l7p_rule_values 0
+
       set l7p_action_parIdx 0
       
       set l7p_action_rules($l7p_actionIdx) [format "0 \{ %s " $l7p_rule_targettmp $column(Parameter)]
@@ -664,11 +671,14 @@ foreach l7p_actionRow $l7policy__rulesAction {
         # table can be referenced.  If a pool index is referenced we replace it here with the name
         # of the pool
         switch -regexp $l7p_action_parameter {
-          (pool|clone-pool) { 
-            if { [regexp {^[0-9]+$} $l7p_action_parameter_value] } {
-              debug [list l7policy action $l7p_actionIdx pool_substitute] [format "val=%s name=%s" $l7p_action_parameter_value $poolNames($l7p_action_parameter_value)] 0
-              set l7p_action_parameter_value [format "%s/%s" $app_path $poolNames($l7p_action_parameter_value)]
-            }
+          (pool|clone-pool) {
+            set l7p_action_parameter_poolidx -1 
+            if { [regexp {^pool:[0-9]+$} $l7p_action_parameter_value] } {
+              set l7p_action_parameter_poolidx [lindex [split $l7p_action_parameter_value :] 1]
+              debug [list l7policy action $l7p_actionIdx pool_substitute_idx] [format "%s" $l7p_action_parameter_poolidx] 0
+              debug [list l7policy action $l7p_actionIdx pool_substitute] [format "val=%s name=%s" $l7p_action_parameter_value $poolNames($l7p_action_parameter_poolidx)] 0
+              set l7p_action_parameter_value [format "%s/%s" $app_path $poolNames($l7p_action_parameter_poolidx)]
+            } 
           }
         }
         append l7p_action_rules($l7p_actionIdx) [format "%s \"%s\" " $l7p_action_parameter $l7p_action_parameter_value]

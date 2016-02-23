@@ -1,10 +1,7 @@
 # Print a timestamped debug message to /var/tmp/scriptd.out
-# Input: string
-# proc debug { string } {
-#   set systemTime [clock seconds]
-#   puts "\[[clock format $systemTime -format %D]\]\[[clock format $systemTime -format %H:%M:%S]\]\[$::app\] $string"
-# }
-
+# Input: headers = TCL list of headers for the log message
+#        msg = The message to log
+#        level = Integer indicated the log level for this message
 proc debug { headers msg level } {
   set systemTime [clock seconds]
 
@@ -14,6 +11,38 @@ proc debug { headers msg level } {
   }
   set pre [format "\[%s %s\]\[%s\]%s" [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S] $::app $brackets]
   puts [format "%s %s" $pre [string map [list "\n" "\n$pre " ] $msg]]
+}
+
+# Credit for psplit: http://wiki.tcl.tk/1499
+# Perform the equivalent of a split on a string except protect an escaped split character in the input
+# Input: str = the string to split
+#        seps = the charater(s) to split by
+# Return: list $strings
+proc psplit { str seps {protector "\\"}} {
+    set out [list]
+    set prev ""
+    set current ""
+    foreach c [split $str ""] {
+        if { [string first $c $seps] >= 0 } {
+            if { $prev eq $protector } {
+                set current [string range $current 0 end-1]
+                append current $c
+            } else {
+                lappend out $current
+                set current ""
+            }
+            set prev ""
+        } else {
+            append current $c
+            set prev $c
+        }
+    }
+    
+    if { $current ne "" } {
+        lappend out $current
+    }
+
+    return $out
 }
 
 # Figure out which type of environment we are executing in.
