@@ -735,13 +735,17 @@ for {set i 0} {$i < $l7p_matchIdx} {incr i} {
 set l7p_cmd_requires [format " requires replace-all-with { %s } " [join [array names l7p_requires] " "]]
 set l7p_cmd_controls [format " controls replace-all-with { %s } " [join [array names l7p_controls] " "]]
 append l7p_cmd [format " strategy %s %s %s %s \}" $l7policy__strategy $l7p_cmd_requires $l7p_cmd_controls $l7p_cmd_rules]
-debug [list l7policy tmsh_create] $l7p_cmd 0
-tmsh::create $l7p_cmd
+if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
+  debug [list l7policy tmsh_create] $l7p_cmd 0
+  tmsh::create $l7p_cmd
 
-# Add the created policy to the vs__AdvPolicies variable so we attach it to the 
-# Virtual Server when it's created.
-append vs__AdvPolicies [format " %s/%s_l7policy " $app_path $app]
-debug [list l7policy add_policy_to_vs] [format "vs__AdvPolicies=%s" $vs__AdvPolicies] 0
+  # Add the created policy to the vs__AdvPolicies variable so we attach it to the 
+  # Virtual Server when it's created.
+  append vs__AdvPolicies [format " %s/%s_l7policy " $app_path $app]
+  debug [list l7policy add_policy_to_vs] [format "vs__AdvPolicies=%s" $vs__AdvPolicies] 0
+} else {
+  debug [list l7policy skip_creation] "No valid actions or rules after processing, skipping creation" 0
+}
 
 # Call the custom_extensions_before_vs proc to allow site-specific customizations
 custom_extensions_before_vs
