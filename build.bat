@@ -19,8 +19,7 @@ python util\build_tmpl.py %BUILDOPT% "%cd%"
 python util\build_tmpl.py %BUILDOPT% -o parts\iapp.tcl -r src\implementation_only.template "%cd%" > NUL
 python util\build_tmpl.py %BUILDOPT% -o parts\iapp.apl -r tmp\apl.build "%cd%" > NUL
 del tmp\apl.build
-del tmp\asm.build
-del tmp\irules.build
+del tmp\bundler.build
 
 rmdir tmp
 

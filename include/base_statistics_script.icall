@@ -2,14 +2,15 @@ set app %APP_NAME%
 set partition %PARTITION%
 set aso "sys.application.service /$partition/${app}.app/$app"
 
-set enabled_stats {
-    virtual
-    pool
-}
+set enabled_stats {}
 
+set pool_enabled %POOL_ENABLED%
+set vs_enabled %VS_ENABLED%
 set http_enabled %HTTP_ENABLED%
 set ssl_enabled %SSL_ENABLED%
 
+if { $pool_enabled } { lappend enabled_stats "pool" }
+if { $vs_enabled } { lappend enabled_stats "virtual" }
 if { $http_enabled } { lappend enabled_stats "http" }
 if { $ssl_enabled } { lappend enabled_stats "ssl" }
 
@@ -78,7 +79,7 @@ foreach type $enabled_stats {
     foreach stat [set ${type}_stats] {
         #puts " stat=$stat"
         set value [tmsh::get_field_value $obj $stat]
-        #puts " aso=$aso stat=$stat value=$value"
+        #puts " aso=$aso type=$type stat=$stat value=$value"
         # associate the iStat with the app service
         istats::set "$aso string $stat" $value
     }
@@ -89,27 +90,29 @@ foreach type $enabled_stats {
 # Do that here each run through rather than in the iApp because if
 # an external pool is used or strictness was off the size of the
 # pool can change and the iApp wouldn't run to adjust the size
-set pools [tmsh::get_config $pool_path]
-set numpools [llength $pools]
-set pool_size 0
-#puts "numpools=$numpools pool_size=$pool_size"
-if { $numpools == 1 } {
-  # safe to assume only obj in list is our pool now. grab its size
-  # and move along
-  set pool [lindex $pools 0]
-  set fdx 0
-  set fields [tmsh::get_field_names nested $pool]
-  set field_count [llength $fields]
-  while { $fdx < $field_count } {
-    set field [lindex $fields $fdx]
-    #puts "field=$field"
-    incr fdx
-    if { $field eq "members"} {
-      set pool_size [llength [tmsh::get_field_value $pool members]]
-      #puts "new pool_size=$pool_size"
+if { $pool_enabled } {
+  set pools [tmsh::get_config $pool_path]
+  set numpools [llength $pools]
+  set pool_size 0
+  #puts "numpools=$numpools pool_size=$pool_size"
+  if { $numpools == 1 } {
+    # safe to assume only obj in list is our pool now. grab its size
+    # and move along
+    set pool [lindex $pools 0]
+    set fdx 0
+    set fields [tmsh::get_field_names nested $pool]
+    set field_count [llength $fields]
+    while { $fdx < $field_count } {
+      set field [lindex $fields $fdx]
+      #puts "field=$field"
+      incr fdx
+      if { $field eq "members"} {
+        set pool_size [llength [tmsh::get_field_value $pool members]]
+        #puts "new pool_size=$pool_size"
+      }
     }
   }
+  istats::set "$aso string total-member-cnt" $pool_size
 }
-istats::set "$aso string total-member-cnt" $pool_size
 #set tmc [istats::get $aso total-member-cnt]
 #puts "tmc=$tmc"

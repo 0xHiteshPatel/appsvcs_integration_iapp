@@ -1,6 +1,6 @@
 {
 	"tmpl_majorversion":"1.1dev",
-	"pres_revision":"006",
+	"pres_revision":"007",
 	"sections":[
 		{
 			"name":"intro",
@@ -50,7 +50,18 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_013"
-				},					
+				},
+				{
+					"name":"logLevel",
+					"description":"iApp: Log Level",
+					"help":"The log level to use during deployment.  0=silent, 10=most verbose",
+					"type":"string",
+					"default":"7",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"1.1_001"
+				},	
 				{
 					"name":"routeDomain",
 					"description":"iApp: Route Domain",
@@ -78,7 +89,24 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"1.1_001"
-				}
+				},
+				{
+					"name":"apmDeployMode",
+					"description":"iApp: APM: Deployment Mode",
+					"help":"The behaviour to take on iApp (re)deployment for an APM policy.  The 'redeploy' options will replace the existing policy with the one packaged in the template.  The 'preserve' options keep the existing policy.  The 'block' modifier to both preserve and redeploy marks the deployed virtual server down to prevent traffic from reaching pool members until policy deployment is complete.  The 'bypass' modifier does not change the virtual server state, however, could cause traffic to bypass the policy until deployment completes.",
+					"type":"choice",
+					"default":"preserve-bypass",
+					"choices":[
+					    "preserve-bypass",
+					    "preserve-block",
+					    "redeploy-bypass",
+					    "redeploy-block"
+					    ],
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"1.1_001"
+				}				
 			]
 		},
 		{
@@ -128,7 +156,7 @@
 					"required":true,
 					"modes":[1,2,3,4],
 					"minver":"1.1_001"
-				},				
+				},
 				{
 					"name":"Pools",
 					"description":"Pool: Pool Table",
@@ -685,7 +713,7 @@
 				{
 					"name":"ProfileAccess",
 					"description":"Virtual Server: Access Profile",
-					"help":"The APM Access Policy to configure",
+					"help":"The APM Access Policy to configure.  To automatically associate a bundled APM policy after deployment use the value 'use-bundled'",
 					"type":"string",
 					"default":"",
 					"required":false,
@@ -753,11 +781,15 @@
 					"minver":"0.3_001"
 				},
 				{
-					"name":"BundledIrules",
-					"description":"Virtual Server: Bundled iRules",
-					"help":"The bundled iRules to deploy.  Ordering is preserved.  See irules/README for more info.",
+					"name":"BundledItems",
+					"description":"Virtual Server: Bundled Items",
+					"help":"The bundled items to deploy.  See bundled/README for more info.",
 					"type":"dynamic_filelist_multi",
-					"glob":"irules/*.irule",
+					"glob":[
+								{ "path":"bundled/irules/*.irule", "prefix":"irule:" },
+								{ "path":"bundled/asm_policies/*.xml", "prefix":"asm:" },
+								{ "path":"bundled/apm_policies/*.tar.gz", "prefix":"apm:" }
+							],
 					"modes":[1,2,3,4],
 					"minver":"0.3_014",
 					"required":false
@@ -1286,16 +1318,6 @@
 							"minver":"0.3_008"
 						}
 					]
-				},
-				{
-					"name":"easyASMPolicy",
-					"description":"Security: WAF: Policy Name",
-					"help":"The bundled ASM policy name to deploy.  See asm_policies/README for more info.",
-					"type":"dynamic_filelist",
-					"glob":"asm_policies/*.xml",
-					"modes":[1,2,3,4],
-					"minver":"0.3_009",
-					"required":false
 				}								
 			]
 		},

@@ -3,14 +3,15 @@
 #        msg = The message to log
 #        level = Integer indicated the log level for this message
 proc debug { headers msg level } {
-  set systemTime [clock seconds]
-
-  set brackets ""
-  if { [llength $headers] > 0 } {
-    set brackets [format "\[%s\]" [join $headers "\]\["]]
+  if { $::iapp__logLevel >= $level } {
+    set systemTime [clock seconds]
+    set brackets ""
+    if { [llength $headers] > 0 } {
+      set brackets [format "\[%s\]" [join $headers "\]\["]]
+    }
+    set pre [format "\[%s %s\]\[%s\]%s" [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S] $::app $brackets]
+    puts [format "%s %s" $pre [string map [list "\n" "\n$pre " ] $msg]]
   }
-  set pre [format "\[%s %s\]\[%s\]%s" [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S] $::app $brackets]
-  puts [format "%s %s" $pre [string map [list "\n" "\n$pre " ] $msg]]
 }
 
 # Credit for psplit: http://wiki.tcl.tk/1499
@@ -58,6 +59,9 @@ proc get_mode { } {
   set newdeploy [catch {tmsh::get_config sys application service /$partition/$app.app/$app}]
   debug [list get_mode] [format "starting folder=%s partition=%s newdeploy=%s" $folder $partition $newdeploy] 0
 
+  if { ! $newdeploy } {
+    set ::asoobj [lindex [lindex [tmsh::get_config sys application service /$partition/$app.app/$app] 0] 4]
+  }
   # Set the routedomain to the partition default-route-domain
   if { [string tolower $::iapp__routeDomain] eq "auto"} {
     set obj [tmsh::get_config auth partition $partition default-route-domain]
@@ -139,7 +143,6 @@ proc has_routedomain { ip } {
 #        $newprofile = name of the new profile
 # Return: string $newprofiles (string suitable for providing to replace-all-with option)
 proc replace_profile { obj oldprofile newprofile } {
-  #set vsobj [tmsh::get_config ltm virtual /Common/nagle.app/my_virtualserver profiles]
   set profiles [tmsh::get_field_value [lindex $obj 0] "profiles"]
   set newprofiles " { "
   foreach profile $profiles {
@@ -209,13 +212,16 @@ proc create_obj_name { append } {
 #       $value = new value of the variable
 # Return: none
 proc change_var { name value } {
-  if { $::mode != 1 } {
-    return ""
-  }
-  debug [list change_var] "updating variable $name to $value" 0
-  set varcmd [format "sys application service %s/%s variables modify \{ %s \{ value \"%s\" \} \}" $::app_path $::app $name $value]
-  tmsh::modify $varcmd
+  # if { $::mode != 1 } {
+  #   debug [list change_var skip] "not in mode 1 deployment... skipping" 0
+  #   return ""
+  # }
+  debug [list change_var] "updating variable $name to $value (executes post-deployment)" 7
+  set varcmd [create_escaped_tmsh [format "tmsh::modify sys application service %s/%s variables modify \{ %s \{ value \"%s\" \} \}" $::app_path $::app $name $value]]
+  #tmsh::modify $varcmd
+  lappend ::postfinal_deferred_cmds $varcmd  
   set [subst ::$name] $value
+  set ::aso_config($name) $value
   return
 }
 
@@ -223,15 +229,15 @@ proc change_var { name value } {
 # Input: $name = name of variable
 # Return: 1=value is different; 0=value not different OR not a redeploy
 proc is_new_value { name } {
-  if { $::mode != 1 } {
-    return 0
-  }
+  # if { $::mode != 1 } {
+  #   return 0
+  # }
   
   if { $::newdeploy } {
     return 0
   }
   set varvalue [get_var $name]
-  debug [list is_new_value] [format "name=%s asovalue=%s varvalue=%s" $name $varvalue [set [subst ::$name]]] 0
+  debug [list is_new_value] [format "name=%s asovalue=%s varvalue=%s" $name $varvalue [set [subst ::$name]]] 10
   if { [set [subst ::$name]] == $varvalue } {
     return 0
   } 
@@ -240,17 +246,29 @@ proc is_new_value { name } {
 
 # Get the variable value in the ASO.
 # Input: $name = name of variable
+#        $orig = return the original value, not the runtime updated one
 # Return: $string = value of variable
-proc get_var { name } {
-  if { $::mode != 1 || $::newdeploy == 1} {
+proc get_var { name { orig 0 }} {
+  if { $::newdeploy == 1} {
     return ""
   }
+  debug [list get_var] [format "start name=%s" $name] 10
+   
+  #set varcmd [format "sys application service %s/%s %s \{ %s \{ value \} \}" $::app_path $::app $type $name]
+  #set varobj [tmsh::get_config $varcmd]
+  #set varvalue [lindex [lindex [lindex [lindex [lindex $varobj 0] 4] 1] 1] 1]
+  if { $orig == 0 && [info exists ::aso_config($name)] } {
+    set varvalue $::aso_config($name)
+    debug [list get_var] [format "name=%s value=%s" $name $varvalue] 10
+    return $varvalue
+  } 
 
-  set varcmd [format "sys application service %s/%s variables \{ %s \{ value \} \}" $::app_path $::app $name]
-  set varobj [tmsh::get_config $varcmd]
-  set varvalue [lindex [lindex [lindex [lindex [lindex $varobj 0] 4] 1] 1] 1]
-  debug [list get_var] [format "name=%s value=%s" $name $varvalue] 0
-  return $varvalue
+  if { $orig == 1 && [info exists ::aso_config_orig($name)] } {
+    set varvalue $::aso_config_orig($name)
+    debug [list get_var original] [format "name=%s value=%s" $name $varvalue] 10
+    return $varvalue
+  } 
+  return ""
 }
 
 # Safely handle the removal of a virtual server option on redeployment
@@ -261,26 +279,27 @@ proc get_var { name } {
 # Return: 1=Option removed; 0=no action taken
 proc handle_opt_remove_on_redeploy { name checkvalue option module } {
   if { ! $::redeploy } {
-    debug [list handle_opt_remove_on_redeploy $name] "not a redeployment, skipping" 0
+    debug [list handle_opt_remove_on_redeploy $name] "not a redeployment, skipping" 10
     return 0
   }
   
   if { ! [is_provisioned $module] } {
-    debug [list handle_opt_remove_on_redeploy $name] [format "%s not provisioned, skipping" $module] 0
+    debug [list handle_opt_remove_on_redeploy $name] [format "%s not provisioned, skipping" $module] 10
     return 0
   }
 
-  set vsobj [lindex [tmsh::get_config ltm virtual $::app_path/$::vs__Name all-properties] 0]
+  set vsname [get_var vs__Name 1]
+  set vsobj [lindex [tmsh::get_config ltm virtual $::app_path/$vsname all-properties] 0]
   if { [is_valid_profile_option $vsobj $option] == 0 } {
-    debug [list handle_opt_remove_on_redeploy $name] [format "%s not available, skipping" $option] 0
+    debug [list handle_opt_remove_on_redeploy $name] [format "%s not available, skipping" $option] 10
     return 0
   }
 
   if { [set [subst ::$name]] == $checkvalue && \
        [is_new_value $name] && \
        $::redeploy } {
-        debug [list handle_opt_remove_on_redeploy] [format "%s %s on redeploy, setting %s to none" $name $checkvalue $option] 0
-        set cmd [format "ltm virtual %s/%s %s none" $::app_path $::vs__Name $option]
+        debug [list handle_opt_remove_on_redeploy] [format "%s %s on redeploy, setting %s to none" $name $checkvalue $option] 7
+        set cmd [format "ltm virtual %s/%s %s none" $::app_path $vsname $option]
         debug [list handle_opt_remove_on_redeploy tmsh_modify] $cmd 0
         tmsh::modify $cmd
         return 1
@@ -300,12 +319,18 @@ proc is_provisioned { module } {
     dedicated 3
   }
 
-  set obj [tmsh::get_config sys provision $module]
-  if { [catch {
-      set level [tmsh::get_field_value [lindex $obj 0] level]
-  }]} { set level none }
-
-  return [expr { $levels($level) >= 1 }]
+  if { [info exists ::__provision_cache($module)] } {
+    debug [list is_provisioned cache_hit] "$module $::__provision_cache($module)" 10
+    return [expr { $levels($::__provision_cache($module)) >= 1 }]
+  } else {
+    set obj [tmsh::get_config sys provision $module]
+    if { [catch {
+        set level [tmsh::get_field_value [lindex $obj 0] level]
+    }]} { set level none }
+    set ::__provision_cache($module) $level
+    debug [list is_provisioned cache_set] "$module $level" 10
+    return [expr { $levels($level) >= 1 }]
+  }
 }
 
 # Consume an APL table and return a list containing the values of the var specified in $key
@@ -361,4 +386,53 @@ proc process_options_string { option_str tmsh template } {
   array unset options
   debug [list process_options_string return] $ret 0
   return $ret
+}
+
+# Split a string and return items matching a prefix in a TCL list
+# Input: prefix = the prefix to match
+#        string = the string to split
+#        splitchar = the charecter to split on (DEFAULT is " ")
+#        strip = 1 value strips the prefix from the returned list
+#                0 (DEFAULT) does nothing
+# Return: retlist = a list of matching strings
+proc get_items_starting_with { prefix string {splitchar " "} {strip 0}} {
+  set parts [psplit $string $splitchar]
+  debug [list get_items_starting_with start] "prefix=$prefix string=$string splitchar=$splitchar strip=$strip" 10
+  #debug [list get_items_starting_with parts] $parts 10
+  set retlist []
+  foreach part $parts {
+    if { [string match $prefix* $part] } {
+      #debug [list get_items_starting_with part_match] $part 10
+      if { $strip == 1 } {
+        lappend retlist [string map [list $prefix ""] $part]
+      } else {
+        lappend retlist $part
+      }
+    }
+  }
+  debug [list get_items_starting_with retlist] $retlist 10
+  return $retlist
+}
+
+# Properly escape a tmsh command string
+# Input: string = the tmsh command
+# Return: string = the modified string
+proc create_escaped_tmsh { string } {
+  return [string map [list \{ \\\{ \} \\\}] $string]
+}
+
+# Set TMOS version info in a global array.  We read info from the /VERSION 
+# file and populate the array with that information.
+proc set_version_info {} {
+  global version_info
+  array set version_info {}
+  set fh [open "/VERSION" r]
+  set file_data [read $fh]
+  close $fh
+  set data [split $file_data "\n"]
+  foreach line $data {
+    set line_info [split $line ":"]
+    set ::version_info([string tolower [lindex $line_info 0]]) [string trim [lindex $line_info 1]]
+  }
+  return 1
 }

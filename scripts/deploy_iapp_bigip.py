@@ -7,6 +7,7 @@
 # deploy_iapp_bigip.py -- Deploy an iApp to a BIG-IP system using the iControl-REST API
 # Documentation: see README.deploy_iapp_bigip
 import requests
+
 try:
 	requests.packages.urllib3.disable_warnings()
 except:
@@ -17,6 +18,7 @@ import argparse
 import os
 import sys
 import pprint
+import time
 pp = pprint.PrettyPrinter(indent=2)
 
 '''
@@ -80,6 +82,14 @@ def process_file(parent, child, indent):
 				parentdict["tables"][i] = child["tables"][child_tables[table["name"]]]
 			i += 1
 
+	if 'lists' in parentdict:
+		i = 0
+		for alist in parentdict["lists"]:
+			if alist["name"] in child_tables.keys():
+				debug("[%s] OVERRIDE LIST: %s" % (parent, alist["name"]))
+				parentdict["lists"][i] = child["lists"][child_tables[alist["name"]]]
+			i += 1
+
 	# Inherit any other top level keys
 	for topitem in child.keys():
 		debug("topitem=%s" % topitem)
@@ -92,6 +102,37 @@ def debug(msg):
 	if args.debug:
 		print "DEBUG: %s" % (msg)
 
+def check_final_deploy(istat_key):
+	if args.nocheck:
+		return(1)
+
+	current_time = int(time.time())
+	bashurl   = "https://%s/mgmt/tm/util/bash" % (args.host)
+	istat_payload = { "command":"run",
+					 "utilCmdArgs":"-c 'tmsh run cli script appsvcs_get_istat \"%s\"'" % (istat_key)
+	               }
+
+	for i in range(args.checknum):
+		print "[info] checking for deployment completion (%s/%s)..." % ((i+1), args.checknum)
+		resp = s.post(bashurl, data=json.dumps(istat_payload))
+		if resp.status_code != requests.codes.ok:
+			print "ERROR: %s" % (resp.json())
+			sys.exit(1)
+
+		respdict = json.loads(resp.text)
+		
+		result = respdict.get('commandResult')
+		result = result.replace('\n','')
+		debug("[check_deploy] current_time=%s result=%s" % (current_time, result))
+		if result.startswith("FINISHED_"):
+			parts = result.split('_')
+			fin_time = int(parts[1])
+			if fin_time > current_time:
+				return(1)
+		time.sleep(args.checkwait)
+
+	return(0)
+
 # Setup and process arguments
 parser = argparse.ArgumentParser(description='Script to deploy an iApp to a BIG-IP device')
 parser.add_argument("host",             help="The IP/Hostname of the BIG-IP device")
@@ -101,6 +142,10 @@ parser.add_argument("-p", "--password", help="The BIG-IP password")
 parser.add_argument("-d", "--dontsave", help="Don't automatically save the config", action="store_true")
 parser.add_argument("-r", "--redeploy", help="Redeploy an existing iApp", action="store_true")
 parser.add_argument("-D", "--debug",    help="Enable debug output", action="store_true")
+parser.add_argument("-n", "--nocheck",  help="Don't check for deployment completion", action="store_true")
+parser.add_argument("-c", "--checknum", help="Number of times to check for deployment completion", default=10, type=int)
+parser.add_argument("-w", "--checkwait",help="Delay in seconds between each deployment completion check", default=6, type=int)
+
 args = parser.parse_args()
 
 print "[info] processing template \"%s\"" % (args.json_template)
@@ -136,7 +181,6 @@ if args.password:
 	
 # Required fields 
 required = ['name','template_name','partition','username','password','inheritedDevicegroup','inheritedTrafficGroup','deviceGroup','trafficGroup']
-
 
 for item in required:
 	if not item in final:
@@ -190,6 +234,7 @@ deploy_payload = {
     "name": final["name"],
     "variables": [],
     "tables": [],
+    "lists":[]
 }
 
 for string in final["strings"]:
@@ -197,6 +242,7 @@ for string in final["strings"]:
 	deploy_payload["variables"].append({"name":k, "value":v})
 
 deploy_payload["tables"] = final["tables"]
+deploy_payload["lists"] = final["lists"]
 
 # Check to see if the template with the name specified in the arguments exists on the BIG-IP device
 debug("exist_url=%s" % iapp_exist_url)
@@ -207,6 +253,7 @@ if resp.status_code == 200 and not args.redeploy:
 	print "[error] An iApp deployment named \"%s\" already exists on BIG-IP \"%s\".  To redeploy please specify the '-r' flag" % (final["name"], args.host)
 	sys.exit(1)
 
+istat_key = "sys.application.service /%s/%s.app/%s string deploy.postdeploy_final" % (deploy_payload.get('partition'), deploy_payload.get('name'), deploy_payload.get('name'))
 # iApp deployment does not already exist, create it
 if resp.status_code == 404:
  	# Send the REST call to create the template and print outcome
@@ -216,7 +263,13 @@ if resp.status_code == 404:
 	if resp.status_code != requests.codes.ok:
 		print "[error] iApp deployment failed: %s" % (resp.json())
 		sys.exit(1)
-	print "[success] iApp \"%s\" deployed on BIG-IP \"%s\"" % (final["name"], args.host)
+	if check_final_deploy(istat_key):
+		print "[success] iApp \"%s\" deployed on BIG-IP \"%s\"" % (final["name"], args.host)
+		sys.exit(0)
+	else:
+		print "[error] iApp deployment might have failed.  Please check /var/tmp/scriptd.out on the device"
+		sys.exit(1)
+
 # Template exists and args.redeploy (-r) is TRUE so we will modify the existing template
 else:
 	del deploy_payload["inheritedDevicegroup"]
@@ -232,7 +285,12 @@ else:
 		print "[error] iApp re-deployment failed: %s" % (resp.json())
 		sys.exit(1)
 
-	print "[success] iApp \"%s\" re-deployed on BIG-IP \"%s\"" % (final["name"], args.host)
+	if check_final_deploy(istat_key):
+		print "[success] iApp \"%s\" re-deployed on BIG-IP \"%s\"" % (final["name"], args.host)
+		sys.exit(0)
+	else:
+		print "[error] iApp deployment might have failed.  Please check /var/tmp/scriptd.out on the device"
+		sys.exit(1)
 
 # Save the config (unless -d option was specified)
 save_payload = { "command":"save" }

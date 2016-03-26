@@ -4,6 +4,8 @@ import sys
 import glob
 import os
 import argparse
+import base64
+import gzip
 
 def get_info(basedir):
 	allvars = []
@@ -73,17 +75,59 @@ def process_file(fin, fout, basedir, name_append, prepend):
 		ret.append(line)
 	return ret
 
-def create_files_include(files, outfile, prefix):
-	with open(outfile, "wt") as out:	
-		for filename in files:
-			print " processing file %s" % filename
-			name_parts = filename.split(os.sep)
-			file_parts = name_parts[1].split('.')
-			just_name = file_parts[0]
-			with open(filename) as infile:
-				data = infile.read()
-				out.write("set %s_%s_data {%s}\n\n" % (prefix, just_name, data))
-	out.close()
+def create_bundled_items():
+	type_string = ""
+	data_string = ""
+
+	print "Building bundled items:"
+	with open(os.path.join(basedir,'tmp','bundler.build'), "wt") as out:
+		print " Adding iRules (bundled/irules/*.irule)..."
+		files = glob.glob(os.path.join('bundled','irules','*.irule'))
+
+		print " Adding ASM policies ('bundled/asm_policies/*.xml)..."
+		files += glob.glob(os.path.join('bundled','asm_policies','*.xml'))
+
+		print " Adding APM policies (apm_policies/*.tar.gz)..."
+		files += glob.glob(os.path.join('bundled','apm_policies','*.tar.gz'))
+
+		if len(files) == 0:
+			print "  no files found"
+			out.write("\n")
+		else:
+			out.write("array set bundler_objects {}\n")
+			out.write("array set bundler_data {}\n")
+			for filename in files:
+				print " Processing file: %s" % filename
+				filetype = ""
+				apm_bip_version = ['1']
+				name_parts = filename.split(os.sep)
+				file_parts = name_parts[2].split('.')
+				just_name = file_parts[0]
+				if re.match( r'.*irules.*', filename): filetype = 'irule'
+				if re.match( r'.*asm.*', filename): filetype = 'asm'
+				if re.match( r'.*apm.*', filename): filetype = 'apm'
+				
+				if filetype == "":
+					print "ERROR: Could not determine the type of object for bundled file '%s'" % filename
+					sys.exit(1)
+
+				if filetype == "apm":
+					with gzip.open(filename, 'rb') as gz:
+						apm_raw = gz.read()
+						apm_bip_version = re.findall(r'^\#F5\[Version:(.*)\]', apm_raw, re.MULTILINE)
+    					if len(apm_bip_version) != 1:
+    						print "ERROR: Could not determine BIG-IP TMOS version for bundled APM file '%s'" % filename
+    						sys.exit(1)
+    					gz.close()
+    					print "  Found BIG-IP Version: %s" % apm_bip_version[0]
+				with open(filename, "rb") as infile:
+					key = "%s:%s" % (filetype, just_name)
+					type_string += "set bundler_objects(%s) %s\n" % (key, apm_bip_version[0])
+					data_string += "set bundler_data(%s) {%s}\n" % (key, base64.b64encode(infile.read()))
+
+			out.write("%s\n%s" % (type_string, data_string))	
+		
+		out.close()
 
 parser = argparse.ArgumentParser(description='Script to assemble the appsvcs_integration_iapp BIG-IP iApp template')
 parser.add_argument("basedir", help="The base directory for the build")
@@ -110,29 +154,7 @@ else:
 
 print "Writing to file: %s" % outfile
 
-print "Processing iRules (irules/*.irule)..."
-irules = glob.glob(os.path.join('irules','*.irule'))
-
-if len(irules) == 0:
-	print "  no iRules found"
-	with open(os.path.join(basedir, 'tmp','irules.build'),"wt") as out:
-		out.write("\n")
-	out.close()
-else:
-	create_files_include(irules, os.path.join('tmp','irules.build'), "irule_include" )
-
-
-print "Processing ASM policies (asm_policies/*.xml)..."
-asm_policies = glob.glob(os.path.join('asm_policies','*.xml'))
-
-if len(asm_policies) == 0:
-	print "  no policies found"
-	with open(os.path.join(basedir, 'tmp','asm.build'),"wt") as out:
-		out.write("\n")
-	out.close()
-else:
-	create_files_include(asm_policies, os.path.join('tmp','asm.build'), "asm_policy" )
-
+create_bundled_items()
 
 root_template = "%s/%s" % (basedir, args.roottmpl)
 

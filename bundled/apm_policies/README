@@ -1,0 +1,5 @@
+To include APM policies in your template export the policy from an APM device and save 
+the file in this directory with a ".tar.gz" extension.  When the template
+is built the .tar.gz files in this directory will be dynamically included in the template.  
+
+The name of the policy will match the filename without the ".tar.gz" extension

@@ -3,20 +3,32 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+package require base64
+
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "011"
+set IMPLMINORVERSION "012"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
-set POSTDEPLOY_DELAY 15
+set POSTDEPLOY_DELAY 10
 
 %insertfile:src/util.tcl%
 
+set_version_info
+
 %insertfile:include/custom_extensions.tcl%
 
+array set bundler_objects {}
+array set bundler_data {}
+set bundler_deferred_cmds []
+
+%insertfile:tmp/bundler.build%
+
 set app $tmsh::app_name
-debug "start" [format "Starting %s version IMPL=%s PRES=%s app_name=%s" $NAME $IMPLVERSION $PRESVERSION $app] 0
+debug [list start] [format "Starting %s version IMPL=%s PRES=%s app_name=%s" $NAME $IMPLVERSION $PRESVERSION $app] 0
+debug [list version_info] [array get version_info] 0
+
 
 array set modenames {
   1 {Standalone}
@@ -25,6 +37,9 @@ array set modenames {
   4 {VMware NSX}
 }
 
+array set __provision_cache {}
+array set aso_config {}
+set asoobj {}
 set modeinfo [get_mode]
 set mode [lindex $modeinfo 0]
 set folder [lindex $modeinfo 1]
@@ -33,15 +48,43 @@ set rd [lindex $modeinfo 3]
 set newdeploy [lindex $modeinfo 4]
 set app_path [format "/%s/%s.app" $partition $app]
 set template_name [format "appsvcs_integration_v%s_%s" $IMPLMAJORVERSION $PRESVERSION]
-
+set aso [format "%s/%s" $app_path $app]
 set redeploy 0
 if { ! $newdeploy } { set redeploy 1 }
+set postfinal_deferred_cmds []
 
 debug "modeinfo" [format "mode=%s folder=%s partition=%s rd=%s newdeploy=%s redeploy=%s template_name=%s" $mode $folder $partition $rd $newdeploy $redeploy $template_name] 0
 
+# Cache our ASO object data
+for { set i 0 } { $i <= [llength $asoobj] } { set i [expr {$i+2}] } {
+  set type [lindex $asoobj $i]
+  if { $type == "variables" || $type == "lists" || $type == "tables" } {
+    for { set j 0 } { $j < [llength [lindex $asoobj [expr {$i+1}]]] } { set j [expr {$j+2}] } {
+      set name [lindex [lindex $asoobj [expr {$i+1}]] $j]
+      
+      if { $type == "tables" } {
+        set val [lindex [lindex $asoobj [expr {$i+1}]] [expr {$j+1}]]
+      } elseif { $type == "lists" } {
+        set val [lindex [lindex [lindex $asoobj [expr {$i+1}]] [expr {$j+1}]] 1] 
+      } else {
+        set val [lindex [lindex [lindex $asoobj [expr {$i+1}]] [expr {$j+1}]] 1] 
+      }
+      set aso_config($name) $val
+    }
+  }
+}
+# Copy the array so that we can preserve the original values
+# aso_config() can change at runtime
+array set aso_config_orig [array get aso_config]
+
+debug [list aso_config] [array names aso_config] 10
+foreach var [array names aso_config] {
+  debug [list aso_config $var] $aso_config($var) 10
+}
+
 set asodescr [format "Deployed by appsvcs_integration_v%s_%s in %s mode on %s" $IMPLVERSION $PRESVERSION $modenames($mode) [clock format $startTime -format "%D %H:%M:%S"]]
 debug "set_aso_decription" [format "setting ASO description=%s" $asodescr] 0
-tmsh::modify sys application service /$partition/$app.app/$app description [format "\"%s\"" $asodescr]
+tmsh::modify [format "sys application service %s description \"%s\"" $aso $asodescr]
 
 # Define various global values
 set allVars {
@@ -107,6 +150,7 @@ foreach var $allVars {
     debug "input" [format "%s NOT sent, setting to blank" $var] 0
   }
 }
+#error "bah"
 
 # Call the custom_extensions_start proc to allow site-specific customizations
 custom_extensions_start
@@ -254,8 +298,8 @@ foreach monRow $monitor__Monitors {
 custom_extensions_before_pools
 
 # Create pool
-
-debug "pools" [format "poolCount=%s" [llength $pool__Pools]] 0
+set poolCount [llength $pool__Pools]
+debug "pools" [format "poolCount=%s" $poolCount] 0
 
 set poolIdx 0
 set default_pool_name ""
@@ -490,8 +534,14 @@ foreach poolRow $pool__Pools {
 # Call the custom_extensions_after_pool proc to allow site-specific customizations
 custom_extensions_after_pools
 
-# Create L7 Traffic policy
+# Check to see if a vsName was specified... if not set to $app_vs
+if { [string length $vs__Name] == 0 } {
+    set vs__Name [format "%s_vs" $app]
+    change_var vs__Name $vs__Name
+    debug [list virtual_server set_vs_name] [format "no VS Name specified... setting to %s" $vs__Name] 0
+}
 
+# Create L7 Traffic policy
 set l7p_numMatches [llength $l7policy__rulesMatch]
 set l7p_numActions [llength $l7policy__rulesAction]
 
@@ -508,7 +558,7 @@ array set l7p_action_rules {}
 array set l7p_asmrule {}
 array set l7p_l7dosrule {}
 array set l7p_indexes {}
-
+set l7p_defer_create 0
 # Iterate through the l7policy__rulesMatch table and create our conditions.
 set l7p_matchIdx 0  
 foreach l7p_matchRow $l7policy__rulesMatch {
@@ -583,6 +633,8 @@ foreach l7p_matchRow $l7policy__rulesMatch {
 
 # Iterate through the l7policy__rulesAction table and create our actions.
 set l7p_actionIdx 0
+set l7p_action_found_default 0
+
 foreach l7p_actionRow $l7policy__rulesAction {
   debug [list l7policy action $l7p_actionIdx] [format "actionRow=%s" $l7p_actionRow] 0
 
@@ -610,87 +662,126 @@ foreach l7p_actionRow $l7policy__rulesAction {
     continue
   }
 
-  # Determine which profile is required in the policy for the specified operand
-  switch -glob [string tolower $column(Target)] {
-    asm*            { 
-                      set l7p_controls("asm") 1
-                      set l7p_asmrule($column(Index)) 1
-                    }
-    cache*          { set l7p_controls("cache") 1 }
-    *compress*      { set l7p_controls("compression") 1 }
-    forward*        { set l7p_controls("forwarding") 1 }
-    http*           { set l7p_controls("forwarding") 1 }
-    l7dos*          { 
-                      set l7p_controls("l7dos") 1
-                      set l7p_controls("asm") 1 
-                      set l7p_l7dosrule($column(Index)) 1
-                    }
-    log*            { set l7p_controls("forwarding") 1 }
-    request-adapt*  { set l7p_controls("request-adaption") 1 }
-    response-adapt* { set l7p_controls("response-adaptions") 1 }
-    server-ssl*     { set l7p_controls("server-ssl") 1 }
-    tcp-nagle*      { set l7p_controls("forwarding") 1 }
-    tcl*            { set l7p_controls("tcl") 1 }
-    default { 
-      error "Could not determine the correct profile type for L7 Policy Action, Index $column(Index), Target $column(Target)"
-    }
+  if { [string tolower $column(Index)] == "default" } {
+    set l7p_action_found_default 1
   }
 
-  # Process the target.  The '/' character get replaced with a ' ' to build the tmsh
-  # command.  We then determine the type of target by counting the number unique
-  # target element.  3 element targets don't require a parameter (eg: forward/request/reset).
-  # 4 element target require parameters.  We then parse the 4th element as a comma-seperated string
-  # to determine the number of unique parameters required.  The entered parameter is checked to
-  # ensure a parameters are entered (can be blank) and the the tmsh command is created.
-  set l7p_action_targets [split $column(Target) /]
-  switch [llength $l7p_action_targets] {
-    3 {
-      set l7p_rule_targettmp [join $l7p_action_targets " "]
-      set l7p_action_rules($l7p_actionIdx) [format "0 \{ %s \}" $l7p_rule_targettmp]
-      debug [list l7policy action $l7p_actionIdx 3_elements] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 0
-     }
-    4 { 
-      set l7p_rule_targettmp [format "%s %s %s" [lindex $l7p_action_targets 0] [lindex $l7p_action_targets 1] [lindex $l7p_action_targets 2]]
-      set l7p_rule_parameters [psplit [lindex $l7p_action_targets 3] ,]
+  #set column(Target) [string map {"\;" "\\\;"} $column(Target)]
+  set l7p_action_target_list [psplit $column(Target) |]
+  set l7p_action_targetIdx 0
+  if { [llength $l7p_action_target_list] > 0 } {
+    set l7p_action_rules($l7p_actionIdx) ""
+  }
 
-      # Fix the list in the case that we got a reserved character
-      if { [llength $column(Parameter)] == 1 } {
-        set column(Parameter) [lindex $column(Parameter) 0]
+  foreach l7p_action_target $l7p_action_target_list {
+    # Determine which profile is required in the policy for the specified operand
+    switch -glob [string tolower $l7p_action_target] {
+      asm*            { 
+                        set l7p_controls("asm") 1
+                        set l7p_asmrule($column(Index)) 1
+                      }
+      cache*          { set l7p_controls("cache") 1 }
+      *compress*      { set l7p_controls("compression") 1 }
+      forward*        { set l7p_controls("forwarding") 1 }
+      http*           { set l7p_controls("forwarding") 1 }
+      l7dos*          { 
+                        set l7p_controls("l7dos") 1
+                        set l7p_controls("asm") 1 
+                        set l7p_l7dosrule($column(Index)) 1
+                      }
+      log*            { set l7p_controls("forwarding") 1 }
+      request-adapt*  { set l7p_controls("request-adaption") 1 }
+      response-adapt* { set l7p_controls("response-adaptions") 1 }
+      server-ssl*     { set l7p_controls("server-ssl") 1 }
+      tcp-nagle*      { set l7p_controls("forwarding") 1 }
+      tcl*            { set l7p_controls("tcl") 1 }
+      default { 
+        error "Could not determine the correct profile type for L7 Policy Action, Index $column(Index), Target $column(Target)"
       }
-      set l7p_rule_values [split $column(Parameter) ,]
-      debug [list l7policy action $l7p_actionIdx val_list] $l7p_rule_values 0
-
-      set l7p_action_parIdx 0
-      
-      set l7p_action_rules($l7p_actionIdx) [format "0 \{ %s " $l7p_rule_targettmp $column(Parameter)]
-      foreach l7p_action_parameter $l7p_rule_parameters {
-        set l7p_action_parameter_value [lindex $l7p_rule_values $l7p_action_parIdx]
-
-        # Special handling for forward/request/select/(pool|clone-pool).  Either a full path to 
-        # a pool can be entered (eg: /Common/mypool) or the index of a pool created in the pool__Pools
-        # table can be referenced.  If a pool index is referenced we replace it here with the name
-        # of the pool
-        switch -regexp $l7p_action_parameter {
-          (pool|clone-pool) {
-            set l7p_action_parameter_poolidx -1 
-            if { [regexp {^pool:[0-9]+$} $l7p_action_parameter_value] } {
-              set l7p_action_parameter_poolidx [lindex [split $l7p_action_parameter_value :] 1]
-              debug [list l7policy action $l7p_actionIdx pool_substitute_idx] [format "%s" $l7p_action_parameter_poolidx] 0
-              debug [list l7policy action $l7p_actionIdx pool_substitute] [format "val=%s name=%s" $l7p_action_parameter_value $poolNames($l7p_action_parameter_poolidx)] 0
-              set l7p_action_parameter_value [format "%s/%s" $app_path $poolNames($l7p_action_parameter_poolidx)]
-            } 
-          }
-        }
-        append l7p_action_rules($l7p_actionIdx) [format "%s \"%s\" " $l7p_action_parameter $l7p_action_parameter_value]
-        incr l7p_action_parIdx
-      }
-      append l7p_action_rules($l7p_actionIdx) "\} "
-      debug [list l7policy action $l7p_actionIdx 4_element] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 0
     }
-    default { error "The target $column(Target) could not be processed" }
+
+    # Process the target(s).  Multiple targets are delimited by a ';' seperator.  The '/' character 
+    # gets replaced with a ' ' to build the tmsh command.  We then determine the type of target by 
+    # counting the number unique target elements.  3 element targets don't require a parameter 
+    # (eg: forward/request/reset). 4 element target require parameters.  We then parse the 4th element 
+    # as a comma-seperated string to determine the number of unique parameters required.  The 
+    # entered parameter is checked to ensure a parameters are entered (can be blank) and the the 
+    # tmsh command is created.
+    set l7p_action_target_chunk ""
+    set l7p_action_targets [split $l7p_action_target /]
+    switch [llength $l7p_action_targets] {
+      3 {
+        set l7p_rule_targettmp [join $l7p_action_targets " "]
+        #set l7p_action_rules($l7p_actionIdx) [format "%s \{ %s \}" $l7p_action_targetIdx $l7p_rule_targettmp]
+        set l7p_action_target_chunk [format "%s \{ %s \}" $l7p_action_targetIdx $l7p_rule_targettmp]
+        debug [list l7policy action $l7p_actionIdx 3_elements $l7p_action_targetIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 0
+       }
+      4 { 
+        set l7p_rule_targettmp [format "%s %s %s" [lindex $l7p_action_targets 0] [lindex $l7p_action_targets 1] [lindex $l7p_action_targets 2]]
+        set l7p_rule_parameters [psplit [lindex $l7p_action_targets 3] ,]
+        # Fix the list in the case that we got a reserved character
+        if { [llength $column(Parameter)] == 1 } {
+          set column(Parameter) [lindex $column(Parameter) 0]
+        }
+        #set l7p_rule_value [lindex [psplit $column(Parameter) ;] $l7p_action_targetIdx]
+        set l7p_rule_values [psplit [lindex [psplit $column(Parameter) |] $l7p_action_targetIdx] ,]
+        debug [list l7policy action $l7p_actionIdx val_list $l7p_action_targetIdx] $l7p_rule_values 0
+
+        set l7p_action_parIdx 0
+        
+        #set l7p_action_rules($l7p_actionIdx) [format "%s \{ %s " $l7p_action_targetIdx $l7p_rule_targettmp $column(Parameter)]
+        set l7p_action_target_chunk [format "%s \{ %s " $l7p_action_targetIdx $l7p_rule_targettmp]
+        foreach l7p_action_parameter $l7p_rule_parameters {
+          set l7p_action_parameter_value [lindex $l7p_rule_values $l7p_action_parIdx]
+
+          # Special handling for forward/request/select/(pool|clone-pool).  Either a full path to 
+          # a pool can be entered (eg: /Common/mypool) or the index of a pool created in the pool__Pools
+          # table can be referenced.  If a pool index is referenced we replace it here with the name
+          # of the pool
+          switch -regexp $l7p_action_target {
+            ^.*(pool|clone-pool)$ {
+              set l7p_action_parameter_poolidx -1 
+              if { [regexp {^pool:[0-9]+$} $l7p_action_parameter_value] } {
+                set l7p_action_parameter_poolidx [lindex [split $l7p_action_parameter_value :] 1]
+                debug [list l7policy action $l7p_actionIdx pool_substitute_idx] [format "%s" $l7p_action_parameter_poolidx] 0
+                debug [list l7policy action $l7p_actionIdx pool_substitute] [format "val=%s name=%s" $l7p_action_parameter_value $poolNames($l7p_action_parameter_poolidx)] 0
+                set l7p_action_parameter_value [format "%s/%s" $app_path $poolNames($l7p_action_parameter_poolidx)]
+              } 
+            }
+            ^asm.*enable.*$ {
+              if { [regexp {^bundled:(.*$)} $l7p_action_parameter_value -> l7p_action_parameter_asmpolicy] } {
+                debug [list l7policy action $l7p_actionIdx asm_policy] [format "%s" $l7p_action_parameter_asmpolicy] 0
+                if { ! [string match *$l7p_action_parameter_asmpolicy* $vs__BundledItems] } {
+                  error "L7 Policy Action Rule with Index $l7p_actionIdx specified a bundled policy that wasn't selected for deployment"
+                }
+                #set l7p_action_parameter_asmpolicy [lindex [split $l7p_action_parameter_value :] 1]
+                set l7p_action_parameter_value [format "%s/%s" $app_path $l7p_action_parameter_asmpolicy]
+                # Flag deferred creation of the policy because of bundled ASM policy
+                set l7p_defer_create 1
+              }
+            }
+          }
+
+          #append l7p_action_rules($l7p_actionIdx) [format "%s \"%s\" " $l7p_action_parameter $l7p_action_parameter_value]
+          append l7p_action_target_chunk [format "%s \"%s\" " $l7p_action_parameter $l7p_action_parameter_value]
+          incr l7p_action_parIdx
+        }
+        #append l7p_action_rules($l7p_actionIdx) "\} "
+        append l7p_action_target_chunk "\} "
+        debug [list l7policy action $l7p_actionIdx 4_element] [format "chunk=%s" $l7p_action_target_chunk] 0
+      }
+      default { error "The target $l7p_action_target could not be processed" }
+    }
+    append l7p_action_rules($l7p_actionIdx) $l7p_action_target_chunk
+    debug [list l7policy action $l7p_actionIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 0
+    incr l7p_action_targetIdx
   }
   incr l7p_actionIdx
   array unset column_defaults
+}
+
+if { [info exists l7p_controls("asm")] && ! $l7p_action_found_default } {
+  error "A 'default' L7 Policy Action must be defined if you wish you use an ASM policy"
 }
 
 # Build our L7 ruleset
@@ -707,7 +798,7 @@ for {set i 0} {$i < $l7p_matchIdx} {incr i} {
       set l7p_rule_asmdefault [format " 1 { asm request enable policy %s } " $l7policy__defaultASM]
       set l7p_controls("asm") 1
     } else {
-      set l7p_rule_asmdefault " 1 { asm request disable } "
+      set l7p_rule_asmdefault " 98 { asm request disable } "
     }
   }
 
@@ -718,7 +809,7 @@ for {set i 0} {$i < $l7p_matchIdx} {incr i} {
       set l7p_controls("asm") 1
       set l7p_controls("l7dos") 1
     } else {    
-      set l7p_rule_l7dosdefault " 2 { l7dos request disable } "
+      set l7p_rule_l7dosdefault " 99 { l7dos request disable } "
     }
   }
 
@@ -728,7 +819,7 @@ for {set i 0} {$i < $l7p_matchIdx} {incr i} {
   if { [string length $l7p_match_rules($i)] > 0 } {
     set l7p_rule_condpart [format "conditions replace-all-with \{ %s \}" $l7p_match_rules($i)]
   }
-  append l7p_cmd_rules [format "%s \{ %s actions replace-all-with \{ %s %s \} ordinal %s \}" $l7p_indexes($i) $l7p_rule_condpart $l7p_action_rules($i) $l7p_rule_default [expr {$i+1}]]
+  append l7p_cmd_rules [format "%s \{ %s actions replace-all-with \{ %s %s \} ordinal %s \} " $l7p_indexes($i) $l7p_rule_condpart $l7p_action_rules($i) $l7p_rule_default [expr {$i+1}]]
 }
 
 # Finish building the tmsh command and execute it
@@ -736,13 +827,33 @@ set l7p_cmd_requires [format " requires replace-all-with { %s } " [join [array n
 set l7p_cmd_controls [format " controls replace-all-with { %s } " [join [array names l7p_controls] " "]]
 append l7p_cmd [format " strategy %s %s %s %s \}" $l7policy__strategy $l7p_cmd_requires $l7p_cmd_controls $l7p_cmd_rules]
 if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
-  debug [list l7policy tmsh_create] $l7p_cmd 0
-  tmsh::create $l7p_cmd
+  if { $l7p_defer_create > 0 } {
+    debug [list l7policy defer_create] $l7p_cmd 0
+    set l7p_cmd_create [format "tmsh::create %s" $l7p_cmd]
+    set l7p_cmd_modify [format "tmsh::modify %s" $l7p_cmd]
+    
+    #lappend bundler_deferred_cmds [create_escaped_tmsh "tmsh::begin_transaction"]
+    lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_modify]]
+    lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_create]]
 
-  # Add the created policy to the vs__AdvPolicies variable so we attach it to the 
-  # Virtual Server when it's created.
-  append vs__AdvPolicies [format " %s/%s_l7policy " $app_path $app]
-  debug [list l7policy add_policy_to_vs] [format "vs__AdvPolicies=%s" $vs__AdvPolicies] 0
+    if { $l7p_defer_create == 1 && $newdeploy } {
+      lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s profiles add \{ /Common/websecurity \{ \} \}" $app_path $vs__Name]]]
+    }
+
+    if { $newdeploy } {
+      set l7p_cmd_addpolicy [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s policies add \{ %s/%s_l7policy \}" $app_path $vs__Name $app_path $app]]]
+      lappend bundler_deferred_cmds $l7p_cmd_addpolicy
+    }
+    #lappend bundler_deferred_cmds [create_escaped_tmsh "tmsh::commit_transaction"]
+  } else {
+    debug [list l7policy tmsh_create] $l7p_cmd 0
+    tmsh::create $l7p_cmd
+
+    # Add the created policy to the vs__AdvPolicies variable so we attach it to the 
+    # Virtual Server when it's created.
+    append vs__AdvPolicies [format " %s/%s_l7policy " $app_path $app]
+    debug [list l7policy add_policy_to_vs] [format "vs__AdvPolicies=%s" $vs__AdvPolicies] 0
+  }
 } else {
   debug [list l7policy skip_creation] "No valid actions or rules after processing, skipping creation" 0
 }
@@ -751,9 +862,8 @@ if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
 custom_extensions_before_vs
 
 # Create virtual Server
-
 # Process the 'auto' flag for feature__redirectToHTTPS
-if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" } {
+if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" && $pool__addr ne "255.255.255.254"} {
   debug [list virtual_server feature__redirectToHTTPS] "found auto flag and port is 443, setting feature to enabled" 0
   set feature__redirectToHTTPS enabled
 }
@@ -865,14 +975,7 @@ if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
   debug [list virtual_server feature__securityEnableHSTS add_irule_to_vs] [format "vs__Irules=%s" $vs__Irules] 0
 }
 
-# Check to see if a vsName was specified... if not set to $app_vs
-if { [string length $vs__Name] == 0 } {
-    set vs__Name [format "%s_vs" $app]
-    debug [list virtual_server set_vs_name] [format "no VS Name specified... setting to %s" $vs__Name] 0
-}
-
 set cmd [format "ltm virtual %s/%s " $app_path $vs__Name]
-#debug "\[create_virtual\] base cmd=$cmd"
 
 # Setup our listener destination address
 if { ![has_routedomain $pool__addr]} {
@@ -986,28 +1089,27 @@ if { $feature__easyL4Firewall == "enabled" } {
 }
 
 # Process bundled iRules
-if { [string length $vs__BundledIrules] > 0 && ![string match *no\ bundled\ items* $vs__BundledIrules]} { 
+set vs__BundledItems [string map {"," " " ";" " "} $vs__BundledItems]
+set bundledirules [get_items_starting_with "irule:" $vs__BundledItems]
+debug [list virtual_server bundled_irule get_list] [format "%s" $bundledirules] 0
 
-%insertfile:tmp/irules.build%
-
+if { [llength $bundledirules] > 0 } { 
   set bundledirule_map [list %APP_PATH%      $app_path \
                              %APP_NAME%      $app \
                              %VS_NAME%       $vs__Name \
                              %POOL_NAME%     $default_pool_name \
                              %PARTITION%     $partition ]
 
-  set vs__BundledIrules [string map {"," " " ";" " "} $vs__BundledIrules]
-
-  foreach bundledirule $vs__BundledIrules {
+  foreach bundledirule $bundledirules {
     debug [list virtual_server bundled_irule create_irule] [format "deploying bundled iRule %s" $bundledirule] 0
-    set bundled_irule_varname [format "irule_include_%s_data" $bundledirule]
-
-    if {! [info exists [subst $bundled_irule_varname]]} {
+    
+    if {! [info exists bundler_objects($bundledirule)] } {
       error "A bundled iRule named '$bundledirule' was not found in the template"
     }
 
-    set bundled_irule_src [string map $bundledirule_map [set [subst $bundled_irule_varname]]]
+    set bundled_irule_src [string map $bundledirule_map [::base64::decode $bundler_data($bundledirule)]]
 
+    set bundledirule [string map {"irule:" ""} $bundledirule]
     set bundledirulecmd [format "ltm rule %s/%s \{%s\}" $app_path $bundledirule $bundled_irule_src]
     #debug "\[create_virtual\]\[bundled_irule\] TMSH CREATE: $bundledirulecmd"
     tmsh::create $bundledirulecmd
@@ -1180,8 +1282,16 @@ array set vs_profiles {
  "vs__ProfileAnalytics" ""
  "vs__ProfileRequestLogging" ""
  "vs__ProfileServerSSL" ""
- "vs__ProfileAccess" ""
  "vs__ProfileSecurityDoS" ""
+}
+
+# Handle the 'use-bundled' value for the VS Access Profile
+# The bundler code will 
+set bundler_apm_associate 0
+if { $vs__ProfileAccess eq "use-bundled" } {
+  set bundler_apm_associate 1
+} else {
+  set vs_profiles(vs__ProfileAccess) ""
 }
 
 # Save the base profile string for later use by feature__redirectToHTTPS
@@ -1234,8 +1344,15 @@ if { [string length $vs__AdvPolicies] > 0 } {
 }
 
 # Create the virtual server
-debug [list virtual_server tmsh_create] $cmd 0
-tmsh::create $cmd
+
+set stats_vs 0
+if { $pool__addr ne "255.255.255.254" } {
+  debug [list virtual_server tmsh_create] $cmd 0
+  tmsh::create $cmd
+  set stats_vs 1
+} else {
+  debug [list virtual_server skip_create] "found 255.255.255.254 as pool__addr, skipping creation" 0
+}
 
 # Call the custom_extensions_after_vs proc to allow site-specific customizations
 custom_extensions_after_vs
@@ -1288,6 +1405,11 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
   }; # END EMBEDDED ICALL SCRIPT
 
   #debug "done creating icall stats publisher icall_script_tmpl=$icall_script_tmpl"
+  set stats_pool 0
+  if { $poolCount > 0 } {
+    set stats_pool 1
+  }
+
   if { [expr {$feature__statsHTTP eq "enabled" || $feature__statsHTTP eq "auto"}] && [string length $vs__ProfileHTTP] > 0 } {
     debug [list stats feature_statsHTTP] "enabling HTTP stats" 0
     set feature__statsHTTP 1
@@ -1307,6 +1429,8 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
                        %VS_NAME%       $vs__Name \
                        %POOL_NAME%     $default_pool_name \
                        %PARTITION%     $partition \
+                       %POOL_ENABLED%  $stats_pool \
+                       %VS_ENABLED%    $stats_vs \
                        %HTTP_ENABLED%  $feature__statsHTTP \
                        %HTTP_PROFILE%  [format "%s" $vs__ProfileHTTP] \
                        %SSL_ENABLED%   $feature__statsTLS \
@@ -1321,7 +1445,251 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
   tmsh::create sys icall handler periodic publish_stats interval 60 script publish_stats
 }
 
-%insertfile:include/feature_easyASMPolicy.tcl%
+# Process deferred deployment bundled ASM policies
+set bundler_asm_policies [get_items_starting_with "asm:" $vs__BundledItems]
+set bundler_apm_policies [get_items_starting_with "apm:" $vs__BundledItems]
+set bundler_timestamp [clock format [clock seconds] -format {%Y%m%d%H%M%S}]
+set bundler_asm_deploy []
+set bundler_apm_deploy []
+set bundler_all_deploy 0
+set postdeploy_final_state 1
+
+# First perform all our checks
+if { [llength $bundler_asm_policies] > 0 } { 
+  if { ![is_provisioned asm]} {
+    error "A bundled ASM policy was selected, however, the ASM module is not provisioned on this device" 
+  }
+
+  if { [string length $vs__ProfileHTTP] == 0 } {
+    error "A HTTP Profile is required to use ASM functionality"
+  }
+}
+
+if { [llength $bundler_apm_policies] > 1 } {
+  error "Only one bundled APM policy may be selected for deployment"
+}
+
+if { [llength $bundler_apm_policies] == 1 } { 
+  if { ![is_provisioned apm]} {
+    error "A bundled APM policy was selected, however, the APM module is not provisioned on this device" 
+  }
+  if { [string length $vs__ProfileHTTP] == 0 } {
+    error "A HTTP Profile is required to use APM functionality"
+  }
+}
+
+# Process deferred deployment bundled ASM policies
+if { [llength $bundler_asm_policies] > 0 } { 
+  foreach bundled_asm $bundler_asm_policies {
+
+    set bundled_asm_stripped [string map {"asm:" ""} $bundled_asm]
+    set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
+
+    #debug [list bundler asm check_preserve] [format "%s %s" $bundled_asm [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems lists]]]] 0
+    debug [list bundler asm check_preserve] [format "%s %s" $bundled_asm [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems]]]] 0
+    if { $newdeploy || \
+         [expr { $redeploy && [string match redeploy* $iapp__asmDeployMode]}] || \
+         [expr { $redeploy && [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems]]]}] == 0 } {
+      debug [list bundler asm deploy] $bundled_asm 0
+      set bundler_asm_mode 1
+      if {! [info exists bundler_objects($bundled_asm)] } {
+        error "A bundled ASM policy named '$bundled_asm' was not found in the template"
+      }
+
+      set outfile [open $bundled_asm_filename w]
+      puts -nonewline $outfile [::base64::decode $bundler_data($bundled_asm)]
+      close $outfile
+    } else {
+      set bundler_asm_mode 2
+      set savecmd [format "asm policy %s/%s min-xml-file %s" $app_path $bundled_asm_stripped $bundled_asm_filename]
+      debug [list bundler asm preserve] [format "preserving existing policy... save to %s" $bundled_asm_filename] 0
+      debug [list bundler asm preserve tmsh_save] $savecmd 0
+      tmsh::save $savecmd
+    }
+    lappend bundler_asm_deploy $bundled_asm_stripped
+    incr bundler_all_deploy
+  }
+}
+
+# Process deferred deployment bundled APM policies
+set bundler_apm_mode 0
+
+if { [llength $bundler_apm_policies] == 1 } { 
+  set bundled_apm [lindex $bundler_apm_policies 0]
+  set bundled_apm_stripped [string map {"apm:" ""} $bundled_apm]
+  set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
+
+  debug [list bundler apm check_preserve] [format "%s %s" $bundled_apm [string match *$bundled_apm* [get_items_starting_with "apm:" [get_var vs__BundledItems]]]] 0
+  if { $newdeploy || \
+       [expr { $redeploy && [string match redeploy* $iapp__apmDeployMode]}] || \
+       [expr { $redeploy && [llength [get_items_starting_with "apm:" [get_var vs__BundledItems]]]}] == 0 } {
+    debug [list bundler apm deploy] $bundled_apm 0
+    set bundler_apm_mode 1
+      
+    if {! [info exists bundler_objects($bundled_apm)] } {
+      error "A bundled APM policy named '$bundled_apm' was not found in the template"
+    }
+
+    debug [list bundler apm deploy version_check] [format "bundled_version=%s system_version=%s" $bundler_objects($bundled_apm) $version_info(version)] 0
+    if {! [string match $bundler_objects($bundled_apm)* $version_info(version)] } {
+      error "The bundled APM policy '$bundled_apm' requires BIG-IP version $bundler_objects($bundled_apm).  This system is running version $version_info(version)"
+    }
+
+    set outfile [open $bundled_apm_filename w]
+    fconfigure $outfile -translation binary
+    puts -nonewline $outfile [::base64::decode $bundler_data($bundled_apm)]
+    close $outfile
+  } else {
+    debug [list bundler apm preserve] $bundled_apm 0
+    set bundler_apm_mode 2
+    set bundled_apm_export_filename [format "appsvcs_apm_%s_%s_%s" $::app $bundled_apm_stripped $bundler_timestamp]
+    switch -glob $version_info(version) {
+      11.5* {
+        #ng_export <access_profile_name> <filename> [<partition>] FIXTHIS
+        set bundler_apm_exportcmd [format "/usr/bin/env REMOTEUSER=admin USER=admin /usr/bin/ng_export %s.app/bundled_apm_policy %s %s" $app $bundled_apm_export_filename $partition]
+        set bundler_apm_renamecmd [format "mv /tmp/%s.conf.tar.gz %s" $bundled_apm_export_filename $bundled_apm_filename]
+      }
+      11.6* { 
+        set bundler_apm_exportcmd [format "/usr/bin/env REMOTEUSER=admin USER=admin /usr/bin/ng_export %s.app/bundled_apm_policy %s -p %s" $app $bundled_apm_export_filename $partition]
+        set bundler_apm_renamecmd [format "mv /tmp/profile-%s.conf.tar.gz %s" $bundled_apm_export_filename $bundled_apm_filename]
+      }
+      12.0* {
+        set bundler_apm_exportcmd [format "/usr/bin/env REMOTEUSER=admin USER=admin /usr/bin/ng_export %s.app/bundled_apm_policy %s -p %s" $app $bundled_apm_export_filename $partition]
+        set bundler_apm_renamecmd [format "mv /tmp/profile-%s.conf.tar.gz %s" $bundled_apm_export_filename $bundled_apm_filename]
+      }
+      default { error "The TMOS version running on this device does not support the preserve APM deployment modes" }
+    }
+    debug [list bundler apm preserve] [format "preserving existing policy... save to %s" $bundled_apm_filename] 0
+    debug [list bundler apm preserve export_cmd] $bundler_apm_exportcmd 0
+    debug [list bundler apm preserve rename_cmd] $bundler_apm_renamecmd 0
+    eval exec $bundler_apm_exportcmd
+    eval exec $bundler_apm_renamecmd
+
+  }
+  lappend bundler_apm_deploy $bundled_apm_stripped
+  incr bundler_all_deploy
+}
+
+if { $bundler_all_deploy } {
+  set postdeploy_final_state 0
+  set bundler_enablevs 0
+  if { [string match *\-block $iapp__asmDeployMode] || [string match *\-block $iapp__apmDeployMode] } {
+    set bundler_vs_cmd [format "ltm virtual %s/%s disabled" $app_path $vs__Name]
+    debug [list bundler check_deploy_mode] "iapp__(asm|apm)DeployMode specified block mode, disabling virtual server" 0
+    debug [list bundler check_deploy_mode tmsh_modify] $bundler_vs_cmd 0
+    tmsh::modify $bundler_vs_cmd
+    set bundler_enablevs 1
+  }
+
+  set bundler_icall_tmpl {
+%insertfile:include/postdeploy_bundler.icall%    
+  };
+
+  set bundler_apm_importcmd ""
+  if { [llength $bundler_apm_policies] == 1 } { 
+    switch -glob $version_info(version) {
+      11.5* {
+        #ng_export <access_profile_name> <filename> [<partition>]
+        set bundler_apm_importcmd [format "/usr/bin/ng_import %s %s.app/bundled_apm_policy %s" $bundled_apm_filename $app $partition]
+      }
+      11.6* { 
+        #ng_import [-s] <templatefile.conf.tar[.gz]> <new_name> [-p|-partition <partition>]
+        set bundler_apm_importcmd [format "/usr/bin/ng_import %s %s.app/bundled_apm_policy -p %s" $bundled_apm_filename $app $partition]
+      }
+      12.0* {
+        #ng_import [-s] <templatefile.conf.tar[.gz]> <new_name> [-p|-partition <partition>]
+        set bundler_apm_importcmd [format "/usr/bin/ng_import %s %s.app/bundled_apm_policy -p %s" $bundled_apm_filename $app $partition]
+      }
+      default { error "The TMOS version running on this device does not support the preserve APM deployment modes" }
+    }
+  }
+
+  set bundler_icall_time [clock format [expr {[clock seconds] + $::POSTDEPLOY_DELAY}] -format {%Y-%m-%d:%H:%M:%S}]
+  set bundler_script_map [list %APP_NAME%  $::app \
+                       %APP_PATH%      $::app_path \
+                       %VS_NAME%       $::vs__Name \
+                       %PARTITION%     $::partition \
+                       %ENABLEVS%      $bundler_enablevs \
+                       %ASMPOLICYLIST% $bundler_asm_deploy \
+                       %APMPOLICYLIST% $bundler_apm_deploy \
+                       %TIMESTAMP%     $bundler_timestamp \
+                       %APMIMPORTCMD%  $bundler_apm_importcmd \
+                       %ICALLTIME%     $bundler_icall_time \
+                       %NEWDEPLOY%     $newdeploy \
+                       %REDEPLOY%      $redeploy \
+                       %ASMMODE%       $bundler_asm_mode \
+                       %APMMODE%       $bundler_apm_mode \
+                       %APMASSOCIATE%  $bundler_apm_associate \
+                       %DEFERREDCMDS%  [join $bundler_deferred_cmds "\n"] \
+                       %STRICTUPDATES% $iapp__strictUpdates ]
+
+  set bundler_icall_src [string map $bundler_script_map $bundler_icall_tmpl]  
+  debug [list bundler icall_src] [format "%s" $bundler_icall_src] 10
+  debug [list bundler icall_script] "creating postdeploy script" 0
+  #tmsh::create sys icall script postdeploy_bundler definition \{ $bundler_icall_src \}
+  debug [list bundler icall_handler] [format "creating iCall handler; executing postdeploy script at: %s" $bundler_icall_time] 0
+
+  set fn [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app]
+  catch {
+      set fh [open $fn w]
+      puts $fh $bundler_icall_src
+      close $fh
+  } {}    
+ 
+  debug [list bundler deploy] "Bundled policy deployment will complete momentarily..." 0
+}
+
+set postfinal_icall_tmpl {
+%insertfile:include/postdeploy_final.icall%    
+};
+
+set postfinal_handler_state "inactive"
+if { $postdeploy_final_state } {
+  set postfinal_handler_state "active"
+} 
+
+set postfinal_deferred_cmds_str [join $postfinal_deferred_cmds "\n"]
+
+set postfinal_icall_time [clock format [expr {[clock seconds] + $::POSTDEPLOY_DELAY}] -format {%Y-%m-%d:%H:%M:%S}]
+set postfinal_script_map [list %APP_NAME%  $::app \
+                     %APP_PATH%      $::app_path \
+                     %VS_NAME%       $::vs__Name \
+                     %PARTITION%     $::partition \
+                     %ICALLTIME%     $postfinal_icall_time \
+                     %NEWDEPLOY%     $newdeploy \
+                     %REDEPLOY%      $redeploy \
+                     %DEFERREDCMDS%  $postfinal_deferred_cmds_str \
+                     %STRICTUPDATES% $iapp__strictUpdates \
+                     %HANDLER_STATE% $postfinal_handler_state ]
+
+set postfinal_icall_src [string map $postfinal_script_map $postfinal_icall_tmpl]  
+debug [list postfinal icall_src] [format "%s" $postfinal_icall_src] 10
+debug [list postfinal icall_script] "creating postdeploy_final script" 0
+debug [list postfinal icall_handler] [format "creating iCall handler; executing postdeploy_final script at: %s" $postfinal_icall_time] 0
+
+set fn [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app]
+catch {
+    if { $bundler_all_deploy } {
+      set fh [open $fn a]
+    } else {
+      set fh [open $fn w]
+    }
+    puts $fh ""
+    puts $fh $postfinal_icall_src
+    close $fh
+} {}    
+
+set fn [format "/var/tmp/appsvcs_load_postdeploy_%s.sh" $app]
+catch {
+    set fh [open $fn w]
+    puts $fh "sleep 5"
+    puts $fh [format "tmsh load sys config file /var/tmp/appsvcs_postdeploy_%s.conf merge" $app]
+    close $fh
+    exec chmod 777 $fn
+    exec $fn &
+} {}    
+
+debug [list bundler deploy] "Post-deployment script will execute momentarily..." 0
 
 # Call the custom_extensions_end proc to allow site-specific customizations
 custom_extensions_end

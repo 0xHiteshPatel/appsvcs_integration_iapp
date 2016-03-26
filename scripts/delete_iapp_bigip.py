@@ -38,8 +38,8 @@ def debug(msg):
 
 # Setup and process arguments
 parser = argparse.ArgumentParser(description='Script to delete an iApp deployment from a BIG-IP device')
+parser.add_argument("host",             help="The IP/Hostname of the BIG-IP device")
 parser.add_argument("iapp_name",        help="The full path to iApp name to delete")
-parser.add_argument("-i", "--host",     help="The IP/Hostname of the BIG-IP device")
 parser.add_argument("-u", "--username", help="The BIG-IP username", default="admin")
 parser.add_argument("-p", "--password", help="The BIG-IP password", default="admin")
 parser.add_argument("-d", "--dontsave", help="Don't automatically save the config", action="store_true")

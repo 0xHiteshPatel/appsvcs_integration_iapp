@@ -19,6 +19,11 @@
 			]
 		},
 		{
+                        "name":"pool__Members",
+                        "columnNames": [ "Index" ,"IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+                        "rows" : [ ]
+        	},
+		{
 			"name":"monitor__Monitors",
 			"columnNames": ["Index", "Name", "Type", "Options"],
 			"rows" : [ 

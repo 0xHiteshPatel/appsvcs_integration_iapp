@@ -65,16 +65,16 @@ def process_field (field, section, tab):
 		filenames = ["disabled"]
 		for filename in files:
 			name_parts = filename.split(os.sep)
-			file_parts = name_parts[1].split('.')
+			file_parts = name_parts[2].split('.')
 			filenames.append(file_parts[0])
 
 		print "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
 
 		if len(files) > 0:
 			for choice in filenames[:-1]:
-	  			print "\t\t%s\"%s\"," % (tab, choice)
+	  			print "\t\t%s\"%s%s\"," % (tab, field["globprefix"], choice)
 			else:
-	  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
+	  			print "\t\t%s\"%s%s\"" % (tab, field["globprefix"], filenames[-1])
 	  	else:
 	  		print "\t\t%s\"disabled\"" % tab
 
@@ -82,20 +82,23 @@ def process_field (field, section, tab):
 	elif field["type"] == "dynamic_filelist_multi":
 		if os.sep != "/":
 			field["glob"] = field["glob"].replace("/","\\")
-			
-		files = glob.glob(field["glob"])
+		types = {}		
+		globs = field["glob"]
 		filenames = []
-		for filename in files:
-			name_parts = filename.split(os.sep)
-			file_parts = name_parts[1].split('.')
-			filenames.append(file_parts[0])
-
+	
+		for	globitem in globs:
+			files = glob.glob(globitem["path"])
+			for filename in files:
+				name_parts = filename.split(os.sep)
+				file_parts = name_parts[2].split('.')
+				filenames.append(file_parts[0])
+				types[file_parts[0]] = globitem["prefix"]
 		print "\t%smultichoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
-		if len(files) > 0:
+		if len(filenames) > 0:
 			for choice in filenames[:-1]:
-	  			print "\t\t%s\"%s\"," % (tab, choice)
+	  			print "\t\t%s\"%s%s\"," % (tab, types.get('%s' % choice), choice)
 			else:
-	  			print "\t\t%s\"%s\"" % (tab, filenames[-1])
+	  			print "\t\t%s\"%s%s\"" % (tab, types.get('%s' % filenames[-1]), filenames[-1])
 	  	else:
 	  		print "\t\t%s\"** no bundled items **\"" % tab
 		print "\t%s}" % tab	

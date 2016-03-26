@@ -26,6 +26,5 @@ python util/build_tmpl.py $BUILDOPT -o parts/iapp.apl -r tmp/apl.build "`pwd`"  
 cp tmp/doc.build ./OPTIONS.html
 rm tmp/apl.build
 rm tmp/doc.build
-rm tmp/irules.build
-rm tmp/asm.build
+rm tmp/bundler.build
 rmdir tmp

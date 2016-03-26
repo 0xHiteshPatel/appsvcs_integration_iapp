@@ -11,8 +11,10 @@
 		{ "iapp__strictUpdates":"enabled" },
 		{ "iapp__appStats":"enabled" },
 		{ "iapp__mode":"auto" },
+		{ "iapp__logLevel":"5" },
 		{ "iapp__routeDomain":"auto" },
     	{ "iapp__asmDeployMode":"preserve-bypass" },
+    	{ "iapp__apmDeployMode":"preserve-bypass" },
 		{ "pool__addr":"" },
 		{ "pool__mask":"255.255.255.255" },
 		{ "pool__port":"" },
@@ -49,7 +51,6 @@
 		{ "vs__OptionSourcePort":"preserve" },
 		{ "vs__OptionConnectionMirroring":"disabled" },
 		{ "vs__Irules":"" },
-		{ "vs__BundledIrules":"" },
 		{ "vs__AdvOptions":"" },
 		{ "vs__AdvProfiles":"" },
 		{ "vs__AdvPolicies":"" },
@@ -63,7 +64,6 @@
 		{ "feature__sslEasyCipher":"disabled" },
 		{ "feature__securityEnableHSTS":"disabled" },
 		{ "feature__easyL4Firewall":"auto" },
-		{ "feature__easyASMPolicy":"" },
 		{ "extensions__Field1":"" },
 		{ "extensions__Field2":"" },
 		{ "extensions__Field3":"" }
@@ -108,5 +108,12 @@
 			"columnNames": [ "CIDRRange" ],
 			"rows" : [ { "row": ["0.0.0.0/0"] } ]		
 		}		
+	],
+	"lists": [
+		{
+			"name": "vs__BundledItems",
+  			"encrypted": "no",
+			"value": []
+		}
 	]
 }
