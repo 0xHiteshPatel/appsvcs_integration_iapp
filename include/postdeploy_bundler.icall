@@ -141,8 +141,8 @@ if { $enable_vs && ! $apm_apply} {
 
 set dellist {}
 lappend dellist [format "/var/tmp/appsvcs_apmapply_%s.sh" $app] 
-lappend dellist [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app] 
-lappend dellist [format "/var/tmp/appsvcs_load_postdeploy_%s.sh" $app]
+# lappend dellist [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app] 
+# lappend dellist [format "/var/tmp/appsvcs_load_postdeploy_%s.sh" $app]
 
 puts "$logprefix Cleaning up..."
 foreach df $dellist {

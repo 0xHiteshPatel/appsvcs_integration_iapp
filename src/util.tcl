@@ -188,14 +188,14 @@ proc is_valid_profile_option { obj option } {
 # Input: $string = string to process
 # Return: array { key1 {val1} ... keyX{valX}}
 proc process_kvp_string { string } {
-  #debug "\[process_kvp_string\] processing string: $string"
-  set pairs [split $string \;]
+  debug [list process_kvp_string] "processing string: $string" 10
+  set pairs [psplit $string ";"]
   array set ret {}
   foreach pair $pairs {
     set key [lindex [split $pair =] 0]
     set val [lindex [split $pair =] 1]
     set ret($key) $val
-    #debug "\[process_kvp_string\] pair=$pair key=$key val=$val"
+    debug [list process_kvp_string] "pair=$pair key=$key val=$val" 10
   }
   return [array get ret]
 }
@@ -307,7 +307,7 @@ proc handle_opt_remove_on_redeploy { name checkvalue option module } {
   return 0
 }
 
-# Check whether a specified module is provisioned and at what levels
+# Check provisioning cache for whether a specified module is provisioned and at what levels
 # Adapted from original code including the F5 iApp TCL helper library
 # Input: $module = name of the module
 # Output: $level = integer representation of the provisioning level.  See levels array below
@@ -323,14 +323,32 @@ proc is_provisioned { module } {
     debug [list is_provisioned cache_hit] "$module $::__provision_cache($module)" 10
     return [expr { $levels($::__provision_cache($module)) >= 1 }]
   } else {
-    set obj [tmsh::get_config sys provision $module]
-    if { [catch {
-        set level [tmsh::get_field_value [lindex $obj 0] level]
-    }]} { set level none }
-    set ::__provision_cache($module) $level
-    debug [list is_provisioned cache_set] "$module $level" 10
-    return [expr { $levels($level) >= 1 }]
+    debug [list is_provisioned cache_miss] "$module" 10
+    return -1
   }
+}
+
+# Load provisioning cache with module provisioning levels
+# Adapted from original code including the F5 iApp TCL helper library
+proc load_provisioned { } {
+  array set levels {
+    none      0
+    minimum   1
+    nominal   2
+    dedicated 3
+  }
+  set obj [tmsh::get_config sys provision]
+  foreach mod $obj {
+    set modname [lindex $mod 2]
+    set modlevel [lindex $mod 3]
+    if { [llength $modlevel] == 2 } {
+      set modlevel [lindex $modlevel 1]
+    } else {
+      set modlevel none
+    }
+    set ::__provision_cache($modname) $modlevel
+    debug [list load_provisioned cache_set] "$modname $modlevel" 10
+  }  
 }
 
 # Consume an APL table and return a list containing the values of the var specified in $key

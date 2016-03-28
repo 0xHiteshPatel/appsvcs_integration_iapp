@@ -38,6 +38,8 @@ array set modenames {
 }
 
 array set __provision_cache {}
+load_provisioned
+
 array set aso_config {}
 set asoobj {}
 set modeinfo [get_mode]
@@ -240,8 +242,7 @@ foreach monRow $monitor__Monitors {
   # extract the iApp table data - borrowed from f5.lbaas.tmpl
   foreach column_data [lrange [split [join $monRow] "\n"] 1 end-1] {
       set name [lindex $column_data 0]
-      set column($name) [lrange $column_data 1 end]
-      #debug [format "column_data name=%s val=%s" $name $column($name)]
+      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
   }
 
   # fill in any empty table values - borrowed from f5.lbaas.tmpl
@@ -319,7 +320,7 @@ foreach poolRow $pool__Pools {
   # extract the iApp table data - borrowed from f5.lbaas.tmpl
   foreach column_data [lrange [split [join $poolRow] "\n"] 1 end-1] {
       set name [lindex $column_data 0]
-      set column($name) [lrange $column_data 1 end]
+      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
       #debug [format "column_data name=%s val=%s" $name $column($name)]
   }
 
@@ -385,7 +386,7 @@ foreach poolRow $pool__Pools {
     set options [lindex $pool_column(AdvOptions) 0]    
 
     if { $idx != $poolIdx } {
-      debug [list pools $poolIdx member_str] [format " %s/%s:%s not a member of pool %s skipping" $idx $ip $port $poolIdx] 0
+      #debug [list pools $poolIdx member_str] [format " %s/%s:%s not a member of pool %s skipping" $idx $ip $port $poolIdx] 10
       continue
     }
 
@@ -399,7 +400,9 @@ foreach poolRow $pool__Pools {
     }
 
     # Add a route domain if it wasn't included and we don't already have a node object created
-    set node_status [catch {tmsh::get_config ltm node /Common/$ip}]
+    set default_folder "/Common/"
+    if { [string first "/" $ip] >= 0 } { set default_folder "" }
+    set node_status [catch {tmsh::get_config ltm node $default_folder$ip}]
     if { $node_status == 1 && ![has_routedomain $ip]} {
       set ip "$ip%$rd"
     }
@@ -450,7 +453,7 @@ foreach poolRow $pool__Pools {
   set name $column(Name)
   set descr $column(Description)
   set lbmethod $column(LbMethod)
-  set advoptions $column(AdvOptions)
+  set advoptions [lindex $column(AdvOptions) 0]
 
   # We support multiple monitors and the ability to specify the minimum number of monitors that need
   # to pass for the pool to be considered healthy.  The format of the Monitor string from the Pool table is:
@@ -571,7 +574,7 @@ foreach l7p_matchRow $l7policy__rulesMatch {
   # extract the iApp table data - borrowed from f5.lbaas.tmpl
   foreach column_data [lrange [split [join $l7p_matchRow] "\n"] 1 end-1] {
       set name [lindex $column_data 0]
-      set column($name) [lrange $column_data 1 end]
+      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
   }
 
   # fill in any empty table values - borrowed from f5.lbaas.tmpl
@@ -644,7 +647,7 @@ foreach l7p_actionRow $l7policy__rulesAction {
   # extract the iApp table data - borrowed from f5.lbaas.tmpl
   foreach column_data [lrange [split [join $l7p_actionRow] "\n"] 1 end-1] {
       set name [lindex $column_data 0]
-      set column($name) [lrange $column_data 1 end]
+      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
       #debug [format "column_data name=%s val=%s" $name $column($name)]
   }
 
@@ -1684,6 +1687,8 @@ catch {
     set fh [open $fn w]
     puts $fh "sleep 5"
     puts $fh [format "tmsh load sys config file /var/tmp/appsvcs_postdeploy_%s.conf merge" $app]
+    puts $fh [format "rm -f /var/tmp/appsvcs_postdeploy_%s.conf" $app]
+    puts $fh [format "rm -f /var/tmp/appsvcs_load_postdeploy_%s.sh" $app]
     close $fh
     exec chmod 777 $fn
     exec $fn &
