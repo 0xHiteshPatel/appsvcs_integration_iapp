@@ -534,6 +534,10 @@ foreach poolRow $pool__Pools {
   array unset column_defaults
 }
 
+if { ! [info exists poolIndexes($pool__DefaultPoolIndex)] && $pool__DefaultPoolIndex ne ""} {
+  error "The default pool index specified was not present in the pool table"
+}
+
 # Call the custom_extensions_after_pool proc to allow site-specific customizations
 custom_extensions_after_pools
 
@@ -1409,7 +1413,7 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
 
   #debug "done creating icall stats publisher icall_script_tmpl=$icall_script_tmpl"
   set stats_pool 0
-  if { $poolCount > 0 } {
+  if { $poolCount > 0 && $default_pool_name ne "" } {
     set stats_pool 1
   }
 
