@@ -121,32 +121,41 @@ def run_test():
 		(del_override, del_override_name, del_partition) = process_file(test_template)
 				
 		cmd = "../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 30 -w 1 %s %s.tmp" % (args.username, args.password, args.host, test_template)
-		print "[%s] Running %s" % (test_template, cmd),
-		sys.stdout.flush()
 
-		exitcode, out, err = get_exitcode_stdout_stderr(cmd)
-		if not exitcode:
-			print "SUCCESS ",
-			if not args.nodelete and not del_override:
-				del_name = test_template.split('.')[0]
-				if len(del_override_name) > 0:
-					del_name = del_override_name
-				
-				delcmd = "../scripts/delete_iapp_bigip.py -u %s -p %s -P %s -n %s %s" % (args.username, args.password, del_partition, args.host, del_name)
-				dexitcode, dout, derr = get_exitcode_stdout_stderr(delcmd)
-				if dexitcode == 0:
-					print "DELETE_OK"
+		for i in range(args.retries):
+			print "[%s] (%s/%s) Running %s" % (test_template, i+1, args.retries, cmd),
+			sys.stdout.flush()
+
+			exitcode, out, err = get_exitcode_stdout_stderr(cmd)
+
+			if not exitcode:
+				print "SUCCESS ",
+				if not args.nodelete and not del_override:
+					del_name = test_template.split('.')[0]
+					if len(del_override_name) > 0:
+						del_name = del_override_name
+					
+					delcmd = "../scripts/delete_iapp_bigip.py -u %s -p %s -P %s -n %s %s" % (args.username, args.password, del_partition, args.host, del_name)
+					dexitcode, dout, derr = get_exitcode_stdout_stderr(delcmd)
+					if dexitcode == 0:
+						print "DELETE_OK"
+						vs_nextip = int(args.vssubnet.split('.')[-1])
+						member_nextip = int(args.membersubnet.split('.')[-1])
+					else:
+						print "DELETE_FAIL: %s %s" % (dout, derr)
+						return(1)
 				else:
-					print "DELETE_FAIL: %s %s" % (dout, derr)
-					return(1)
-			else:
-				print ""
+					print ""
 
-			os.remove("%s.tmp" % test_template)
-		else:
-			print "FAIL "
-			print out
-			return(1)
+				os.remove("%s.tmp" % test_template)
+				break
+			else:
+				print "FAIL "
+				print out
+				if i+1 == args.retries:
+					return(1)
+			time.sleep(5)
+
 		time.sleep(5)
 
 	print "\nAll tests completed"
@@ -183,6 +192,7 @@ parser.add_argument("-v", "--vssubnet", help="The starting IP to use for Virtual
 parser.add_argument("-m", "--membersubnet", help="The starting IP to use for Pool Member IPs", default="10.0.0.10")
 parser.add_argument("-n", "--nodelete", help="Don't delete deployments automatically", action="store_true")
 parser.add_argument("-c", "--runcount", help="The number of times to run tests", type=int, default=1)
+parser.add_argument("-r", "--retries", help="The number of times to retry tests upon failure", type=int, default=3)
 
 args = parser.parse_args()
 

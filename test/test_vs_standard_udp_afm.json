@@ -1,0 +1,63 @@
+{
+	"name":"%TEST_NAME%",
+	"parent":"include_defaults.json",
+	"strings":[
+		{ "pool__addr":"%TEST_VS_IP%" },
+		{ "pool__port":"53" },
+		{ "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_udp_vs" },
+      { "vs__Description":"Standard UDP Virtual Server" },
+      { "vs__IpProtocol":"udp" },
+      { "vs__ProfileClientProtocol":"/Common/udp" },
+      { "vs__ProfileServerProtocol":"/Common/udp" },
+      { "vs__SNATConfig":"automap" }
+	],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/tcp", "none", "none" ] }
+         ]
+      },
+		{
+			"name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+		{
+			"name":"pool__Members",
+      	"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "53", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "53", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "53", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+		},
+      {
+         "name":"feature__easyL4FirewallBlacklist",
+         "columnNames": [ "CIDRRange" ],
+         "rows" : [ 
+            { "row": ["192.168.1.0/24"] },
+            { "row": ["192.168.2.0/24"] },
+            { "row": ["192.168.3.0/24"] },
+            { "row": ["192.168.4.0/24"] },
+            { "row": ["192.168.5.0/24"] },
+            { "row": ["192.168.6.0/25"] },
+            { "row": ["192.168.7.0/26"] },
+            { "row": ["192.168.8.0/30"] },
+            { "row": ["192.168.9.1/32"] }
+         ]
+      },    
+      {
+         "name":"feature__easyL4FirewallSourceList",
+         "columnNames": [ "CIDRRange" ],
+         "rows" : [ 
+            { "row": ["10.0.0.0/8"] }, 
+            { "row": ["172.16.0.0/16"] } 
+         ]
+      }         
+	]
+}
