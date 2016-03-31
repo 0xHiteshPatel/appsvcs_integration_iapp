@@ -1,0 +1,40 @@
+{
+	"name":"%TEST_NAME%",
+	"parent":"include_defaults.json",
+   "partition":"test_appsvcs",
+	"strings":[
+      { "iapp__routeDomain":"auto" },
+		{ "pool__addr":"%TEST_VS_IP%" },
+		{ "pool__port":"80" },
+		{ "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_tcp_vs" },
+      { "vs__Description":"Standard TCP Virtual Server deployed in Partition with Route Domain" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"automap" }
+	],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/tcp", "none", "none" ] }
+         ]
+      },
+		{
+			"name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+		{
+			"name":"pool__Members",
+      	"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+		}
+	]
+}

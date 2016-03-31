@@ -1,0 +1,53 @@
+{
+	"name":"%TEST_NAME%",
+	"parent":"include_defaults.json",
+	"strings":[
+		{ "pool__addr":"%TEST_VS_IP%" },
+		{ "pool__port":"80" },
+		{ "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_http_bundle_irule_vs" },
+      { "vs__Description":"Standard HTTP Virtual Server with Bundled iRules" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"" },
+      { "vs__ProfileHTTP":"/Common/http" },
+      { "vs__ProfileOneConnect":"/Common/oneconnect" },
+      { "vs__ProfileCompression":"/Common/httpcompression" },
+      { "vs__ProfileDefaultPersist":"/Common/cookie" },
+      { "vs__ProfileFallbackPersist":"/Common/source_addr" }
+	],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/http", "none", "none" ] }
+         ]
+      },
+		{
+			"name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+		{
+			"name":"pool__Members",
+      	"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+		}      
+	],
+   "lists": [
+      {
+         "name": "vs__BundledItems",
+         "encrypted": "no",
+         "value": [
+            "irule:bundle2",
+            "irule:bundle1"
+         ]
+      }
+   ]
+}

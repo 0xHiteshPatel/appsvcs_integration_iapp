@@ -71,7 +71,6 @@ if resp.status_code == 404:
 	print "[error] iApp deployment named \"%s\" does not exist on %s" % (full_name, args.host)
 	sys.exit(1)
 
-# The template exists and the -o argument (overwrite) was not specified.  Print error and exit
 if resp.status_code == 200 and not args.noprompt:
 	if not yes_no_question("Are you sure you want to delete iApp deployment named \"%s\" on BIG-IP \"%s\"" % (full_name, args.host)):
 		sys.exit(1)
@@ -92,3 +91,5 @@ if not args.dontsave:
 		sys.exit(1)
 	else:
 		print "[success] Config saved"
+
+sys.exit(0)

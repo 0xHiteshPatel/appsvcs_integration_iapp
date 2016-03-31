@@ -1,0 +1,83 @@
+{
+   "name":"%TEST_NAME%",
+   "parent":"include_defaults.json",
+   "strings":[
+      { "pool__addr":"%TEST_VS_IP%" },
+      { "pool__port":"443" },
+      { "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_https_l7policy" },
+      { "vs__Description":"Standard HTTPS Virtual Server with L7 policy" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"automap" },
+      { "vs__ProfileHTTP":"/Common/http" },
+      { "vs__ProfileOneConnect":"/Common/oneconnect" },
+      { "vs__ProfileCompression":"/Common/httpcompression" },
+      { "vs__ProfileDefaultPersist":"/Common/ssl" },
+      { "vs__ProfileFallbackPersist":"/Common/source_addr" },
+      { "vs__ProfileClientSSLCert":"/Common/default.crt" },
+      { "vs__ProfileClientSSLKey":"/Common/default.key" }
+   ],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/http", "none", "none" ] }
+         ]
+      },
+      {
+         "name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] },
+            { "row": [ "1", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+      {
+         "name":"pool__Members",
+         "columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+      },
+      {
+         "name":"l7policy__rulesMatch",
+         "columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+         "rows" : [ 
+            { "row": ["0","client-ssl/request/cipher-bits","no","equals","1024","no","no"] },
+            { "row": ["1","http-basic-auth/request/username","no","contains","hansolo","no","no"] },
+            { "row": ["2","http-host/request/all","yes","equals","www.yoda.com","yes","yes"] },
+            { "row": ["3","http-uri/request/path","no","starts-with","/admiral,/akbar","no","no"] },
+            { "row": ["4","ssl-extension/ssl-client-hello/server-name","no","ends-with","ssl.skywalker.com","no","no"] },
+            { "row": ["","error/error/error","no","error","error","no","no"]},
+            { "row": ["5","http-uri/request/path-segment/index/1","no","equals","chewbacca","no","no"]},
+            { "row": ["6","tcp/request/route-domain/internal","no","equals","100","no","no"]},
+            { "row": ["7","http-uri/request/query-parameter/name/princess","no","equals","leia","no","no"]},
+            { "row": ["8","http-uri/request/path","no","starts-with","/r2d2","no","no"]},
+            { "row": ["default","","no","","","no","no"]}
+         ]
+      },
+      {
+         "name":"l7policy__rulesAction",
+         "columnNames": ["Index","Target","Parameter"],
+         "rows" : [ 
+            { "row": ["0","forward/request/reset","none"] },
+            { "row": ["1","forward/request/select/pool","pool:1"] },
+            { "row": ["2","forward/request/select/pool","/Common/test_pool"] },
+            { "row": ["3","forward/request/reset","none"] },
+            { "row": ["4","http-reply/response/redirect/location","http://www.c-3po.com"] },
+            { "row": ["5","log/request/write/message","Use the force!"] },
+            { "row": ["6","http-set-cookie/response/insert/name,domain,path,value","Stay,,/,OnTarget"] },
+            { "row": ["","error/error/error","error"]},
+            { "row": ["7","http-header/response/insert/name,value","X-Thats-No-Moon,[IP::client_addr]"]},
+            { "row": ["8","tcp-nagle/request/disable","none"]},
+            { "row": ["default","forward/request/select/pool","pool:0"]}
+         ]
+      } 
+   ]
+}

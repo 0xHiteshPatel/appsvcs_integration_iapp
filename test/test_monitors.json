@@ -1,0 +1,33 @@
+{
+	"name":"%TEST_NAME%",
+	"parent":"include_defaults.json",
+	"strings":[
+		{ "pool__addr":"%TEST_VS_IP%" },
+		{ "pool__port":"80" },
+		{ "pool__DefaultPoolIndex":"0" }
+	],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/tcp", "none", "none" ] },
+            { "row": [ "1", "/Common/http", "none", "none" ] },
+            { "row": [ "2", "custom_http_monitor", "http", "send=GET /%3Bblah HTTP/1.0\\r\\n\\r\\n;recv=OK;interval=10;timeout=100;reverse=enabled;manual-resume=enabled" ] },
+            { "row": [ "3", "custom_external_monitor", "external", "args=argument1;run=/Common/arg_example"] }
+         ]
+      },
+		{
+			"name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0,1,2", "none"] }
+         ]
+      },
+		{
+			"name":"pool__Members",
+      	"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [ ]
+		}
+	]
+}

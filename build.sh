@@ -12,16 +12,24 @@ python util/build_doc.py src/presentation_layer.json > tmp/doc.build
 echo "Assembling template..."
 
 BUILDOPT=""
+BUNDLEDIR=""
+
 if [ -n "$1" ]
 then
  BUILDOPT="-a $1"
 fi
 
-echo BUILDOPT=$BUILDOPT
+if [ -n "$2" ]
+then
+ BUNDLEDIR="-b $2"
+fi
 
-python util/build_tmpl.py $BUILDOPT "`pwd`"
-python util/build_tmpl.py $BUILDOPT -o parts/iapp.tcl -r src/implementation_only.template "`pwd`"  > /dev/null
-python util/build_tmpl.py $BUILDOPT -o parts/iapp.apl -r tmp/apl.build "`pwd`"  > /dev/null
+echo BUILDOPT=$BUILDOPT
+echo BUNDLEDIR=$BUNDLEDIR
+
+python util/build_tmpl.py $BUILDOPT $BUNDLEDIR "`pwd`"
+python util/build_tmpl.py $BUILDOPT $BUNDLEDIR -o parts/iapp.tcl -r src/implementation_only.template "`pwd`"  > /dev/null
+python util/build_tmpl.py $BUILDOPT $BUNDLEDIR -o parts/iapp.apl -r tmp/apl.build "`pwd`"  > /dev/null
 
 cp tmp/doc.build ./OPTIONS.html
 rm tmp/apl.build

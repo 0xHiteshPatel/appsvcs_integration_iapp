@@ -6,7 +6,7 @@
 		tls_1.1+1.2 {TLSv1_2:TLSv1_1:!TLSv1_2+LOW:!TLSv1_1+LOW:!EXPORT:!MD5:!ADH:@STRENGTH}
 	}
 
-	if { $feature__sslEasyCipher != "disabled" && [info exists feature_sslEasyCipher_strings($feature__sslEasyCipher)]} {
+	if { $feature__sslEasyCipher ne "disabled" && [info exists feature_sslEasyCipher_strings($feature__sslEasyCipher)]} {
 		debug [list client_ssl create ssl_easy_cipher] [format "sslEasyCipher is not disabled, setting vs__ProfileClientSSLCipherString=%s" $feature_sslEasyCipher_strings($feature__sslEasyCipher)] 0
 		set vs__ProfileClientSSLCipherString $feature_sslEasyCipher_strings($feature__sslEasyCipher)
 	}

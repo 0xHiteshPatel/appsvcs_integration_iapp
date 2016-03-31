@@ -81,14 +81,14 @@ def create_bundled_items():
 
 	print "Building bundled items:"
 	with open(os.path.join(basedir,'tmp','bundler.build'), "wt") as out:
-		print " Adding iRules (bundled/irules/*.irule)..."
-		files = glob.glob(os.path.join('bundled','irules','*.irule'))
+		print " Adding iRules (%s/irules/*.irule)..." % (args.bundledir)
+		files = glob.glob(os.path.join(args.bundledir,'irules','*.irule'))
 
-		print " Adding ASM policies ('bundled/asm_policies/*.xml)..."
-		files += glob.glob(os.path.join('bundled','asm_policies','*.xml'))
+		print " Adding ASM policies (%s/asm_policies/*.xml)..." % (args.bundledir)
+		files += glob.glob(os.path.join(args.bundledir, 'asm_policies','*.xml'))
 
-		print " Adding APM policies (apm_policies/*.tar.gz)..."
-		files += glob.glob(os.path.join('bundled','apm_policies','*.tar.gz'))
+		print " Adding APM policies (%s/apm_policies/*.tar.gz)..." % (args.bundledir)
+		files += glob.glob(os.path.join(args.bundledir,'apm_policies','*.tar.gz'))
 
 		if len(files) == 0:
 			print "  no files found"
@@ -101,7 +101,7 @@ def create_bundled_items():
 				filetype = ""
 				apm_bip_version = ['1']
 				name_parts = filename.split(os.sep)
-				file_parts = name_parts[2].split('.')
+				file_parts = name_parts[-1].split('.')
 				just_name = file_parts[0]
 				if re.match( r'.*irules.*', filename): filetype = 'irule'
 				if re.match( r'.*asm.*', filename): filetype = 'asm'
@@ -134,6 +134,8 @@ parser.add_argument("basedir", help="The base directory for the build")
 parser.add_argument("-a", "--append", help="A string to append to the base template name")
 parser.add_argument("-r", "--roottmpl", help="The root template file to use (default: <basedir>/src/master.template", default="src/master.template")
 parser.add_argument("-o", "--outfile", help="The name of the output file")
+parser.add_argument("-b", "--bundledir", help="The directory to use for bundled items", default="bundled")
+
 args = parser.parse_args()
 
 basedir = args.basedir

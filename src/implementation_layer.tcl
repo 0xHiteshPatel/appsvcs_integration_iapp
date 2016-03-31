@@ -839,19 +839,10 @@ if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
     set l7p_cmd_create [format "tmsh::create %s" $l7p_cmd]
     set l7p_cmd_modify [format "tmsh::modify %s" $l7p_cmd]
     
-    #lappend bundler_deferred_cmds [create_escaped_tmsh "tmsh::begin_transaction"]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_modify]]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_create]]
-
-    if { $l7p_defer_create == 1 && $newdeploy } {
-      lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s profiles add \{ /Common/websecurity \{ \} \}" $app_path $vs__Name]]]
-    }
-
-    if { $newdeploy } {
-      set l7p_cmd_addpolicy [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s policies add \{ %s/%s_l7policy \}" $app_path $vs__Name $app_path $app]]]
-      lappend bundler_deferred_cmds $l7p_cmd_addpolicy
-    }
-    #lappend bundler_deferred_cmds [create_escaped_tmsh "tmsh::commit_transaction"]
+    lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s profiles add \{ /Common/websecurity \{ \} \}" $app_path $vs__Name]]]
+    lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s policies add \{ %s/%s_l7policy \}" $app_path $vs__Name $app_path $app]]]
   } else {
     debug [list l7policy tmsh_create] $l7p_cmd 0
     tmsh::create $l7p_cmd
@@ -876,8 +867,8 @@ if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" && $pool__addr 
 }
 
 # Process the 'auto' flag for feature__insertXForwardedFor
-if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $pool__port eq "80"}] } {
-  debug [list virtual_server feature__insertXForwardedFor] "found auto flag and port is 443 or 80, setting feature to enabled" 0
+if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $pool__port eq "80"}] && $vs__SNATConfig ne ""} {
+  debug [list virtual_server feature__insertXForwardedFor] "found auto flag, port is 443 or 80 and SNAT enabled, setting feature to enabled" 0
   set feature__insertXForwardedFor enabled
 }
 
@@ -1382,7 +1373,7 @@ if { $feature__redirectToHTTPS eq "enabled" } {
   }
 
   # The HSTS spec recommends that when redirected a 301 Redirect is used, rather than a 302 like _sys_https_redirect uses
-  if { $feature__securityEnableHSTS eq "enabled" } {
+  if { [string match "enabled*" $feature__securityEnableHSTS] } {
     debug [list virtual_server feature__redirectToHTTPS hsts_check] [format "feature__securityEnableHSTS is enabled, using %s" $hstsredirectrule] 0
     append redirect_cmd " rules { $hstsredirectrule } "
   } else {
@@ -1486,6 +1477,7 @@ if { [llength $bundler_apm_policies] == 1 } {
 }
 
 # Process deferred deployment bundled ASM policies
+set bundler_asm_mode 0
 if { [llength $bundler_asm_policies] > 0 } { 
   foreach bundled_asm $bundler_asm_policies {
 

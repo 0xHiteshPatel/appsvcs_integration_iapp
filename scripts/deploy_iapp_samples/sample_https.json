@@ -12,7 +12,7 @@
 		{ "vs__ProfileClientSSLAdvOptions":"" },
 		{ "feature__insertXForwardedFor":"enabled" },
 		{ "feature__redirectToHTTPS":"enabled" },
-		{ "feature__sslEasyCipher":"tls1.1+1.2" }
+		{ "feature__sslEasyCipher":"tls_1.1+1.2" }
 	],
 	"tables":[
 		{
