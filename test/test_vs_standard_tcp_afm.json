@@ -8,7 +8,8 @@
       { "vs__Name":"test_vs_standard_tcp_vs" },
       { "vs__Description":"Standard TCP Virtual Server" },
       { "vs__IpProtocol":"tcp" },
-      { "vs__SNATConfig":"automap" }
+      { "vs__SNATConfig":"automap" },
+      { "feature__easyL4Firewall":"auto" }
 	],
    "tables":[
       {

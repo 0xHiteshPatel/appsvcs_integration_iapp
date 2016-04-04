@@ -10,7 +10,8 @@
       { "vs__IpProtocol":"udp" },
       { "vs__ProfileClientProtocol":"/Common/udp" },
       { "vs__ProfileServerProtocol":"/Common/udp" },
-      { "vs__SNATConfig":"automap" }
+      { "vs__SNATConfig":"automap" },
+      { "feature__easyL4Firewall":"auto" }
 	],
    "tables":[
       {

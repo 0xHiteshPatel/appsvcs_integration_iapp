@@ -61,7 +61,7 @@
 		{ "feature__redirectToHTTPS":"auto" },
 		{ "feature__sslEasyCipher":"disabled" },
 		{ "feature__securityEnableHSTS":"disabled" },
-		{ "feature__easyL4Firewall":"auto" },
+		{ "feature__easyL4Firewall":"disabled" },
 		{ "extensions__Field1":"" },
 		{ "extensions__Field2":"" },
 		{ "extensions__Field3":"" }

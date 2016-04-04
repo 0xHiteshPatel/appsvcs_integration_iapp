@@ -436,7 +436,7 @@ proc get_items_starting_with { prefix string {splitchar " "} {strip 0}} {
 # Input: string = the tmsh command
 # Return: string = the modified string
 proc create_escaped_tmsh { string } {
-  return [string map [list \{ \\\{ \} \\\}] $string]
+  return [string map [list \{ \\\{ \} \\\} \" \\\"] $string]
 }
 
 # Set TMOS version info in a global array.  We read info from the /VERSION 
@@ -453,4 +453,22 @@ proc set_version_info {} {
     set ::version_info([string tolower [lindex $line_info 0]]) [string trim [lindex $line_info 1]]
   }
   return 1
+}
+
+# Run the cURL command and save the URL to a file.  Throws a hard error if cURL 
+# exits uncleanly
+# Input: string = URL to fetch
+proc curl_save_file { url filename } {
+  debug [list curl_save_file start] "url=$url filename=$filename" 10
+  set status [catch {
+      exec curl --connect-timeout 5 -k -o $filename $url
+  } message]
+
+  debug [list curl_save_file done] "status=$status message=$message" 10
+
+  if { $status != 0 && [string match "*curl:*" $message]} {
+    error "Error occured while trying to retrieve $url: $message"
+  }
+
+  return
 }

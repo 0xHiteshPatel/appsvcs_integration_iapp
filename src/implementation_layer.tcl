@@ -6,6 +6,8 @@
 package require base64
 
 set startTime [clock seconds]
+set bundler_timestamp [clock format $startTime -format {%Y%m%d%H%M%S}]
+
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.1dev"
 set IMPLMINORVERSION "012"
@@ -1088,33 +1090,45 @@ if { $feature__easyL4Firewall == "enabled" } {
 
 # Process bundled iRules
 set vs__BundledItems [string map {"," " " ";" " "} $vs__BundledItems]
-set bundledirules [get_items_starting_with "irule:" $vs__BundledItems]
-debug [list virtual_server bundled_irule get_list] [format "%s" $bundledirules] 0
+set bundled_irules [get_items_starting_with "irule:" $vs__BundledItems]
+debug [list virtual_server bundled_irule get_list] [format "%s" $bundled_irules] 0
 
-if { [llength $bundledirules] > 0 } { 
-  set bundledirule_map [list %APP_PATH%      $app_path \
+if { [llength $bundled_irules] > 0 } { 
+  set bundled_irule_map [list %APP_PATH%      $app_path \
                              %APP_NAME%      $app \
                              %VS_NAME%       $vs__Name \
                              %POOL_NAME%     $default_pool_name \
                              %PARTITION%     $partition ]
 
-  foreach bundledirule $bundledirules {
-    debug [list virtual_server bundled_irule create_irule] [format "deploying bundled iRule %s" $bundledirule] 0
-    
-    if {! [info exists bundler_objects($bundledirule)] } {
-      error "A bundled iRule named '$bundledirule' was not found in the template"
+  foreach bundled_irule $bundled_irules {
+    debug [list virtual_server bundled_irule create_irule] [format "deploying bundled iRule %s" $bundled_irule] 0
+
+    if { [string match "irule:url=*" $bundled_irule] } {
+      set bundled_irule_isurl 1
+      set bundled_irule_url [string map {"irule:url=" ""} $bundled_irule]
+
+      regexp {^.*/(.*).irule$} $bundled_irule_url -> bundled_irule
+      set bundled_irule_filename [format "/var/tmp/appsvcs_irule_%s_%s_%s.irule" $::app $bundled_irule $bundler_timestamp]
+      curl_save_file $bundled_irule_url $bundled_irule_filename
+      set bundled_irule_fh [open $bundled_irule_filename]
+      set bundled_irule_src [string map $bundled_irule_map [read $bundled_irule_fh]]
+      close $bundled_irule_fh
+      file delete $bundled_irule_filename
+    } else { 
+      if {! [info exists bundler_objects($bundled_irule)] } {
+        error "A bundled iRule named '$bundled_irule' was not found in the template"
+      }
+      set bundled_irule_src [string map $bundled_irule_map [::base64::decode $bundler_data($bundled_irule)]]
+      set bundled_irule [string map {"irule:" ""} $bundled_irule]
     }
 
-    set bundled_irule_src [string map $bundledirule_map [::base64::decode $bundler_data($bundledirule)]]
-
-    set bundledirule [string map {"irule:" ""} $bundledirule]
-    set bundledirulecmd [format "ltm rule %s/%s \{%s\}" $app_path $bundledirule $bundled_irule_src]
-    #debug "\[create_virtual\]\[bundled_irule\] TMSH CREATE: $bundledirulecmd"
-    tmsh::create $bundledirulecmd
+    set bundled_irule_cmd [format "ltm rule %s/%s \{%s\}" $app_path $bundled_irule $bundled_irule_src]
+    debug [list virtual_server bundled_irule create $bundled_irule] $bundled_irule_cmd 10
+    tmsh::create $bundled_irule_cmd
     if { [string length $vs__Irules] > 0 } {
       append vs__Irules ","
     }
-    append vs__Irules [format "%s/%s" $app_path $bundledirule]
+    append vs__Irules [format "%s/%s" $app_path $bundled_irule]
   }
   debug [list virtual_server bundled_irule add_irule_to_vs] [format "vs__Irules=\"%s\"" $vs__Irules] 0
 }
@@ -1446,7 +1460,6 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
 # Process deferred deployment bundled ASM policies
 set bundler_asm_policies [get_items_starting_with "asm:" $vs__BundledItems]
 set bundler_apm_policies [get_items_starting_with "apm:" $vs__BundledItems]
-set bundler_timestamp [clock format [clock seconds] -format {%Y%m%d%H%M%S}]
 set bundler_asm_deploy []
 set bundler_apm_deploy []
 set bundler_all_deploy 0
@@ -1480,24 +1493,35 @@ if { [llength $bundler_apm_policies] == 1 } {
 set bundler_asm_mode 0
 if { [llength $bundler_asm_policies] > 0 } { 
   foreach bundled_asm $bundler_asm_policies {
+    set bundled_asm_isurl 0
+    if { [string match "asm:url=*" $bundled_asm] } {
+      set bundled_asm_isurl 1
+      set bundled_asm_url [string map {"asm:url=" ""} $bundled_asm] 
+      regexp {^.*/(.*).xml$} $bundled_asm_url -> bundled_asm_stripped
+      set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
+    } else {
+      set bundled_asm_stripped [string map {"asm:" ""} $bundled_asm]
+      set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
+    }
 
-    set bundled_asm_stripped [string map {"asm:" ""} $bundled_asm]
-    set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
-
-    #debug [list bundler asm check_preserve] [format "%s %s" $bundled_asm [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems lists]]]] 0
     debug [list bundler asm check_preserve] [format "%s %s" $bundled_asm [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems]]]] 0
     if { $newdeploy || \
          [expr { $redeploy && [string match redeploy* $iapp__asmDeployMode]}] || \
          [expr { $redeploy && [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems]]]}] == 0 } {
       debug [list bundler asm deploy] $bundled_asm 0
       set bundler_asm_mode 1
-      if {! [info exists bundler_objects($bundled_asm)] } {
-        error "A bundled ASM policy named '$bundled_asm' was not found in the template"
-      }
 
-      set outfile [open $bundled_asm_filename w]
-      puts -nonewline $outfile [::base64::decode $bundler_data($bundled_asm)]
-      close $outfile
+      if { $bundled_asm_isurl } {
+        curl_save_file $bundled_asm_url $bundled_asm_filename
+      } else {
+        if {! [info exists bundler_objects($bundled_asm)] } {
+          error "A bundled ASM policy named '$bundled_asm' was not found in the template"
+        }
+
+        set outfile [open $bundled_asm_filename w]
+        puts -nonewline $outfile [::base64::decode $bundler_data($bundled_asm)]
+        close $outfile
+      }
     } else {
       set bundler_asm_mode 2
       set savecmd [format "asm policy %s/%s min-xml-file %s" $app_path $bundled_asm_stripped $bundled_asm_filename]
@@ -1515,8 +1539,17 @@ set bundler_apm_mode 0
 
 if { [llength $bundler_apm_policies] == 1 } { 
   set bundled_apm [lindex $bundler_apm_policies 0]
-  set bundled_apm_stripped [string map {"apm:" ""} $bundled_apm]
-  set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
+
+  set bundled_apm_isurl 0
+  if { [string match "apm:url=*" $bundled_apm] } {
+    set bundled_apm_isurl 1
+    set bundled_apm_url [string map {"apm:url=" ""} $bundled_apm] 
+    regexp {^.*/(.*).tar.gz$} $bundled_apm_url -> bundled_apm_stripped
+    set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
+  } else {
+    set bundled_apm_stripped [string map {"apm:" ""} $bundled_apm]
+    set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
+  }
 
   debug [list bundler apm check_preserve] [format "%s %s" $bundled_apm [string match *$bundled_apm* [get_items_starting_with "apm:" [get_var vs__BundledItems]]]] 0
   if { $newdeploy || \
@@ -1524,20 +1557,24 @@ if { [llength $bundler_apm_policies] == 1 } {
        [expr { $redeploy && [llength [get_items_starting_with "apm:" [get_var vs__BundledItems]]]}] == 0 } {
     debug [list bundler apm deploy] $bundled_apm 0
     set bundler_apm_mode 1
-      
-    if {! [info exists bundler_objects($bundled_apm)] } {
-      error "A bundled APM policy named '$bundled_apm' was not found in the template"
-    }
 
-    debug [list bundler apm deploy version_check] [format "bundled_version=%s system_version=%s" $bundler_objects($bundled_apm) $version_info(version)] 0
-    if {! [string match $bundler_objects($bundled_apm)* $version_info(version)] } {
-      error "The bundled APM policy '$bundled_apm' requires BIG-IP version $bundler_objects($bundled_apm).  This system is running version $version_info(version)"
-    }
+    if { $bundled_apm_isurl } {
+      curl_save_file $bundled_apm_url $bundled_apm_filename
+    } else {      
+      if {! [info exists bundler_objects($bundled_apm)] } {
+        error "A bundled APM policy named '$bundled_apm' was not found in the template"
+      }
 
-    set outfile [open $bundled_apm_filename w]
-    fconfigure $outfile -translation binary
-    puts -nonewline $outfile [::base64::decode $bundler_data($bundled_apm)]
-    close $outfile
+      debug [list bundler apm deploy version_check] [format "bundled_version=%s system_version=%s" $bundler_objects($bundled_apm) $version_info(version)] 0
+      if {! [string match $bundler_objects($bundled_apm)* $version_info(version)] } {
+        error "The bundled APM policy '$bundled_apm' requires BIG-IP version $bundler_objects($bundled_apm).  This system is running version $version_info(version)"
+      }
+
+      set outfile [open $bundled_apm_filename w]
+      fconfigure $outfile -translation binary
+      puts -nonewline $outfile [::base64::decode $bundler_data($bundled_apm)]
+      close $outfile
+    }
   } else {
     debug [list bundler apm preserve] $bundled_apm 0
     set bundler_apm_mode 2

@@ -1,7 +1,7 @@
 {
 	"name":"%TEST_NAME%",
 	"parent":"include_defaults.json",
-   "test_delete_override":"true",
+	"test_delete_override":"true",
 	"strings":[
 		{ "pool__addr":"%TEST_VS_IP%" },
 		{ "pool__port":"80" },

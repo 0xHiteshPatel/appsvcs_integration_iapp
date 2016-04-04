@@ -13,7 +13,8 @@
       { "vs__ProfileOneConnect":"/Common/oneconnect" },
       { "vs__ProfileCompression":"/Common/httpcompression" },
       { "vs__ProfileDefaultPersist":"/Common/cookie" },
-      { "vs__ProfileFallbackPersist":"/Common/source_addr" }
+      { "vs__ProfileFallbackPersist":"/Common/source_addr" },
+      { "feature__easyL4Firewall":"auto" }
 	],
    "tables":[
       {

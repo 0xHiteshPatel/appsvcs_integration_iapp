@@ -45,13 +45,17 @@ def process_file(template_fn):
 				delete_override_match = re.match( r'.*\"test_delete_override\":\"true\".*', line)
 				parent_match = re.match( r'.*\"test_parent\":\"(.*)\".*', line)
 				partition_match = re.match( r'.*\"partition\":\"(.*)\".*', line)
-
+				policyhost_match = re.match( r'.*%TEST_POLICY_HOST%.*', line)
+					
 				if partition_match:
 					retlist[2] = partition_match.group(1)
 
 				if parent_match:
 					retlist[1] = parent_match.group(1)
 
+				if policyhost_match:
+					line = re.sub(r'\%TEST_POLICY_HOST\%', args.policyhost, line)
+					
 				if delete_override_match:
 					print "[%s] Delete disabled (found override), chained re-deploy assumed" % template_fn
 					retlist[0] = 1
@@ -193,6 +197,7 @@ parser.add_argument("-m", "--membersubnet", help="The starting IP to use for Poo
 parser.add_argument("-n", "--nodelete", help="Don't delete deployments automatically", action="store_true")
 parser.add_argument("-c", "--runcount", help="The number of times to run tests", type=int, default=1)
 parser.add_argument("-r", "--retries", help="The number of times to retry tests upon failure", type=int, default=3)
+parser.add_argument("-b", "--policyhost", help="The host to use for URL based bundled items", default="192.168.2.2")
 
 args = parser.parse_args()
 
