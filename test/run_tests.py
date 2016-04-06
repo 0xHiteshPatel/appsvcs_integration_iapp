@@ -169,20 +169,23 @@ def get_version():
 	s = requests.session()
 	s.auth = (args.username, args.password)
 	s.verify = False
-	resp = s.get("https://%s/mgmt/tm/sys/software/image?$select=version" % args.host)
+	resp = s.get("https://%s/mgmt/tm/sys/software/volume?$select=active,version" % args.host)
 
 	if resp.status_code == 401:
 		print "[error] Authentication to %s failed" % (args.host)
 		sys.exit(1)
 
 	if resp.status_code == 200:
-		version = resp.json()["items"][0]["version"]
-		parts = version.split('.')
+		for item in resp.json()["items"]:
+			print item
+			if item["active"] == True:
+				version = item["version"]
+				parts = version.split('.')
 
-		return( { 'version':'_'.join(parts),
-				  'major':'_'.join(parts[0:-1]),
-				  'minor':parts[2]
-			    })
+				return( { 'version':'_'.join(parts),
+						  'major':'_'.join(parts[0:-1]),
+						  'minor':parts[2]
+					    })
 		
 	return({})
 
