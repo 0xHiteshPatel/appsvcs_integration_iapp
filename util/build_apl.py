@@ -2,6 +2,7 @@ import json
 import sys
 import glob
 import os
+import argparse
 
 from pprint import pprint
 
@@ -61,11 +62,11 @@ def process_field (field, section, tab):
 		if os.sep != "/":
 			field["glob"] = field["glob"].replace("/","\\")
 			
-		files = glob.glob(field["glob"])
+		files = glob.glob("%s/%s" % (args.bundledir, field["glob"]))
 		filenames = ["disabled"]
 		for filename in files:
 			name_parts = filename.split(os.sep)
-			file_parts = name_parts[2].split('.')
+			file_parts = name_parts[-1].split('.')
 			filenames.append(file_parts[0])
 
 		print "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
@@ -87,10 +88,10 @@ def process_field (field, section, tab):
 		filenames = []
 	
 		for	globitem in globs:
-			files = glob.glob(globitem["path"])
+			files = glob.glob("%s/%s" % (args.bundledir, globitem["path"]))
 			for filename in files:
 				name_parts = filename.split(os.sep)
-				file_parts = name_parts[2].split('.')
+				file_parts = name_parts[-1].split('.')
 				filenames.append(file_parts[0])
 				types[file_parts[0]] = globitem["prefix"]
 		print "\t%smultichoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
@@ -108,11 +109,14 @@ def process_field (field, section, tab):
 
 	return
 
-if len(sys.argv) != 2:
-	print "Usage: %s <JSON file>" % sys.argv[0]
-	quit(0)
 
-with open(sys.argv[1]) as data_file:    
+parser = argparse.ArgumentParser(description='Script to create the appsvcs_integration_iapp BIG-IP iApp APL code')
+parser.add_argument("jsonfile", help="The input JSON file for the build")
+parser.add_argument("-b", "--bundledir", help="The directory to use for bundled items", default="bundled")
+
+args = parser.parse_args()
+
+with open(args.jsonfile) as data_file:    
     data = json.load(data_file)
 
 #pprint(data)

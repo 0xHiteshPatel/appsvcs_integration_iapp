@@ -786,9 +786,9 @@
 					"help":"The bundled items to deploy.  See bundled/README for more info.",
 					"type":"dynamic_filelist_multi",
 					"glob":[
-								{ "path":"bundled/irules/*.irule", "prefix":"irule:" },
-								{ "path":"bundled/asm_policies/*.xml", "prefix":"asm:" },
-								{ "path":"bundled/apm_policies/*.tar.gz", "prefix":"apm:" }
+								{ "path":"irules/*.irule", "prefix":"irule:" },
+								{ "path":"asm_policies/*.xml", "prefix":"asm:" },
+								{ "path":"apm_policies/*.tar.gz", "prefix":"apm:" }
 							],
 					"modes":[1,2,3,4],
 					"minver":"0.3_014",

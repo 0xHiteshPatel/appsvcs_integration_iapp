@@ -1,6 +1,7 @@
 @echo off
 PATH=%PATH%;c:\Python27;c:\Python26
 SET BUILDOPT=
+SET BUNDLEDIR=
 
 IF NOT "%1"=="" SET BUILDOPT=-a %1
 IF NOT "%2"=="" SET BUNDLEDIR=-b %2
@@ -9,7 +10,7 @@ mkdir tmp
 IF NOT EXIST parts mkdir parts
 
 echo Generating APL...
-python util/build_apl.py src\presentation_layer.json > tmp\apl.build
+python util/build_apl.py %BUNDLEDIR% src\presentation_layer.json > tmp\apl.build
 
 echo Generating docs...
 python util/build_doc.py src\presentation_layer.json > OPTIONS.html
