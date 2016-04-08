@@ -178,7 +178,7 @@ def get_version():
 	if resp.status_code == 200:
 		for item in resp.json()["items"]:
 			print item
-			if item["active"] == True:
+			if 'active' in item.keys() and item["active"] == True:
 				version = item["version"]
 				parts = version.split('.')
 
