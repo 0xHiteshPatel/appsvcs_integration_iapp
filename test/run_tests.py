@@ -124,7 +124,7 @@ def run_test():
 	for test_template in test_templates:
 		(del_override, del_override_name, del_partition) = process_file(test_template)
 				
-		cmd = "../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 30 -w 1 %s %s.tmp" % (args.username, args.password, args.host, test_template)
+		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 30 -w 1 %s %s.tmp" % (args.username, args.password, args.host, test_template)
 
 		for i in range(args.retries):
 			print "[%s] (%s/%s) Running %s" % (test_template, i+1, args.retries, cmd),
@@ -139,7 +139,7 @@ def run_test():
 					if len(del_override_name) > 0:
 						del_name = del_override_name
 					
-					delcmd = "../scripts/delete_iapp_bigip.py -u %s -p %s -P %s -n %s %s" % (args.username, args.password, del_partition, args.host, del_name)
+					delcmd = "python ../scripts/delete_iapp_bigip.py -u %s -p %s -P %s -n %s %s" % (args.username, args.password, del_partition, args.host, del_name)
 					dexitcode, dout, derr = get_exitcode_stdout_stderr(delcmd)
 					if dexitcode == 0:
 						print "DELETE_OK"

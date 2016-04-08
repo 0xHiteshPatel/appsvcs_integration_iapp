@@ -81,14 +81,15 @@ def process_field (field, section, tab):
 
 		print "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist_multi":
-		if os.sep != "/":
-			field["glob"] = field["glob"].replace("/","\\")
 		types = {}		
 		globs = field["glob"]
 		filenames = []
 	
 		for	globitem in globs:
-			files = glob.glob("%s/%s" % (args.bundledir, globitem["path"]))
+			if os.sep != "/":
+				globitem["path"] = globitem["path"].replace("/","\\")
+
+			files = glob.glob("%s%s%s" % (args.bundledir, os.sep, globitem["path"]))
 			for filename in files:
 				name_parts = filename.split(os.sep)
 				file_parts = name_parts[-1].split('.')
