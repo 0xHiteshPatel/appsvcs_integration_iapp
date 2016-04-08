@@ -57,7 +57,6 @@ def process_file(template_fn):
 					line = re.sub(r'\%TEST_POLICY_HOST\%', args.policyhost, line)
 					
 				if delete_override_match:
-					print "[%s] Delete disabled (found override), chained re-deploy assumed" % template_fn
 					retlist[0] = True
 
 				if version_match:
@@ -103,7 +102,7 @@ def run_test():
 	member_subnet = '.'.join(args.membersubnet.split('.')[0:-1]) + '.'
 	member_nextip = int(args.membersubnet.split('.')[-1])
 
-	test_templates = glob.glob(args.glob)
+	test_templates = sorted(glob.glob(args.glob))
 
 	version = get_version()
 
@@ -131,6 +130,9 @@ def run_test():
 			sys.stdout.flush()
 
 			exitcode, out, err = get_exitcode_stdout_stderr(cmd)
+
+			if del_override:
+				print "DEL_OVERRIDE ",
 
 			if not exitcode:
 				print "SUCCESS ",
