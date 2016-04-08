@@ -1,6 +1,6 @@
 {
-	"tmpl_majorversion":"1.1dev",
-	"pres_revision":"007",
+	"tmpl_majorversion":"2.0dev",
+	"pres_revision":"001",
 	"sections":[
 		{
 			"name":"intro",
@@ -60,7 +60,7 @@
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				},	
 				{
 					"name":"routeDomain",
@@ -88,7 +88,7 @@
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				},
 				{
 					"name":"apmDeployMode",
@@ -105,7 +105,7 @@
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				}				
 			]
 		},
@@ -155,7 +155,7 @@
 					"display":"small",
 					"required":true,
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				},
 				{
 					"name":"Pools",
@@ -163,7 +163,7 @@
 					"help":"The pools to create.  Note that pool index must be >0 and sequential.",
 					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001",
+					"minver":"2.0_001",
 					"fields": [
 						{
 							"name":"Index",
@@ -174,7 +174,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Name",
@@ -185,7 +185,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Description",
@@ -196,7 +196,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},		
 						{
 							"name":"LbMethod",
@@ -227,7 +227,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},	
 						{
 							"name":"Monitor",
@@ -238,7 +238,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"AdvOptions",
@@ -281,7 +281,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"IPAddress",
@@ -361,7 +361,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						}					
 					]
 				}
@@ -377,7 +377,7 @@
 					"help":"The monitors to create/associate.  Note that monitor index must be >0 and sequential.",
 					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001",
+					"minver":"2.0_001",
 					"fields": [
 						{
 							"name":"Index",
@@ -388,7 +388,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Name",
@@ -399,7 +399,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Type",
@@ -410,7 +410,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},		
 						{
 							"name":"Options",
@@ -421,7 +421,7 @@
 							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						}				
 					]
 				}
@@ -452,6 +452,23 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
+				},
+				{
+					"name":"RouteAdv",
+					"description":"Virtual Server: Route Advertisement",
+					"help":"Control the route-advertisement behaviour setting of the associated Virtual Address object.  Routing protocol configuration must be completed on the device manually.",
+					"type":"choice",
+					"default":"disabled",
+					"choices":[
+						"disabled",
+						"all_vs",
+						"any_vs",
+						"always"
+					],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
 				},
 				{
 					"name":"SourceAddress",
@@ -825,7 +842,7 @@
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				}	
 			]
 		},
@@ -847,7 +864,7 @@
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				},
 				{
 					"name":"defaultASM",
@@ -858,7 +875,7 @@
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				},
 				{
 					"name":"defaultL7DOS",
@@ -869,7 +886,7 @@
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001"
+					"minver":"2.0_001"
 				},				
 				{
 					"name":"rulesMatch",
@@ -877,7 +894,7 @@
 					"help":"The L7 policy ruleset matches to configure.  https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html",
 					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001",
+					"minver":"2.0_001",
 					"fields":[
 						{
 							"name":"Index",
@@ -888,7 +905,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},					
 						{
 							"name":"Operand",
@@ -964,7 +981,7 @@
 							"required":false,
 							"display":"xlarge",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Negate",
@@ -979,7 +996,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Condition",
@@ -999,7 +1016,7 @@
 							"required":false,
 							"display":"large",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Value",
@@ -1010,7 +1027,7 @@
 							"required":false,
 							"display":"large",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"CaseSensitive",
@@ -1025,7 +1042,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},						
 						{
 							"name":"Missing",
@@ -1040,7 +1057,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						}					
 					]
 				},
@@ -1050,7 +1067,7 @@
 					"help":"The L7 policy ruleset actions to configure.  https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html",
 					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"1.1_001",
+					"minver":"2.0_001",
 					"fields":[
 						{
 							"name":"Index",
@@ -1061,7 +1078,7 @@
 							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},					
 						{
 							"name":"Target",
@@ -1138,7 +1155,7 @@
 							"required":false,
 							"display":"xlarge",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						},
 						{
 							"name":"Parameter",
@@ -1149,7 +1166,7 @@
 							"required":false,
 							"display":"large",
 							"modes":[1,2,3,4],
-							"minver":"1.1_001"
+							"minver":"2.0_001"
 						}
 					]
 				}			

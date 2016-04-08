@@ -20,6 +20,7 @@
 		{ "pool__MemberDefaultPort":"80" },
 		{ "vs__Name":"" },
 		{ "vs__Description":"" },
+		{ "vs__RouteAdv":"disabled" },
 		{ "vs__SourceAddress":"0.0.0.0/0" },
 		{ "vs__IpProtocol":"tcp" },
 		{ "vs__ConnectionLimit":"0" },

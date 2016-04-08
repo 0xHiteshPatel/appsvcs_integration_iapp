@@ -30,7 +30,7 @@ def process_file(template_fn):
 	global vs_subnet
 	global member_subnet
 	retlist = []
-	retlist.append(0)
+	retlist.append(False)
 	retlist.append("")
 	retlist.append("Common")
 
@@ -58,7 +58,7 @@ def process_file(template_fn):
 					
 				if delete_override_match:
 					print "[%s] Delete disabled (found override), chained re-deploy assumed" % template_fn
-					retlist[0] = 1
+					retlist[0] = True
 
 				if version_match:
 					if version_match.group(1) == "MAJOR":

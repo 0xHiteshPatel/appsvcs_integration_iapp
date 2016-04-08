@@ -1,5 +1,5 @@
 <table border=1 width="100%">
- <tr><th colspan=7><b>Generated from JSON v1.1dev_007</b></th></tr>
+ <tr><th colspan=7><b>Generated from JSON v2.0dev_001</b></th></tr>
  <tr>
   <th>Display Name</th>
   <th>Var Name</th>
@@ -44,7 +44,7 @@
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>iapp.routeDomain</td>
@@ -65,7 +65,7 @@
 preserve-block,
 redeploy-bypass,
 redeploy-block</td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>iapp.apmDeployMode</td>
@@ -77,7 +77,7 @@ redeploy-block</td>
 preserve-block,
 redeploy-bypass,
 redeploy-block</td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Section: pool</b></td></tr>
 <tr>
@@ -114,7 +114,7 @@ redeploy-block</td>
   <td>[1, 2, 3, 4]</td>
   <td>number</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Table: Pools</b></td></tr>
 <tr>
@@ -124,7 +124,7 @@ redeploy-block</td>
   <td>[1, 2, 3, 4]</td>
   <td>number</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>pool.Pools.Name</td>
@@ -133,7 +133,7 @@ redeploy-block</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>pool.Pools.Description</td>
@@ -142,7 +142,7 @@ redeploy-block</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>pool.Pools.LbMethod</td>
@@ -168,7 +168,7 @@ ratio-session,
 ratio-least-connections-member,
 ratio-least-connections-node,
 weighted-least-connections-member</td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>pool.Pools.Monitor</td>
@@ -177,7 +177,7 @@ weighted-least-connections-member</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>pool.Pools.AdvOptions</td>
@@ -205,7 +205,7 @@ weighted-least-connections-member</td>
   <td>[1, 2, 3, 4]</td>
   <td>number</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>pool.Members.IPAddress</td>
@@ -270,7 +270,7 @@ disabled</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Section: monitor</b></td></tr>
 <tr><td colspan=7><b>Table: Monitors</b></td></tr>
@@ -281,7 +281,7 @@ disabled</td>
   <td>[1, 2, 3, 4]</td>
   <td>number</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>monitor.Monitors.Name</td>
@@ -290,7 +290,7 @@ disabled</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>monitor.Monitors.Type</td>
@@ -299,7 +299,7 @@ disabled</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>monitor.Monitors.Options</td>
@@ -308,7 +308,7 @@ disabled</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Section: vs</b></td></tr>
 <tr>
@@ -328,6 +328,18 @@ disabled</td>
   <td>string</td>
   <td></td>
   <td>0.3_001</td>
+</tr>
+<tr>
+  <td>vs.RouteAdv</td>
+  <td>$vs__RouteAdv</td>
+  <td>Control the route-advertisement behaviour setting of the associated Virtual Address object.  Routing protocol configuration must be completed on the device manually.</td>
+  <td>[1, 2, 3, 4]</td>
+  <td>choice</td>
+  <td>disabled,
+all_vs,
+any_vs,
+always</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>vs.SourceAddress</td>
@@ -626,7 +638,7 @@ change</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Section: l7policy</b></td></tr>
 <tr>
@@ -636,7 +648,7 @@ change</td>
   <td>[1, 2, 3, 4]</td>
   <td>editchoice</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.defaultASM</td>
@@ -645,7 +657,7 @@ change</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.defaultL7DOS</td>
@@ -654,7 +666,7 @@ change</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Table: rulesMatch</b></td></tr>
 <tr>
@@ -664,7 +676,7 @@ change</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesMatch.Operand</td>
@@ -673,7 +685,7 @@ change</td>
   <td>[1, 2, 3, 4]</td>
   <td>editchoice</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesMatch.Negate</td>
@@ -683,7 +695,7 @@ change</td>
   <td>choice</td>
   <td>no,
 yes</td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesMatch.Condition</td>
@@ -699,7 +711,7 @@ greater,
 greater-or-equal,
 less,
 less-or-equal</td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesMatch.Value</td>
@@ -708,7 +720,7 @@ less-or-equal</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesMatch.CaseSensitive</td>
@@ -718,7 +730,7 @@ less-or-equal</td>
   <td>choice</td>
   <td>no,
 yes</td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesMatch.Missing</td>
@@ -728,7 +740,7 @@ yes</td>
   <td>choice</td>
   <td>no,
 yes</td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Table: rulesAction</b></td></tr>
 <tr>
@@ -738,7 +750,7 @@ yes</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesAction.Target</td>
@@ -747,7 +759,7 @@ yes</td>
   <td>[1, 2, 3, 4]</td>
   <td>editchoice</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr>
   <td>l7policy.rulesAction.Parameter</td>
@@ -756,7 +768,7 @@ yes</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
-  <td>1.1_001</td>
+  <td>2.0_001</td>
 </tr>
 <tr><td colspan=7><b>Section: feature</b></td></tr>
 <tr>

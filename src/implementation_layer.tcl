@@ -9,8 +9,8 @@ set startTime [clock seconds]
 set bundler_timestamp [clock format $startTime -format {%Y%m%d%H%M%S}]
 
 set NAME "F5 Application Services Integration iApp (Community Edition)"
-set IMPLMAJORVERSION "1.1dev"
-set IMPLMINORVERSION "012"
+set IMPLMAJORVERSION "2.0dev"
+set IMPLMINORVERSION "001"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 set POSTDEPLOY_DELAY 10
@@ -1673,6 +1673,18 @@ if { $bundler_all_deploy } {
   } {}    
  
   debug [list bundler deploy] "Bundled policy deployment will complete momentarily..." 0
+}
+
+if { [string length $vs__RouteAdv] > 0 && $vs__RouteAdv ne "disabled" } {
+  switch $vs__RouteAdv {
+    "any_vs" { set routeadv_mode "any" }
+    "all_vs" { set routeadv_mode "all" }
+    "always" { set routeadv_mode "none" }
+    default { error "The value specified for the Route Advertisement mode (vs__RouteAdv) is invalid" }
+  }
+  debug [list virtual_address route-adv] [format "enabling route advertisement for virtual address %s with mode %s (postdeploy_final)" $vs_dest_addr $routeadv_mode] 0
+  lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm virtual-address /%s/%s route-advertisement enabled" $partition $vs_dest_addr]]
+  lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm virtual-address /%s/%s server-scope %s" $partition $vs_dest_addr $routeadv_mode]]
 }
 
 set postfinal_icall_tmpl {
