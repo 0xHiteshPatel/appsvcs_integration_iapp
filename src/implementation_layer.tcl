@@ -13,7 +13,7 @@ set IMPLMAJORVERSION "2.0dev"
 set IMPLMINORVERSION "001"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
-set POSTDEPLOY_DELAY 10
+set POSTDEPLOY_DELAY 0
 
 %insertfile:src/util.tcl%
 
@@ -1687,6 +1687,9 @@ if { [string length $vs__RouteAdv] > 0 && $vs__RouteAdv ne "disabled" } {
   lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm virtual-address /%s/%s server-scope %s" $partition $vs_dest_addr $routeadv_mode]]
 }
 
+# Call the custom_extensions_end proc to allow site-specific customizations
+custom_extensions_end
+
 set postfinal_icall_tmpl {
 %insertfile:include/postdeploy_final.icall%    
 };
@@ -1738,11 +1741,6 @@ catch {
     exec chmod 777 $fn
     exec $fn &
 } {}    
-
-debug [list bundler deploy] "Post-deployment script will execute momentarily..." 0
-
-# Call the custom_extensions_end proc to allow site-specific customizations
-custom_extensions_end
 
 if { $iapp__strictUpdates eq "disabled" } {
   debug [list strict_updates] "disabling strict updates" 0
