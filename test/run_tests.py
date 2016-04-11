@@ -123,7 +123,7 @@ def run_test():
 	for test_template in test_templates:
 		(del_override, del_override_name, del_partition) = process_file(test_template)
 				
-		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 30 -w 1 %s %s.tmp" % (args.username, args.password, args.host, test_template)
+		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 60 -w 1 %s %s.tmp" % (args.username, args.password, args.host, test_template)
 
 		for i in range(args.retries):
 			print "[%s] (%s/%s) Running %s" % (test_template, i+1, args.retries, cmd),

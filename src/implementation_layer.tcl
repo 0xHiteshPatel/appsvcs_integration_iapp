@@ -1589,7 +1589,7 @@ if { [llength $bundler_apm_policies] == 1 } {
         set bundler_apm_exportcmd [format "/usr/bin/env REMOTEUSER=admin USER=admin /usr/bin/ng_export %s.app/bundled_apm_policy %s -p %s" $app $bundled_apm_export_filename $partition]
         set bundler_apm_renamecmd [format "mv /tmp/profile-%s.conf.tar.gz %s" $bundled_apm_export_filename $bundled_apm_filename]
       }
-      12.0* {
+      12.* {
         set bundler_apm_exportcmd [format "/usr/bin/env REMOTEUSER=admin USER=admin /usr/bin/ng_export %s.app/bundled_apm_policy %s -p %s" $app $bundled_apm_export_filename $partition]
         set bundler_apm_renamecmd [format "mv /tmp/profile-%s.conf.tar.gz %s" $bundled_apm_export_filename $bundled_apm_filename]
       }
@@ -1632,7 +1632,7 @@ if { $bundler_all_deploy } {
         #ng_import [-s] <templatefile.conf.tar[.gz]> <new_name> [-p|-partition <partition>]
         set bundler_apm_importcmd [format "/usr/bin/ng_import %s %s.app/bundled_apm_policy -p %s" $bundled_apm_filename $app $partition]
       }
-      12.0* {
+      12.* {
         #ng_import [-s] <templatefile.conf.tar[.gz]> <new_name> [-p|-partition <partition>]
         set bundler_apm_importcmd [format "/usr/bin/ng_import %s %s.app/bundled_apm_policy -p %s" $bundled_apm_filename $app $partition]
       }

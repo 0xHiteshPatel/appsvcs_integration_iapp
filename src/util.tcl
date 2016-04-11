@@ -461,12 +461,12 @@ proc set_version_info {} {
 proc curl_save_file { url filename } {
   debug [list curl_save_file start] "url=$url filename=$filename" 10
   set status [catch {
-      exec curl --connect-timeout 5 -k -o $filename $url
+    exec curl --connect-timeout 5 -k -s -w 'RESPCODE=\%\{response_code\}' -o $filename $url
   } message]
 
   debug [list curl_save_file done] "status=$status message=$message" 10
-
-  if { $status != 0 && [string match "*curl:*" $message]} {
+  
+  if { ![string match "*RESPCODE=200*" $message]} {
     error "Error occured while trying to retrieve $url: $message"
   }
 
