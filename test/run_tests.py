@@ -35,7 +35,7 @@ def process_file(template_fn):
 	retlist.append("Common")
 
 	with open (template_fn) as template:
-		with open ("%s.tmp" % template_fn, "wt") as tmp:
+		with open ("%s_%s.tmp" % (template_fn, sessionid), "wt") as tmp:
 			for line in template:
 				line = re.sub(r'\%TEST_NAME\%', template_fn.split('.')[0], line)
 				vs_ip_match = re.match( r'.*%TEST_VS_IP%.*', line)
@@ -120,13 +120,18 @@ def run_test():
 	print out
 	print err
 
+	testnum = 1
 	for test_template in test_templates:
 		(del_override, del_override_name, del_partition) = process_file(test_template)
 				
-		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 60 -w 1 %s %s.tmp" % (args.username, args.password, args.host, test_template)
+		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 60 -w 1 %s %s_%s.tmp" % (args.username, args.password, args.host, test_template, sessionid)
 
 		for i in range(args.retries):
-			print "[%s] (%s/%s) Running %s" % (test_template, i+1, args.retries, cmd),
+			if args.debug:
+				print "[%s/%s][%s/%s][%s] (%s/%s) Running %s" % (run+1, args.runcount, testnum, len(test_templates), test_template, i+1, args.retries, cmd),
+			else:
+				print "[%s/%s][%s/%s][%s] (%s/%s) Running..." % (run+1, args.runcount, testnum, len(test_templates), test_template, i+1, args.retries),
+
 			sys.stdout.flush()
 
 			exitcode, out, err = get_exitcode_stdout_stderr(cmd)
@@ -153,7 +158,7 @@ def run_test():
 				else:
 					print ""
 
-				os.remove("%s.tmp" % test_template)
+				os.remove("%s_%s.tmp" % (test_template, sessionid))
 				break
 			else:
 				print "FAIL "
@@ -162,6 +167,7 @@ def run_test():
 					return(1)
 			time.sleep(5)
 
+		testnum += 1
 		time.sleep(5)
 
 	print "\nAll tests completed"
@@ -203,12 +209,16 @@ parser.add_argument("-n", "--nodelete", help="Don't delete deployments automatic
 parser.add_argument("-c", "--runcount", help="The number of times to run tests", type=int, default=1)
 parser.add_argument("-r", "--retries", help="The number of times to retry tests upon failure", type=int, default=3)
 parser.add_argument("-b", "--policyhost", help="The host to use for URL based bundled items", default="192.168.2.2")
+parser.add_argument("-D", "--debug",    help="Enabled debug output", action="store_true")
 
 args = parser.parse_args()
 
 if args.runcount > 1 and args.nodelete:
 	print "A '-c' option > 1 and the '-n' are not valid.  Please choose only one"
 	exit(1)
+
+sessionid = str(int(time.time()))
+print "Starting test run, sessionid is %s" % sessionid
 
 for run in range(args.runcount):
 	print "=== Start Run %s/%s =======================" % (run+1, args.runcount)

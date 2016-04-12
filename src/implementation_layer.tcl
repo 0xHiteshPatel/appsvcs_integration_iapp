@@ -837,23 +837,23 @@ set l7p_cmd_controls [format " controls replace-all-with { %s } " [join [array n
 # TMOS 12.1 introduced a new draft/publish model for L7 policies.  Check for
 # that version and set a mode accordingly
 if { [string match "12.1*" $version_info(version)] } {
-    debug [list l7policy version_check] "12.1 or newer detected" 10
-	set l7p_new_model 1 
+  debug [list l7policy version_check] "12.1 or newer detected" 10
+  set l7p_new_model 1 
 } else {
-    debug [list l7policy version_check] "12.0 or older detected" 10
-	set l7p_new_model 0
+  debug [list l7policy version_check] "12.0 or older detected" 10
+  set l7p_new_model 0
 }
 
 if { $l7p_new_model } {
-	if { $l7p_defer_create > 0 } {
-		set l7p_cmd [format "ltm policy %s/Drafts/%s_l7policy" $app_path $app]
-	} else {
-		set l7p_cmd [format "ltm policy %s/Drafts/%s_l7policy legacy" $app_path $app]
-	}
-	set l7p_publish_cmd [format "ltm policy %s/Drafts/%s_l7policy" $app_path $app]
+  if { $l7p_defer_create > 0 } {
+    set l7p_cmd [format "ltm policy %s/Drafts/%s_l7policy" $app_path $app]
+  } else {
+    set l7p_cmd [format "ltm policy %s/Drafts/%s_l7policy legacy" $app_path $app]
+  }
+  set l7p_publish_cmd [format "ltm policy %s/Drafts/%s_l7policy" $app_path $app]
 } else {
-	set l7p_cmd [format "ltm policy %s/%s_l7policy" $app_path $app]
-	set l7p_defer_cmd $l7p_cmd
+  set l7p_cmd [format "ltm policy %s/%s_l7policy" $app_path $app]
+  set l7p_defer_cmd $l7p_cmd
 }
 
 append l7p_cmd [format " strategy %s %s %s %s \}" $l7policy__strategy $l7p_cmd_requires $l7p_cmd_controls $l7p_cmd_rules]
@@ -868,9 +868,9 @@ if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_modify]]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_create]]
 	
-	if { $l7p_new_model } {
-		lappend bundler_deferred_cmds [format "catch { tmsh::publish %s }" [create_escaped_tmsh $l7p_publish_cmd]]
-	}
+    if { $l7p_new_model } {
+    	lappend bundler_deferred_cmds [format "catch { tmsh::publish %s }" [create_escaped_tmsh $l7p_publish_cmd]]
+    }
 	
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s profiles add \{ /Common/websecurity \{ \} \}" $app_path $vs__Name]]]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s policies add \{ %s/%s_l7policy \}" $app_path $vs__Name $app_path $app]]]
