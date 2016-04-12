@@ -71,7 +71,7 @@
             { "row": ["2","forward/request/select/pool","/Common/test_pool"] },
             { "row": ["3","forward/request/reset","none"] },
             { "row": ["4","http-reply/response/redirect/location","http://www.c-3po.com"] },
-            { "row": ["5","log/request/write/message","Use the force!"] },
+            { "row": ["5","log/request/write/message|forward/request/reset","Use the force!"] },
             { "row": ["6","http-set-cookie/response/insert/name,domain,path,value","Stay,,/,OnTarget"] },
             { "row": ["","error/error/error","error"]},
             { "row": ["7","http-header/response/insert/name,value|forward/request/select/pool","X-Thats-No-Moon,[IP::client_addr]|pool:1"]},
