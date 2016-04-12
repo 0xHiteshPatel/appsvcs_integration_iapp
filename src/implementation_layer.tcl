@@ -559,7 +559,6 @@ if { $l7p_numActions != $l7p_numMatches } {
   error "The number of rows in L7 Policy Match and Action tables must be equal"
 }
 
-set l7p_cmd [format "ltm policy %s/%s_l7policy" $app_path $app]
 array set l7p_requires {}
 array set l7p_controls {}
 array set l7p_match_rules {}
@@ -709,7 +708,7 @@ foreach l7p_actionRow $l7policy__rulesAction {
       }
     }
 
-    # Process the target(s).  Multiple targets are delimited by a ';' seperator.  The '/' character 
+    # Process the target(s).  Multiple targets/parameters are delimited by a '|' seperator.  The '/' character 
     # gets replaced with a ' ' to build the tmsh command.  We then determine the type of target by 
     # counting the number unique target elements.  3 element targets don't require a parameter 
     # (eg: forward/request/reset). 4 element target require parameters.  We then parse the 4th element 
@@ -834,7 +833,32 @@ for {set i 0} {$i < $l7p_matchIdx} {incr i} {
 # Finish building the tmsh command and execute it
 set l7p_cmd_requires [format " requires replace-all-with { %s } " [join [array names l7p_requires] " "]]
 set l7p_cmd_controls [format " controls replace-all-with { %s } " [join [array names l7p_controls] " "]]
+
+# TMOS 12.1 introduced a new draft/publish model for L7 policies.  Check for
+# that version and set a mode accordingly
+if { [string match "12.1*" $version_info(version)] } {
+    debug [list l7policy version_check] "12.1 or newer detected" 10
+	set l7p_new_model 1 
+} else {
+    debug [list l7policy version_check] "12.0 or older detected" 10
+	set l7p_new_model 0
+}
+
+if { $l7p_new_model } {
+	if { $l7p_defer_create > 0 } {
+		set l7p_cmd [format "ltm policy %s/Drafts/%s_l7policy" $app_path $app]
+	} else {
+		set l7p_cmd [format "ltm policy %s/Drafts/%s_l7policy legacy" $app_path $app]
+	}
+	set l7p_publish_cmd [format "ltm policy %s/Drafts/%s_l7policy" $app_path $app]
+} else {
+	set l7p_cmd [format "ltm policy %s/%s_l7policy" $app_path $app]
+	set l7p_defer_cmd $l7p_cmd
+}
+
 append l7p_cmd [format " strategy %s %s %s %s \}" $l7policy__strategy $l7p_cmd_requires $l7p_cmd_controls $l7p_cmd_rules]
+debug [list l7policy l7p_cmd] $l7p_cmd 10
+
 if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
   if { $l7p_defer_create > 0 } {
     debug [list l7policy defer_create] $l7p_cmd 0
@@ -843,12 +867,21 @@ if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
     
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_modify]]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh $l7p_cmd_create]]
+	
+	if { $l7p_new_model } {
+		lappend bundler_deferred_cmds [format "catch { tmsh::publish %s }" [create_escaped_tmsh $l7p_publish_cmd]]
+	}
+	
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s profiles add \{ /Common/websecurity \{ \} \}" $app_path $vs__Name]]]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s policies add \{ %s/%s_l7policy \}" $app_path $vs__Name $app_path $app]]]
   } else {
     debug [list l7policy tmsh_create] $l7p_cmd 0
     tmsh::create $l7p_cmd
-
+	if { $l7p_new_model } {
+		debug [list l7policy tmsh_publish] $l7p_publish_cmd 0
+		tmsh::publish $l7p_publish_cmd
+	}
+	
     # Add the created policy to the vs__AdvPolicies variable so we attach it to the 
     # Virtual Server when it's created.
     append vs__AdvPolicies [format " %s/%s_l7policy " $app_path $app]
