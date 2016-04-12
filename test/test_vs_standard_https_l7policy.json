@@ -74,7 +74,7 @@
             { "row": ["5","log/request/write/message","Use the force!"] },
             { "row": ["6","http-set-cookie/response/insert/name,domain,path,value","Stay,,/,OnTarget"] },
             { "row": ["","error/error/error","error"]},
-            { "row": ["7","http-header/response/insert/name,value","X-Thats-No-Moon,[IP::client_addr]"]},
+            { "row": ["7","http-header/response/insert/name,value|forward/request/select/pool","X-Thats-No-Moon,[IP::client_addr]|pool:1"]},
             { "row": ["8","tcp-nagle/request/disable","none"]},
             { "row": ["default","forward/request/select/pool","pool:0"]}
          ]
