@@ -153,7 +153,7 @@
 					"type":"number",
 					"default":"0",
 					"display":"small",
-					"required":true,
+					"required":false,
 					"modes":[1,2,3,4],
 					"minver":"2.0_001"
 				},
