@@ -29,7 +29,7 @@ set bundler_deferred_cmds []
 
 set app $tmsh::app_name
 debug [list start] [format "Starting %s version IMPL=%s PRES=%s app_name=%s" $NAME $IMPLVERSION $PRESVERSION $app] 0
-debug [list version_info] [array get version_info] 0
+debug [list version_info] [array get version_info] 3
 
 
 array set modenames {
@@ -57,7 +57,7 @@ set redeploy 0
 if { ! $newdeploy } { set redeploy 1 }
 set postfinal_deferred_cmds []
 
-debug "modeinfo" [format "mode=%s folder=%s partition=%s rd=%s newdeploy=%s redeploy=%s template_name=%s" $mode $folder $partition $rd $newdeploy $redeploy $template_name] 0
+debug "modeinfo" [format "mode=%s folder=%s partition=%s rd=%s newdeploy=%s redeploy=%s template_name=%s" $mode $folder $partition $rd $newdeploy $redeploy $template_name] 2
 
 # Cache our ASO object data
 for { set i 0 } { $i <= [llength $asoobj] } { set i [expr {$i+2}] } {
@@ -81,13 +81,13 @@ for { set i 0 } { $i <= [llength $asoobj] } { set i [expr {$i+2}] } {
 # aso_config() can change at runtime
 array set aso_config_orig [array get aso_config]
 
-debug [list aso_config] [array names aso_config] 10
+debug [list aso_config] [array names aso_config] 9
 foreach var [array names aso_config] {
-  debug [list aso_config $var] $aso_config($var) 10
+  debug [list aso_config $var] $aso_config($var) 9
 }
 
 set asodescr [format "Deployed by appsvcs_integration_v%s_%s in %s mode on %s" $IMPLVERSION $PRESVERSION $modenames($mode) [clock format $startTime -format "%D %H:%M:%S"]]
-debug "set_aso_decription" [format "setting ASO description=%s" $asodescr] 0
+debug [list set_aso_decription tmsh_modify] [format "sys application service %s description \"%s\"" $aso $asodescr] 1
 tmsh::modify [format "sys application service %s description \"%s\"" $aso $asodescr]
 
 # Define various global values
@@ -100,7 +100,7 @@ array set table_defaults {
         Index 0
         State enabled
         IPAddress Error
-        Port 80
+        Port ""
         ConnectionLimit 0
         Ratio 1
         PriorityGroup 0
@@ -148,10 +148,10 @@ array set pool_state {
 # results in all sorts of problems.  We just check for existence of the var and set to "" if it doesn't exist
 foreach var $allVars {
   if {[info exists [subst $var]]} {
-    debug "input" [format "%s sent, value is: %s" $var [set [subst $var]]] 0
+    debug "input" [format "%s sent, value is: %s" $var [set [subst $var]]] 2
   } else {
     set [subst $var] ""
-    debug "input" [format "%s NOT sent, setting to blank" $var] 0
+    debug "input" [format "%s NOT sent, setting to blank" $var] 2
   }
 }
 #error "bah"
@@ -162,58 +162,58 @@ custom_extensions_start
 # Special handling for the Source Address because it comes in as 0.0.0.0/0 and
 # needs to be 0.0.0.0%xxxx/0, where '%xxxx' is the route-domain ID
 set working $vs__SourceAddress
-debug "fix_src_addr" "Check if vs__SourceAddress needs to be fixed" 0
+debug [list fix_src_addr] "Check if vs__SourceAddress needs to be fixed" 7
 if { [string length $working] > 0 } {
   set net  [lindex [split $working /] 0]
   set cidr [lindex [split $working /] 1]
   set vs__SourceAddress "$net%$rd\/$cidr"
-  debug "fix_src_addr" [format " Fixing vs__SourceAddress: orig=%s new=%s" $working $vs__SourceAddress] 0
+  debug [list fix_src_addr] [format " Fixing vs__SourceAddress: orig=%s new=%s" $working $vs__SourceAddress] 7
 }
 
 # Create Client-SSL profile if Cert and Key are specified but ClientSSLProfile is not
-debug "client_ssl create" "checking if client ssl cert & key were entered" 0
+debug [list client_ssl create] "checking if client ssl cert & key were entered" 7
 set clientssl 0
 if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__ProfileClientSSLCert] > 0 && [string length $vs__ProfileClientSSL] == 0 } {
   if { $vs__ProfileClientSSLKey == "auto" } {
-    debug "client_ssl create auto_key" [format "found auto option for key, setting vs__ProfileClientSSLKey=/Common/%s.key" $app] 0
+    debug [list client_ssl create auto_key] [format "found auto option for key, setting vs__ProfileClientSSLKey=/Common/%s.key" $app] 5
     set vs__ProfileClientSSLKey "/Common/$app.key"
   }
 
   if { $vs__ProfileClientSSLCert == "auto" } {
-    debug "client_ssl create auto_cert" [format "found auto option for key, setting vs__ProfileClientSSLCert=/Common/%s.crt" $app] 0
+    debug [list client_ssl create auto_cert] [format "found auto option for key, setting vs__ProfileClientSSLCert=/Common/%s.crt" $app] 5
     set vs__ProfileClientSSLCert "/Common/$app.crt"
   }
 
   tmsh::get_config /sys file ssl-key $vs__ProfileClientSSLKey
   tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLCert
-  debug "client_ssl create check_exist" "ssl cert & key found... creating profile" 0
+  debug [list client_ssl create check_exist] "ssl cert & key found... creating profile" 7
 
   set cmd [format "ltm profile client-ssl %s_clientssl key %s cert %s" $app $vs__ProfileClientSSLKey $vs__ProfileClientSSLCert]
 
   if { [string length $vs__ProfileClientSSLChain] > 0 } {
       tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLChain
-      debug "client_ssl create cert_chain" "adding cert chain" 0
+      debug [list client_ssl create cert_chain] "adding cert chain" 7
       append cmd [format " chain %s" $vs__ProfileClientSSLChain]
   }
 
 %insertfile:include/feature_sslEasyCipher.tcl%
 
   if { [string length $vs__ProfileClientSSLCipherString] > 0 } {
-      debug "client_ssl create cipher_string" "adding cipher string" 0
+      debug [list client_ssl create cipher_string] "adding cipher string" 7
       append cmd [format " ciphers \"%s\"" $vs__ProfileClientSSLCipherString]
   }
 
   if { [string length $vs__ProfileClientSSLAdvOptions] > 0 } {
-    debug "client_ssl create adv_options" "processing advanced options string" 0
+    debug [list client_ssl create adv_options] "processing advanced options string" 7
     append cmd [format " %s" [process_options_string $vs__ProfileClientSSLAdvOptions "profile client-ssl" "/Common/clientssl"]]
   }
 
-  debug "client_ssl create tmsh_create" $cmd 0
+  debug [list client_ssl create tmsh_create] $cmd 1
   tmsh::create $cmd
   set clientssl 1
 } else { 
   if { [string length $vs__ProfileClientSSL] > 0 } {
-    debug "client_ssl associate" "ClientSSLProfile was provided... checking if it exists" 0
+    debug [list client_ssl associate] "ClientSSLProfile was provided... checking if it exists" 5
     tmsh::get_config /ltm profile client-ssl $vs__ProfileClientSSL
     set clientssl 2
   } else {
@@ -224,19 +224,19 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
     if { [string length $vs__ProfileClientSSLKey] == 0 && [string length $vs__ProfileClientSSLCert] > 0 } {
       error "A client-ssl certifcate was specified without a client-ssl key"
     }
-    debug "client_ssl" "ssl cert & key not specified... skipped Client-SSL profile creation" 0
+    debug [list client_ssl] "ssl cert & key not specified... skipped Client-SSL profile creation" 2
   }
 }
 
 # Create Monitors
-debug "monitors" [format "monCount=%s" [llength $monitor__Monitors]] 0
+debug [list monitors] [format "monCount=%s" [llength $monitor__Monitors]] 7
 
 set monIdx 0
 array set monNames {}
 array set monCreate {}
 foreach monRow $monitor__Monitors {
   set cmd ""
-  debug [list monitors $monIdx] [format "monRow=%s" $monRow] 0
+  debug [list monitors $monIdx] [format "monRow=%s" $monRow] 9
 
   array set column_defaults [subst $::table_defaults(Monitors)]
   array unset column
@@ -251,14 +251,14 @@ foreach monRow $monitor__Monitors {
   foreach name [array names column_defaults] {
       if { ![info exists column($name)] || $column($name) eq "" } {
           set column($name) $column_defaults($name)
-          debug [list monitors $monIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 0
+          debug [list monitors $monIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
       }
   }
 
   # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
   # If a Index is not specified then skip this row in the table
   if { $column(Index) < 0 } {
-    debug [list monitors $monIdx check_index] "no index value found, skipping row" 0
+    debug [list monitors $monIdx check_index] "no index value found, skipping row" 9
     continue
   } elseif { [info exists monNames($column(Index))] } {
     error "A monitor with Index of \"$column(Index)\" was already specified"
@@ -285,11 +285,11 @@ foreach monRow $monitor__Monitors {
     set cmd [format "ltm monitor %s %s " $column(Type) $monNames($monIdx)]
     if { [string length $column(Options)] > 0 } {
       set column(Options) [join $column(Options) " "]
-      debug [list monitors $monIdx options] [format "processing options string \"%s\"" $column(Options)] 0
+      debug [list monitors $monIdx options] [format "processing options string \"%s\"" $column(Options)] 10
       append cmd [format " %s" [process_options_string $column(Options) "" ""]]
     }
 
-    debug [list monitors $monIdx tmsh_create] $cmd 0
+    debug [list monitors $monIdx tmsh_create] $cmd 1
     tmsh::create $cmd
   }
 
@@ -302,7 +302,7 @@ custom_extensions_before_pools
 
 # Create pool
 set poolCount [llength $pool__Pools]
-debug "pools" [format "poolCount=%s" $poolCount] 0
+debug [list pools] [format "poolCount=%s" $poolCount] 7
 
 set poolIdx 0
 set default_pool_name ""
@@ -312,7 +312,7 @@ foreach poolRow $pool__Pools {
   set cmd ""
   set nummembers 0
 
-  debug [list pools $poolIdx] [format "poolRow=%s" $poolRow] 0
+  debug [list pools $poolIdx] [format "poolRow=%s" $poolRow] 9
 
   custom_extensions_before_pool
 
@@ -330,14 +330,14 @@ foreach poolRow $pool__Pools {
   foreach name [array names column_defaults] {
       if { ![info exists column($name)] || $column($name) eq "" } {
           set column($name) $column_defaults($name)
-          debug [list pools $poolIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 0
+          debug [list pools $poolIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
       }
   }
 
   # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
   # If a Index is not specified then skip this row in the table
   if { $column(Index) < 0 } {
-    debug [list pools $poolIdx] "no index value found, skipping row" 0
+    debug [list pools $poolIdx] "no index value found, skipping row" 9
     continue
   } elseif { [info exists poolIndexes($column(Index))] } {
     error "A pool with Index of \"$column(Index)\" was already specified"
@@ -348,7 +348,7 @@ foreach poolRow $pool__Pools {
   # Check to see if a poolName was specified... if not set to $app_pool_$poolIdx
   if { [string length $column(Name)] == 0 } {
       set column(Name) [format "%s_pool_%s" $app $poolIdx]
-      debug [list pools $poolIdx] [format "no pool name specified... setting to %s" $column(Name)] 0
+      debug [list pools $poolIdx] [format "no pool name specified... setting to %s" $column(Name)] 7
   }
   set poolNames($column(Index)) $column(Name)
 
@@ -359,7 +359,7 @@ foreach poolRow $pool__Pools {
 
   set memberstr "members replace-all-with \{ "
   foreach memberRow $pool__Members {
-    #debug "\[create_pool\]\[pools\]\[$poolIdx\]\[member_str\]  row=$memberRow"
+    debug [list pools $poolIdx member_str] [format "memberRow=%s" $poolRow] 10
     array set pool_column_defaults [subst $::table_defaults(Members)]
     array unset pool_column
 
@@ -374,7 +374,7 @@ foreach poolRow $pool__Pools {
     foreach name [array names pool_column_defaults] {
         if { ![info exists pool_column($name)] || $pool_column($name) eq "" } {
             set pool_column($name) $pool_column_defaults($name)
-            debug [list pools $poolIdx member_str set_default] [format "value for %s not found... setting to default of %s" $name $pool_column_defaults($name)] 0
+            debug [list pools $poolIdx member_str set_default] [format "value for %s not found... setting to default of %s" $name $pool_column_defaults($name)] 10
         }
     }
 
@@ -388,14 +388,14 @@ foreach poolRow $pool__Pools {
     set options [lindex $pool_column(AdvOptions) 0]    
 
     if { $idx != $poolIdx } {
-      #debug [list pools $poolIdx member_str] [format " %s/%s:%s not a member of pool %s skipping" $idx $ip $port $poolIdx] 10
+      debug [list pools $poolIdx member_str] [format " %s/%s:%s not a member of pool %s skipping" $idx $ip $port $poolIdx] 10
       continue
     }
 
     # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
     if { [string match 0.0.0.0* $ip] } {
-      debug [list pools $poolIdx member_str] "  ip=0.0.0.0, skipping" 0
+      debug [list pools $poolIdx member_str] "  ip=0.0.0.0, skipping" 7
       continue
     } else {
       incr nummembers
@@ -414,17 +414,17 @@ foreach poolRow $pool__Pools {
     if {[has_routedomain $port]} {
       set port $column(IPAddress)
       set ip $column(Port)
-      debug [list pools $poolIdx member_str] [format "  fixing ip=%s port=%s" $ip $port] 0
+      debug [list pools $poolIdx member_str] [format "  fixing ip=%s port=%s" $ip $port] 7
     }
-    debug [list pools $poolIdx member_str] [format "  idx=%s ip=%s port=%s connlimit=%s ratio=%s prigrp=%s state=%s advoptions=%s" $idx $ip $port $connlimit $ratio $prigrp $state $options] 0
+    debug [list pools $poolIdx member_str] [format "  idx=%s ip=%s port=%s connlimit=%s ratio=%s prigrp=%s state=%s advoptions=%s" $idx $ip $port $connlimit $ratio $prigrp $state $options] 7
     
     # If we don't get a port in the pool member table than use the template value for pool__MemberDefaultPort
     if { [string length $port] == 0} {
       if { [string length $pool__MemberDefaultPort] == 0 } {
-        debug [list pools $poolIdx member_str] [format "  Pool member port was not specified, pool__MemberDefaultPort was blank, using pool__port=%s" $pool__port] 0
+        debug [list pools $poolIdx member_str] [format "  Pool member port was not specified, pool__MemberDefaultPort was blank, using pool__port=%s" $pool__port] 5
         set port $pool__port
       } else {
-        debug [list pools $poolIdx member_str] [format "  Pool member port was not specified, using pool__MemberDefaultPort=%s" $pool__MemberDefaultPort] 0
+        debug [list pools $poolIdx member_str] [format "  Pool member port was not specified, using pool__MemberDefaultPort=%s" $pool__MemberDefaultPort] 5
         set port $pool__MemberDefaultPort
       }
     }
@@ -435,7 +435,7 @@ foreach poolRow $pool__Pools {
     }
 
     if { [string length $options] > 0} {
-      debug [list pools $poolIdx member_str adv_options] "processing member advanced options string" 0
+      debug [list pools $poolIdx member_str adv_options] "processing member advanced options string" 7
       set options [format " %s" [process_options_string $options "" ""]]
     }
 
@@ -445,11 +445,11 @@ foreach poolRow $pool__Pools {
 
   # Check to see if we really have any pool members after table processing
   if { $nummembers == 0 } {
-    debug [list pools $poolIdx member_str] "  no true pool members found after table was processed, setting to none" 0
+    debug [list pools $poolIdx member_str] "  no true pool members found after table was processed, setting to none" 5
     set memberstr " members none"
   }
 
-  debug [list pools $poolIdx member_str] "memberstr=$memberstr" 0
+  debug [list pools $poolIdx member_str] "memberstr=$memberstr" 7
 
   set idx $column(Index)
   set name $column(Name)
@@ -519,16 +519,15 @@ foreach poolRow $pool__Pools {
   }
 
   foreach {optionvar optioncmd} [array get pool_options] {
-    #debug "\[create_pool\]\[options\] var=$optionvar cmd=$optioncmd"
     append cmd [generic_add_option [list pools $poolIdx options] [set [subst $optionvar]] $optioncmd "" 0]
   }
 
   if { [string length $advoptions] > 0 } {
-    debug [list pools $poolIdx adv_options] "processing advanced options string" 0
+    debug [list pools $poolIdx adv_options] "processing advanced options string" 7
     append cmd [format " %s" [process_options_string $advoptions "" ""]]
   }
 
-  debug [list pools $poolIdx tmsh_create] $cmd 0
+  debug [list pools $poolIdx tmsh_create] $cmd 1
   tmsh::create $cmd
   
   custom_extensions_after_pool
@@ -547,14 +546,14 @@ custom_extensions_after_pools
 if { [string length $vs__Name] == 0 } {
     set vs__Name [format "%s_vs" $app]
     change_var vs__Name $vs__Name
-    debug [list virtual_server set_vs_name] [format "no VS Name specified... setting to %s" $vs__Name] 0
+    debug [list virtual_server set_vs_name] [format "no VS Name specified... setting to %s" $vs__Name] 5
 }
 
 # Create L7 Traffic policy
 set l7p_numMatches [llength $l7policy__rulesMatch]
 set l7p_numActions [llength $l7policy__rulesAction]
 
-debug "l7policy" [format "numMatches=%s numActions=%s" $l7p_numMatches, $l7p_numActions] 0
+debug "l7policy" [format "numMatches=%s numActions=%s" $l7p_numMatches, $l7p_numActions] 7
 if { $l7p_numActions != $l7p_numMatches } {
   error "The number of rows in L7 Policy Match and Action tables must be equal"
 }
@@ -570,7 +569,7 @@ set l7p_defer_create 0
 # Iterate through the l7policy__rulesMatch table and create our conditions.
 set l7p_matchIdx 0  
 foreach l7p_matchRow $l7policy__rulesMatch {
-  debug [list l7policy match $l7p_matchIdx] [format "matchRow=%s" $l7p_matchRow] 0
+  debug [list l7policy match $l7p_matchIdx] [format "matchRow=%s" $l7p_matchRow] 9
 
   set l7p_rules($l7p_matchIdx) {}
   array set column_defaults [subst $::table_defaults(L7P_Match)]
@@ -586,7 +585,7 @@ foreach l7p_matchRow $l7policy__rulesMatch {
   foreach name [array names column_defaults] {
       if { ![info exists column($name)] || $column($name) eq "" } {
           set column($name) $column_defaults($name)
-          debug [list l7policy match $l7p_matchIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 0
+          debug [list l7policy match $l7p_matchIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
       }
   }
 
@@ -595,7 +594,7 @@ foreach l7p_matchRow $l7policy__rulesMatch {
 
   # Skip rows with an index < 0 excluding the default rule
   if { [string tolower $column(Index)] != "default" && $column(Index) < 0 } {
-    debug [list l7policy match] "skipping row, index < 0" 0
+    debug [list l7policy match] "skipping row, index < 0" 9
     continue
   }
 
@@ -631,7 +630,7 @@ foreach l7p_matchRow $l7policy__rulesMatch {
       set l7p_rule_valtmp [format "%s %s values { \"%s\" }" $column(Negate) $column(Condition) [string map {, "\" \""} $column(Value)]]
     } 
     set l7p_match_rules($l7p_matchIdx) [format "0 { %s %s %s %s }" $l7p_rule_opertmp $column(Missing) $column(CaseSensitive) $l7p_rule_valtmp]
-    debug [list l7policy match $l7p_matchIdx] [format "rule=%s" $l7p_match_rules($l7p_matchIdx)] 0
+    debug [list l7policy match $l7p_matchIdx] [format "rule=%s" $l7p_match_rules($l7p_matchIdx)] 7
   } else {
     set l7p_match_rules($l7p_matchIdx) ""
   }
@@ -644,7 +643,7 @@ set l7p_actionIdx 0
 set l7p_action_found_default 0
 
 foreach l7p_actionRow $l7policy__rulesAction {
-  debug [list l7policy action $l7p_actionIdx] [format "actionRow=%s" $l7p_actionRow] 0
+  debug [list l7policy action $l7p_actionIdx] [format "actionRow=%s" $l7p_actionRow] 9
 
   array set column_defaults [subst $::table_defaults(L7P_Action)]
   array unset column
@@ -660,13 +659,13 @@ foreach l7p_actionRow $l7policy__rulesAction {
   foreach name [array names column_defaults] {
       if { ![info exists column($name)] || $column($name) eq "" } {
           set column($name) $column_defaults($name)
-          debug [list l7policy action $l7p_actionIdx set_default]  [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 0
+          debug [list l7policy action $l7p_actionIdx set_default]  [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
       }
   }
 
   # Skip rows with an index < 0 excluding the default rule
   if { [string tolower $column(Index)] != "default" && $column(Index) < 0 } {
-    debug [list l7policy action] "skipping row, index < 0" 0
+    debug [list l7policy action] "skipping row, index < 0" 9
     continue
   }
 
@@ -722,7 +721,7 @@ foreach l7p_actionRow $l7policy__rulesAction {
         set l7p_rule_targettmp [join $l7p_action_targets " "]
         #set l7p_action_rules($l7p_actionIdx) [format "%s \{ %s \}" $l7p_action_targetIdx $l7p_rule_targettmp]
         set l7p_action_target_chunk [format "%s \{ %s \}" $l7p_action_targetIdx $l7p_rule_targettmp]
-        debug [list l7policy action $l7p_actionIdx 3_elements $l7p_action_targetIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 0
+        debug [list l7policy action $l7p_actionIdx 3_elements $l7p_action_targetIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 7
        }
       4 { 
         set l7p_rule_targettmp [format "%s %s %s" [lindex $l7p_action_targets 0] [lindex $l7p_action_targets 1] [lindex $l7p_action_targets 2]]
@@ -733,11 +732,10 @@ foreach l7p_actionRow $l7policy__rulesAction {
         }
         #set l7p_rule_value [lindex [psplit $column(Parameter) ;] $l7p_action_targetIdx]
         set l7p_rule_values [psplit [lindex [psplit $column(Parameter) |] $l7p_action_targetIdx] ,]
-        debug [list l7policy action $l7p_actionIdx val_list $l7p_action_targetIdx] $l7p_rule_values 0
+        debug [list l7policy action $l7p_actionIdx val_list $l7p_action_targetIdx] $l7p_rule_values 7
 
         set l7p_action_parIdx 0
         
-        #set l7p_action_rules($l7p_actionIdx) [format "%s \{ %s " $l7p_action_targetIdx $l7p_rule_targettmp $column(Parameter)]
         set l7p_action_target_chunk [format "%s \{ %s " $l7p_action_targetIdx $l7p_rule_targettmp]
         foreach l7p_action_parameter $l7p_rule_parameters {
           set l7p_action_parameter_value [lindex $l7p_rule_values $l7p_action_parIdx]
@@ -751,14 +749,13 @@ foreach l7p_actionRow $l7policy__rulesAction {
               set l7p_action_parameter_poolidx -1 
               if { [regexp {^pool:[0-9]+$} $l7p_action_parameter_value] } {
                 set l7p_action_parameter_poolidx [lindex [split $l7p_action_parameter_value :] 1]
-                debug [list l7policy action $l7p_actionIdx pool_substitute_idx] [format "%s" $l7p_action_parameter_poolidx] 0
-                debug [list l7policy action $l7p_actionIdx pool_substitute] [format "val=%s name=%s" $l7p_action_parameter_value $poolNames($l7p_action_parameter_poolidx)] 0
+                debug [list l7policy action $l7p_actionIdx pool_substitute] [format "idx=%s val=%s name=%s" $l7p_action_parameter_poolidx $l7p_action_parameter_value $poolNames($l7p_action_parameter_poolidx)] 7
                 set l7p_action_parameter_value [format "%s/%s" $app_path $poolNames($l7p_action_parameter_poolidx)]
               } 
             }
             ^asm.*enable.*$ {
               if { [regexp {^bundled:(.*$)} $l7p_action_parameter_value -> l7p_action_parameter_asmpolicy] } {
-                debug [list l7policy action $l7p_actionIdx asm_policy] [format "%s" $l7p_action_parameter_asmpolicy] 0
+                debug [list l7policy action $l7p_actionIdx asm_policy] [format "%s" $l7p_action_parameter_asmpolicy] 7
                 if { ! [string match *$l7p_action_parameter_asmpolicy* $vs__BundledItems] } {
                   error "L7 Policy Action Rule with Index $l7p_actionIdx specified a bundled policy that wasn't selected for deployment"
                 }
@@ -776,12 +773,12 @@ foreach l7p_actionRow $l7policy__rulesAction {
         }
         #append l7p_action_rules($l7p_actionIdx) "\} "
         append l7p_action_target_chunk "\} "
-        debug [list l7policy action $l7p_actionIdx 4_element] [format "chunk=%s" $l7p_action_target_chunk] 0
+        debug [list l7policy action $l7p_actionIdx 4_element] [format "chunk=%s" $l7p_action_target_chunk] 7
       }
       default { error "The target $l7p_action_target could not be processed" }
     }
     append l7p_action_rules($l7p_actionIdx) $l7p_action_target_chunk
-    debug [list l7policy action $l7p_actionIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 0
+    debug [list l7policy action $l7p_actionIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 7
     incr l7p_action_targetIdx
   }
   incr l7p_actionIdx
@@ -795,8 +792,8 @@ if { [info exists l7p_controls("asm")] && ! $l7p_action_found_default } {
 # Build our L7 ruleset
 set l7p_cmd_rules "rules replace-all-with \{ "
 for {set i 0} {$i < $l7p_matchIdx} {incr i} {
-  debug [list l7policy rules $i "match "] $l7p_match_rules($i) 0
-  debug [list l7policy rules $i action] $l7p_action_rules($i) 0
+  debug [list l7policy rules $i "match "] $l7p_match_rules($i) 7
+  debug [list l7policy rules $i action] $l7p_action_rules($i) 7
 
   # If an ASM target was selected we must add a bypass action to each action in the ruleset
   # that does not contain an ASM target
@@ -837,10 +834,10 @@ set l7p_cmd_controls [format " controls replace-all-with { %s } " [join [array n
 # TMOS 12.1 introduced a new draft/publish model for L7 policies.  Check for
 # that version and set a mode accordingly
 if { [string match "12.1*" $version_info(version)] } {
-  debug [list l7policy version_check] "12.1 or newer detected" 10
+  debug [list l7policy version_check] "12.1 or newer detected" 7
   set l7p_new_model 1 
 } else {
-  debug [list l7policy version_check] "12.0 or older detected" 10
+  debug [list l7policy version_check] "12.0 or older detected" 7
   set l7p_new_model 0
 }
 
@@ -857,11 +854,11 @@ if { $l7p_new_model } {
 }
 
 append l7p_cmd [format " strategy %s %s %s %s \}" $l7policy__strategy $l7p_cmd_requires $l7p_cmd_controls $l7p_cmd_rules]
-debug [list l7policy l7p_cmd] $l7p_cmd 10
+debug [list l7policy l7p_cmd] $l7p_cmd 7
 
 if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
   if { $l7p_defer_create > 0 } {
-    debug [list l7policy defer_create] $l7p_cmd 0
+    debug [list l7policy defer_create] $l7p_cmd 1
     set l7p_cmd_create [format "tmsh::create %s" $l7p_cmd]
     set l7p_cmd_modify [format "tmsh::modify %s" $l7p_cmd]
     
@@ -875,20 +872,20 @@ if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s profiles add \{ /Common/websecurity \{ \} \}" $app_path $vs__Name]]]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s policies add \{ %s/%s_l7policy \}" $app_path $vs__Name $app_path $app]]]
   } else {
-    debug [list l7policy tmsh_create] $l7p_cmd 0
+    debug [list l7policy tmsh_create] $l7p_cmd 1
     tmsh::create $l7p_cmd
 	if { $l7p_new_model } {
-		debug [list l7policy tmsh_publish] $l7p_publish_cmd 0
+		debug [list l7policy tmsh_publish] $l7p_publish_cmd 1
 		tmsh::publish $l7p_publish_cmd
 	}
 	
     # Add the created policy to the vs__AdvPolicies variable so we attach it to the 
     # Virtual Server when it's created.
     append vs__AdvPolicies [format " %s/%s_l7policy " $app_path $app]
-    debug [list l7policy add_policy_to_vs] [format "vs__AdvPolicies=%s" $vs__AdvPolicies] 0
+    debug [list l7policy add_policy_to_vs] [format "vs__AdvPolicies=%s" $vs__AdvPolicies] 5
   }
 } else {
-  debug [list l7policy skip_creation] "No valid actions or rules after processing, skipping creation" 0
+  debug [list l7policy skip_creation] "No valid actions or rules after processing, skipping creation" 7
 }
 
 # Call the custom_extensions_before_vs proc to allow site-specific customizations
@@ -897,13 +894,13 @@ custom_extensions_before_vs
 # Create virtual Server
 # Process the 'auto' flag for feature__redirectToHTTPS
 if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" && $pool__addr ne "255.255.255.254"} {
-  debug [list virtual_server feature__redirectToHTTPS] "found auto flag and port is 443, setting feature to enabled" 0
+  debug [list virtual_server feature__redirectToHTTPS] "found auto flag and port is 443, setting feature to enabled" 5
   set feature__redirectToHTTPS enabled
 }
 
 # Process the 'auto' flag for feature__insertXForwardedFor
 if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $pool__port eq "80"}] && $vs__SNATConfig ne ""} {
-  debug [list virtual_server feature__insertXForwardedFor] "found auto flag, port is 443 or 80 and SNAT enabled, setting feature to enabled" 0
+  debug [list virtual_server feature__insertXForwardedFor] "found auto flag, port is 443 or 80 and SNAT enabled, setting feature to enabled" 5
   set feature__insertXForwardedFor enabled
 }
 
@@ -925,22 +922,22 @@ set afm_auto_ipistring ""
 if { [is_provisioned afm] } {
   switch [string tolower $feature__easyL4Firewall] {
     auto {
-      debug [list virtual_server feature__easyL4Firewall] "found auto option, setting feature to enabled" 0 
+      debug [list virtual_server feature__easyL4Firewall] "found auto option, setting feature to enabled" 5
       set feature__easyL4Firewall enabled
       set afm_auto_ipistring "none"
     }
     base { 
-      debug [list virtual_server feature__easyL4Firewall] "found base flag, setting feature to enabled, vs__ProfileSecurityIPBlacklist to disabled" 0
+      debug [list virtual_server feature__easyL4Firewall] "found base flag, setting feature to enabled, vs__ProfileSecurityIPBlacklist to disabled" 5
       set feature__easyL4Firewall enabled
       set afm_auto_ipistring "none"
     }
     base+ip_blacklist_block { 
-      debug [list virtual_server feature__easyL4Firewall] "found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block" 0
+      debug [list virtual_server feature__easyL4Firewall] "found auto option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-block" 5
       set feature__easyL4Firewall enabled
       set afm_auto_ipistring "enabled-block"
     }
     base+ip_blacklist_log { 
-      debug [list virtual_server feature__easyL4Firewall] "found base+ipblacklist_log option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-log" 0
+      debug [list virtual_server feature__easyL4Firewall] "found base+ipblacklist_log option, setting feature to enabled, vs__ProfileSecurityIPBlacklist to enabled-log" 5
       set feature__easyL4Firewall enabled
       set afm_auto_ipistring "enabled-log"
     }
@@ -955,7 +952,7 @@ if { [is_provisioned afm] } {
     change_var vs__ProfileSecurityIPBlacklist $afm_auto_ipistring
   }
 } else {
-  debug [list virtual_server feature__easyL4Firewall] "AFM not provisioned, skipping" 0
+  debug [list virtual_server feature__easyL4Firewall] "AFM not provisioned, skipping" 5
   if { $feature__easyL4Firewall != "auto" } {
     change_var feature__easyL4Firewall disabled
   }
@@ -973,7 +970,7 @@ if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
     %insertfile:include/feature_securityEnableHSTS_redirect.irule% 
   }; 
   
-  debug [list virtual_server feature__securityEnableHSTS] "creating HSTS iRule" 0
+  debug [list virtual_server feature__securityEnableHSTS] "creating HSTS iRule" 5
   set hstsrule [format "%s/hsts_irule" $app_path]
 
   # Substitute in HSTS options is specified
@@ -987,25 +984,23 @@ if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
   set irule_HSTS_final [string map [list %HSTSOPTIONS% $hstsoptions] $irule_HSTS]
 
   set hstscmd "ltm rule $hstsrule $irule_HSTS_final"
-  debug [list virtual_server feature__securityEnableHSTS tmsh_create] $hstscmd 0
+  debug [list virtual_server feature__securityEnableHSTS tmsh_create] $hstscmd 1
   tmsh::create $hstscmd
 
   if { $feature__redirectToHTTPS eq "enabled"} {
-    debug [list virtual_server feature__securityEnableHSTS ssl_redirect_check] "feature_redirectToHTTPS enabled, creating HSTS redirect iRule" 0
+    debug [list virtual_server feature__securityEnableHSTS ssl_redirect_check] "feature_redirectToHTTPS enabled, creating HSTS redirect iRule" 5
     set hstsredirectrule [format "%s/hsts_redirect_irule" $app_path]
     set hstsredirectcmd "ltm rule $hstsredirectrule $irule_HSTS_redirect"
-    debug [list virtual_server feature__securityEnableHSTS tmsh_create] $hstsredirectcmd 0
+    debug [list virtual_server feature__securityEnableHSTS tmsh_create] $hstsredirectcmd 1
     tmsh::create $hstsredirectcmd
   }
   
   if { [string length $vs__Irules] > 0 } {
-    #debug "\[create_virtual\]\[feature__securityEnableHSTS\] vs__Irules has data, appending"
     append vs__Irules ",$hstsrule"
   } else {
-    #debug "\[create_virtual\]\[feature__securityEnableHSTS\] vs__Irules is empty, setting"
     set vs__Irules $hstsrule
   }
-  debug [list virtual_server feature__securityEnableHSTS add_irule_to_vs] [format "vs__Irules=%s" $vs__Irules] 0
+  debug [list virtual_server feature__securityEnableHSTS add_irule_to_vs] [format "vs__Irules=%s" $vs__Irules] 7
 }
 
 set cmd [format "ltm virtual %s/%s " $app_path $vs__Name]
@@ -1050,17 +1045,17 @@ handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intellig
 
 # Process the vs__ProfileSecurityIPBlacklist option according to $ipi_mode set above
 if { $ipi_mode == 1 } {
-  debug [list virtual_server ip_blacklist create] [format "ipi_action=%s, creating IPI policy" $ipi_action] 0
+  debug [list virtual_server ip_blacklist create] [format "ipi_action=%s, creating IPI policy" $ipi_action] 7
   set ipi_name [create_obj_name "ip_blacklist"]
   set ipi_cmd [format "security ip-intelligence policy %s default-action %s default-log-blacklist-hit-only yes" $ipi_name $ipi_action]
-  debug [list virtual_server ip_blacklist tmsh_create] $ipi_cmd 0
+  debug [list virtual_server ip_blacklist tmsh_create] $ipi_cmd 1
   tmsh::create $ipi_cmd
   set vs__ProfileSecurityIPBlacklist $ipi_name
   array set vs_options [list vs__ProfileSecurityIPBlacklist ip-intelligence-policy]
 } 
 
 if { $ipi_mode == 2 } {
-  debug [list virtual_server ip_blacklist associate] [format "adding existing IPI policy %s" $vs__ProfileSecurityIPBlacklist] 0
+  debug [list virtual_server ip_blacklist associate] [format "adding existing IPI policy %s" $vs__ProfileSecurityIPBlacklist] 7
   array set vs_options [list vs__ProfileSecurityIPBlacklist ip-intelligence-policy]
 }
 
@@ -1068,20 +1063,20 @@ if { $ipi_mode == 2 } {
 handle_opt_remove_on_redeploy feature__easyL4Firewall "disabled" "fw-enforced-policy" "afm"
 
 if { $feature__easyL4Firewall == "enabled" } {
-  debug [list virtual_server l4_firewall] "creating FW policy" 0
+  debug [list virtual_server l4_firewall] "creating FW policy" 5
 
   set cidr_blacklist [single_column_table_to_list $feature__easyL4FirewallBlacklist "CIDRRange"]
-  debug [list virtual_server l4_firewall cidr_blacklist] $cidr_blacklist 0
+  debug [list virtual_server l4_firewall cidr_blacklist] $cidr_blacklist 7
 
   set cidr_sourcelist [single_column_table_to_list $feature__easyL4FirewallSourceList "CIDRRange"]
-  debug [list virtual_server l4_firewall cidr_sourcelist] $cidr_sourcelist 0
+  debug [list virtual_server l4_firewall cidr_sourcelist] $cidr_sourcelist 7
 
   if { [llength $cidr_blacklist] > 0 } {
-    debug [list virtual_server l4_firewall create_blacklist] "creating static blacklist address-list" 0
+    debug [list virtual_server l4_firewall create_blacklist] "creating static blacklist address-list" 7
     set feature_easyL4Firewall_blacklistcmd [format "security firewall address-list %s/afm_staticBlacklist addresses replace-all-with { %s }" \
      $app_path [join $cidr_blacklist " "]]
 
-    debug [list virtual_server l4_firewall create_blacklist tmsh_create] $feature_easyL4Firewall_blacklistcmd 0
+    debug [list virtual_server l4_firewall create_blacklist tmsh_create] $feature_easyL4Firewall_blacklistcmd 1
     tmsh::create $feature_easyL4Firewall_blacklistcmd
     set feature_easyL4Firewall_blacklisttmpl [format "staticBlacklist { action drop source { address-lists replace-all-with { %s/afm_staticBlacklist } } }" $app_path]
   } else {
@@ -1089,17 +1084,17 @@ if { $feature__easyL4Firewall == "enabled" } {
   }
 
   if { [llength $cidr_sourcelist] > 0 } {
-    debug [list virtual_server l4_firewall create_sourcelist] "creating source address-list" 0
+    debug [list virtual_server l4_firewall create_sourcelist] "creating source address-list" 7
     set feature_easyL4Firewall_srclistcmd [format "security firewall address-list %s/afm_sourceList addresses replace-all-with { %s }" \
      $app_path [join $cidr_sourcelist " "]]
 
-    debug [list virtual_server l4_firewall create_sourcelist] $feature_easyL4Firewall_srclistcmd 0
+    debug [list virtual_server l4_firewall create_sourcelist tmsh_create] $feature_easyL4Firewall_srclistcmd 1
     tmsh::create $feature_easyL4Firewall_srclistcmd
   } else {
-    debug [list virtual_server l4_firewall create_sourcelist] "creating DEFAULT source address-list" 0
+    debug [list virtual_server l4_firewall create_sourcelist] "creating DEFAULT source address-list" 7
     set feature_easyL4Firewall_srclistcmd [format "security firewall address-list %s/afm_sourceList addresses replace-all-with { 0.0.0.0/0 }" $app_path]
 
-    debug [list virtual_server l4_firewall create_sourcelist tmsh_create] $feature_easyL4Firewall_srclistcmd 0
+    debug [list virtual_server l4_firewall create_sourcelist tmsh_create] $feature_easyL4Firewall_srclistcmd 1
     tmsh::create $feature_easyL4Firewall_srclistcmd
   }
   set feature_easyL4Firewall_srclist [format "%s/afm_sourceList" $app_path]
@@ -1116,7 +1111,7 @@ if { $feature__easyL4Firewall == "enabled" } {
                      %SOURCE_LIST%      $feature_easyL4Firewall_srclist ]
 
   set fw_policy [string map $tmpl_map $fw_tmpl]
-  debug [list virtual_server l4_firewall tmsh_create] $fw_policy 0
+  debug [list virtual_server l4_firewall tmsh_create] $fw_policy 1
   tmsh::create $fw_policy
   array set vs_options [list fw_name fw-enforced-policy]  
 }
@@ -1124,7 +1119,7 @@ if { $feature__easyL4Firewall == "enabled" } {
 # Process bundled iRules
 set vs__BundledItems [string map {"," " " ";" " "} $vs__BundledItems]
 set bundled_irules [get_items_starting_with "irule:" $vs__BundledItems]
-debug [list virtual_server bundled_irule get_list] [format "%s" $bundled_irules] 0
+debug [list virtual_server bundled_irule get_list] [format "%s" $bundled_irules] 7
 
 if { [llength $bundled_irules] > 0 } { 
   set bundled_irule_map [list %APP_PATH%      $app_path \
@@ -1134,7 +1129,7 @@ if { [llength $bundled_irules] > 0 } {
                              %PARTITION%     $partition ]
 
   foreach bundled_irule $bundled_irules {
-    debug [list virtual_server bundled_irule create_irule] [format "deploying bundled iRule %s" $bundled_irule] 0
+    debug [list virtual_server bundled_irule create_irule] [format "deploying bundled iRule %s" $bundled_irule] 5
 
     if { [string match "irule:url=*" $bundled_irule] } {
       set bundled_irule_isurl 1
@@ -1156,30 +1151,28 @@ if { [llength $bundled_irules] > 0 } {
     }
 
     set bundled_irule_cmd [format "ltm rule %s/%s \{%s\}" $app_path $bundled_irule $bundled_irule_src]
-    debug [list virtual_server bundled_irule create $bundled_irule] $bundled_irule_cmd 10
+    debug [list virtual_server bundled_irule $bundled_irule tmsh_create] $bundled_irule_cmd 1
     tmsh::create $bundled_irule_cmd
     if { [string length $vs__Irules] > 0 } {
       append vs__Irules ","
     }
     append vs__Irules [format "%s/%s" $app_path $bundled_irule]
   }
-  debug [list virtual_server bundled_irule add_irule_to_vs] [format "vs__Irules=\"%s\"" $vs__Irules] 0
+  debug [list virtual_server bundled_irule add_irule_to_vs] [format "vs__Irules=\"%s\"" $vs__Irules] 7
 }
 
 # Process the vs_options array
 foreach {optionvar optioncmd} [array get vs_options] {
-  #debug "\[create_virtual\]\[options\] var=$optionvar cmd=$optioncmd"
   append cmd [generic_add_option [list virtual_server options] [set [subst $optionvar]] $optioncmd "" 0]
 }
 
 # Process the vs_options_custom array
 foreach {optionvar optioncmd} [array get vs_options_custom] {
-  #debug "\[create_virtual\]\[options\] var=$optionvar cmd=$optioncmd"
   append cmd [generic_add_option [list virtual_server options_custom] [set [subst $optionvar]] "" $optioncmd 1]
 }
 
 if { [string length $vs__AdvOptions] > 0 } {
-  debug [list virtual_server adv_options] "processing advanced options string" 0
+  debug [list virtual_server adv_options] "processing advanced options string" 7
   append cmd [format " %s" [process_options_string $vs__AdvOptions "" ""]]
 }
 
@@ -1205,7 +1198,7 @@ if { [string length $vs__SNATConfig] > 0 } {
         append create_snat_poolcmd [format " %s%%%s " $ip $rd]
       }
       append create_snat_poolcmd "} "
-      debug [list virtual_server snat create_snat_pool tmsh_create] $create_snat_poolcmd 0
+      debug [list virtual_server snat create_snat_pool tmsh_create] $create_snat_poolcmd 1
       tmsh::create $create_snat_poolcmd
       append snatcmd [format " source-address-translation \{ pool %s type snat \}" $create_snat_poolname] 
     }
@@ -1214,7 +1207,7 @@ if { [string length $vs__SNATConfig] > 0 } {
           append snatcmd [format " source-address-translation \{ pool %s type snat \}" $vs__SNATConfig]
     }
   }
-  debug [list virtual_server snatcmd] $snatcmd 0
+  debug [list virtual_server snatcmd] $snatcmd 7
 }
 append cmd $snatcmd
 
@@ -1222,13 +1215,13 @@ append cmd $snatcmd
 if { $feature__insertXForwardedFor eq "enabled"} {
   if { [regexp -nocase {^create:} $vs__ProfileHTTP] } {
     if { ! [regexp -nocase {insert-xforwarded-for=enabled} $vs__ProfileHTTP] } {
-      debug [list virtual_server feature__insertXForwardedFor append] "Appending insert-xforwarded-for=enabled to existing HTTP profile customization string" 0
+      debug [list virtual_server feature__insertXForwardedFor append] "Appending insert-xforwarded-for=enabled to existing HTTP profile customization string" 5
       append vs__ProfileHTTP ";insert-xforwarded-for=enabled"
     } else {
-      debug [list virtual_server feature__insertXForwardedFor ignore] "insert-xforwarded-for=enabled alredy in HTTP profile customization string... doing nothing" 0
+      debug [list virtual_server feature__insertXForwardedFor ignore] "insert-xforwarded-for=enabled alredy in HTTP profile customization string... doing nothing" 5
     }
   } else {
-    debug [list virtual_server feature__insertXForwardedFor create] [format "Creating HTTP profile customization string \"create:insert-xforwarded-for=enabled;defaults-from=%s\"" $vs__ProfileHTTP] 0
+    debug [list virtual_server feature__insertXForwardedFor create] [format "Creating HTTP profile customization string \"create:insert-xforwarded-for=enabled;defaults-from=%s\"" $vs__ProfileHTTP] 5
     set vs__ProfileHTTP [format "create:insert-xforwarded-for=enabled;defaults-from=%s" $vs__ProfileHTTP]
   }
 }
@@ -1257,7 +1250,7 @@ foreach {profilevar} [array names create_supported] {
   if { [regexp -nocase {^create:} $profileval] } {
     set defaultfound 0
     set kvpstring [string map {"create\:" ""} $profileval]
-    debug [list virtual_server profiles create_handler] [format "processing create for %s=%s" $profilevar $profileval] 0
+    debug [list virtual_server profiles create_handler] [format "processing create for %s=%s" $profilevar $profileval] 7
 
     # Get all the options passed in array format
     array set create_options [process_kvp_string $kvpstring]
@@ -1278,14 +1271,14 @@ foreach {profilevar} [array names create_supported] {
       append profilestr [format "defaults-from %s " $profiledefault]
     }
     set [subst $profilevar] [format "%s/%s" $app_path $profilename]
-    debug [list virtual_server profiles create_handler tmsh_create] [format "%s; %s=%s" $profilestr $profilevar [set [subst $profilevar]]] 0
+    debug [list virtual_server profiles create_handler tmsh_create] [format "%s; %s=%s" $profilestr $profilevar [set [subst $profilevar]]] 1
     tmsh::create $profilestr
   }
 }
 
 # Add profiles
 set vsprofiles " profiles replace-all-with  \{ "
-debug [list virtual_server profiles] [format "adding base vsprofiles=%s" $vsprofiles] 0
+debug [list virtual_server profiles] [format "adding base vsprofiles=%s" $vsprofiles] 7
 
 # We have to specify context aware profiles first
 # Figure out the correct context to apply protocol profiles
@@ -1293,7 +1286,7 @@ set clientContext "all"
 set serverContext "all"
 
 if { [string length $vs__ProfileClientProtocol] > 0 && [string length $vs__ProfileServerProtocol] > 0 && $vs__ProfileClientProtocol ne $vs__ProfileServerProtocol } {
-  debug [list virtual_server profiles protocol] "got both client and server protocol profiles" 0
+  debug [list virtual_server profiles protocol] "got both client and server protocol profiles" 7
   set clientContext "clientside"
   set serverContext "serverside"
 } 
@@ -1301,13 +1294,13 @@ if { [string length $vs__ProfileClientProtocol] > 0 && [string length $vs__Profi
 # Client-side protocol
 if { [string length $vs__ProfileClientProtocol] > 0 } {
   append vsprofiles [format " %s \{ context %s \}" $vs__ProfileClientProtocol $clientContext]
-  debug [list virtual_server profiles protocol] [format "clientside protocol name=%s context=%s" $vs__ProfileClientProtocol $clientContext] 0
+  debug [list virtual_server profiles protocol] [format "clientside protocol name=%s context=%s" $vs__ProfileClientProtocol $clientContext] 7
 }
 
 # Server-side protocol
 if { [string length $vs__ProfileServerProtocol] > 0 && $vs__ProfileClientProtocol ne $vs__ProfileServerProtocol } {
   append vsprofiles [format " %s \{ context %s \}" $vs__ProfileServerProtocol $serverContext]
-  debug [list virtual_server profiles protocol] [format "serverside protocol name=%s context=%s" $vs__ProfileServerProtocol context=$serverContext] 0
+  debug [list virtual_server profiles protocol] [format "serverside protocol name=%s context=%s" $vs__ProfileServerProtocol context=$serverContext] 7
 }
 
 
@@ -1348,13 +1341,13 @@ if { $feature__redirectToHTTPS eq "enabled"} {
 if { $clientssl == 1 } {
   set vs__ProfileClientSSL [format "%s/%s_clientssl" $app_path $app]
   set vs_profiles(vs__ProfileClientSSL) ""
-  debug [list virtual_server client_ssl associate_created] [format "name=%s" $vs__ProfileClientSSL] 0
+  debug [list virtual_server client_ssl associate_created] [format "name=%s" $vs__ProfileClientSSL] 7
 }
 
 # Client-SSL profile specified via vs__ProfileClientSSL
 if { $clientssl == 2 } {
   set vs_profiles(vs__ProfileClientSSL) ""
-  debug [list virtual_server client_ssl associate_existing] [format "name=%s" $vs__ProfileClientSSL] 0
+  debug [list virtual_server client_ssl associate_existing] [format "name=%s" $vs__ProfileClientSSL] 7
 }
 
 # Process the vs_profiles_contextual array first to make sure profiles that require a proxy
@@ -1369,22 +1362,22 @@ foreach {optionvar optioncmd} [array get vs_profiles] {
 }
 
 if { [string length $vs__AdvProfiles] > 0 } {
-  debug [list virtual_server adv_options] "processing advanced profile string" 0
+  debug [list virtual_server adv_options] "processing advanced profile string" 7
   append vsprofiles [format " %s" [generic_add_option [list virtual_server adv_profiles] $vs__AdvProfiles "" "%s" 1]]    
 }
 
 append vsprofiles " \}"
-debug [list virtual_server profiles cmd] $vsprofiles 0
+debug [list virtual_server profiles cmd] $vsprofiles 7
 
 # Add the profile string to the TMSH command
 append cmd $vsprofiles
 
 # Process the $vs__AdvPolicies option
 if { [string length $vs__AdvPolicies] > 0 } {
-  debug [list virtual_server adv_policies] "processing advanced policies string" 0
+  debug [list virtual_server adv_policies] "processing advanced policies string" 7
   # Add the polcies string to the TMSH command
   set vspolicies [format " policies replace-all-with \{ %s \} " [generic_add_option [list virtual_server adv_policies] $vs__AdvPolicies "" "%s" 1]] 
-  debug [list virtual_server adv_policies cmd] $vspolicies 0
+  debug [list virtual_server adv_policies cmd] $vspolicies 7
   append cmd $vspolicies
 }
 
@@ -1392,11 +1385,11 @@ if { [string length $vs__AdvPolicies] > 0 } {
 
 set stats_vs 0
 if { $pool__addr ne "255.255.255.254" } {
-  debug [list virtual_server tmsh_create] $cmd 0
+  debug [list virtual_server tmsh_create] $cmd 1
   tmsh::create $cmd
   set stats_vs 1
 } else {
-  debug [list virtual_server skip_create] "found 255.255.255.254 as pool__addr, skipping creation" 0
+  debug [list virtual_server skip_create] "found 255.255.255.254 as pool__addr, skipping creation" 2
 }
 
 # Call the custom_extensions_after_vs proc to allow site-specific customizations
@@ -1404,7 +1397,7 @@ custom_extensions_after_vs
 
 # Create and additional virtual server on port 80 for feature__redirectToHTTPS
 if { $feature__redirectToHTTPS eq "enabled" } {
-  debug [list virtual_server feature__redirectToHTTPS create_redirect_vs] [format "feature__redirectToHTTPS is enabled, creating redirect virtual server on %s:80" $vs_dest_addr] 0
+  debug [list virtual_server feature__redirectToHTTPS create_redirect_vs] [format "feature__redirectToHTTPS is enabled, creating redirect virtual server on %s:80" $vs_dest_addr] 5
 
   set redirect_cmd [format "ltm virtual %s/%s_redirect destination %s:80 " $app_path $vs__Name $vs_dest_addr]
   array set vs_redirect_options {
@@ -1415,13 +1408,12 @@ if { $feature__redirectToHTTPS eq "enabled" } {
 
   # Process the vs_options array
   foreach {optionvar optioncmd} [array get vs_redirect_options] {
-    #debug "\[create_virtual\]\[options\] var=$optionvar cmd=$optioncmd"
     append redirect_cmd [generic_add_option [list virtual_server feature__redirectToHTTPS options] [set [subst $optionvar]] $optioncmd "" 0]
   }
 
   # The HSTS spec recommends that when redirected a 301 Redirect is used, rather than a 302 like _sys_https_redirect uses
   if { [string match "enabled*" $feature__securityEnableHSTS] } {
-    debug [list virtual_server feature__redirectToHTTPS hsts_check] [format "feature__securityEnableHSTS is enabled, using %s" $hstsredirectrule] 0
+    debug [list virtual_server feature__redirectToHTTPS hsts_check] [format "feature__securityEnableHSTS is enabled, using %s" $hstsredirectrule] 5
     append redirect_cmd " rules { $hstsredirectrule } "
   } else {
     append redirect_cmd " rules { /Common/_sys_https_redirect } "
@@ -1430,7 +1422,7 @@ if { $feature__redirectToHTTPS eq "enabled" } {
   append redirect_cmd $vsprofiles_redirect
   append redirect_cmd [generic_add_option [list virtual_server feature__redirectToHTTPS options] $vs__ProfileHTTP "" "" 0]
   append redirect_cmd " \}"
-  debug [list virtual_server feature__redirectToHTTPS tmsh_create] $redirect_cmd 0
+  debug [list virtual_server feature__redirectToHTTPS tmsh_create] $redirect_cmd 1
   tmsh::create $redirect_cmd
 }
 
@@ -1440,30 +1432,29 @@ if { $feature__redirectToHTTPS eq "enabled" } {
 # mode=1 (Standalone) : Look at $iapp__appStats from the presentation layer to control creation
 # mode=2 (BIGIQ Cloud): Look at $app_stats set by BIG-IQ to control creation
 # mode=3 (APIC)       : Look at $app_stats set by BIG-IQ to control creation
-debug [list stats] [format "mode=%s app_stats=%s iapp__appStats=%s" $mode $app_stats $iapp__appStats] 0
+debug [list stats] [format "mode=%s app_stats=%s iapp__appStats=%s" $mode $app_stats $iapp__appStats] 7
 if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($mode == 1 && $iapp__appStats eq "enabled") } {
   # Create the iCall stats publisher
-  debug [list stats] "creating icall stats publisher" 0
+  debug [list stats] "creating icall stats publisher" 7
       # START EMBEDDED ICALL SCRIPT
   set icall_script_tmpl {
 %insertfile:include/base_statistics_script.icall%
   }; # END EMBEDDED ICALL SCRIPT
 
-  #debug "done creating icall stats publisher icall_script_tmpl=$icall_script_tmpl"
   set stats_pool 0
   if { $poolCount > 0 && $default_pool_name ne "" } {
     set stats_pool 1
   }
 
   if { [expr {$feature__statsHTTP eq "enabled" || $feature__statsHTTP eq "auto"}] && [string length $vs__ProfileHTTP] > 0 } {
-    debug [list stats feature_statsHTTP] "enabling HTTP stats" 0
+    debug [list stats feature_statsHTTP] "enabling HTTP stats" 7
     set feature__statsHTTP 1
   } else {
     set feature__statsHTTP 0
   }
 
   if { [expr {$feature__statsTLS eq "enabled" || $feature__statsTLS eq "auto"}] && [string length $vs__ProfileClientSSL] > 0 } {
-    debug [list stats feature_statsTLS] "enabling TLS stats" 0
+    debug [list stats feature_statsTLS] "enabling TLS stats" 7
     set feature__statsTLS 1
   } else {
     set feature__statsTLS 0
@@ -1482,11 +1473,11 @@ if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($
                        %SSL_PROFILE%   [format "%s" $vs__ProfileClientSSL] ]
 
   set icall_script_src [string map $script_map $icall_script_tmpl]
-  #debug "\[create_stats\] icall_script_src=$icall_script_src"
+  debug [list stats icall_src] $icall_script_src 10
 
-  debug [list stats icall_script tmsh_create] "publish_stats script" 0
+  debug [list stats icall_script tmsh_create] "publish_stats script" 1
   tmsh::create sys icall script publish_stats definition \{ $icall_script_src \}
-  debug [list stats icall_handler tmsh_create] "iCall handler" 0
+  debug [list stats icall_handler tmsh_create] "iCall handler" 1
   tmsh::create sys icall handler periodic publish_stats interval 60 script publish_stats
 }
 
@@ -1537,11 +1528,11 @@ if { [llength $bundler_asm_policies] > 0 } {
       set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
     }
 
-    debug [list bundler asm check_preserve] [format "%s %s" $bundled_asm [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems]]]] 0
+    debug [list bundler asm check_preserve] [format "%s %s" $bundled_asm [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems]]]] 7
     if { $newdeploy || \
          [expr { $redeploy && [string match redeploy* $iapp__asmDeployMode]}] || \
          [expr { $redeploy && [string match *$bundled_asm* [get_items_starting_with "asm:" [get_var vs__BundledItems]]]}] == 0 } {
-      debug [list bundler asm deploy] $bundled_asm 0
+      debug [list bundler asm deploy] $bundled_asm 5
       set bundler_asm_mode 1
 
       if { $bundled_asm_isurl } {
@@ -1558,8 +1549,8 @@ if { [llength $bundler_asm_policies] > 0 } {
     } else {
       set bundler_asm_mode 2
       set savecmd [format "asm policy %s/%s min-xml-file %s" $app_path $bundled_asm_stripped $bundled_asm_filename]
-      debug [list bundler asm preserve] [format "preserving existing policy... save to %s" $bundled_asm_filename] 0
-      debug [list bundler asm preserve tmsh_save] $savecmd 0
+      debug [list bundler asm preserve] [format "preserving existing policy... save to %s" $bundled_asm_filename] 5
+      debug [list bundler asm preserve tmsh_save] $savecmd 1
       tmsh::save $savecmd
     }
     lappend bundler_asm_deploy $bundled_asm_stripped
@@ -1584,11 +1575,11 @@ if { [llength $bundler_apm_policies] == 1 } {
     set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
   }
 
-  debug [list bundler apm check_preserve] [format "%s %s" $bundled_apm [string match *$bundled_apm* [get_items_starting_with "apm:" [get_var vs__BundledItems]]]] 0
+  debug [list bundler apm check_preserve] [format "%s %s" $bundled_apm [string match *$bundled_apm* [get_items_starting_with "apm:" [get_var vs__BundledItems]]]] 7
   if { $newdeploy || \
        [expr { $redeploy && [string match redeploy* $iapp__apmDeployMode]}] || \
        [expr { $redeploy && [llength [get_items_starting_with "apm:" [get_var vs__BundledItems]]]}] == 0 } {
-    debug [list bundler apm deploy] $bundled_apm 0
+    debug [list bundler apm deploy] $bundled_apm 5
     set bundler_apm_mode 1
 
     if { $bundled_apm_isurl } {
@@ -1598,7 +1589,7 @@ if { [llength $bundler_apm_policies] == 1 } {
         error "A bundled APM policy named '$bundled_apm' was not found in the template"
       }
 
-      debug [list bundler apm deploy version_check] [format "bundled_version=%s system_version=%s" $bundler_objects($bundled_apm) $version_info(version)] 0
+      debug [list bundler apm deploy version_check] [format "bundled_version=%s system_version=%s" $bundler_objects($bundled_apm) $version_info(version)] 7
       if {! [string match $bundler_objects($bundled_apm)* $version_info(version)] } {
         error "The bundled APM policy '$bundled_apm' requires BIG-IP version $bundler_objects($bundled_apm).  This system is running version $version_info(version)"
       }
@@ -1609,7 +1600,7 @@ if { [llength $bundler_apm_policies] == 1 } {
       close $outfile
     }
   } else {
-    debug [list bundler apm preserve] $bundled_apm 0
+    debug [list bundler apm preserve] $bundled_apm 5
     set bundler_apm_mode 2
     set bundled_apm_export_filename [format "appsvcs_apm_%s_%s_%s" $::app $bundled_apm_stripped $bundler_timestamp]
     switch -glob $version_info(version) {
@@ -1628,9 +1619,9 @@ if { [llength $bundler_apm_policies] == 1 } {
       }
       default { error "The TMOS version running on this device does not support the preserve APM deployment modes" }
     }
-    debug [list bundler apm preserve] [format "preserving existing policy... save to %s" $bundled_apm_filename] 0
-    debug [list bundler apm preserve export_cmd] $bundler_apm_exportcmd 0
-    debug [list bundler apm preserve rename_cmd] $bundler_apm_renamecmd 0
+    debug [list bundler apm preserve] [format "preserving existing policy... save to %s" $bundled_apm_filename] 5
+    debug [list bundler apm preserve export_cmd] $bundler_apm_exportcmd 1
+    debug [list bundler apm preserve rename_cmd] $bundler_apm_renamecmd 1
     eval exec $bundler_apm_exportcmd
     eval exec $bundler_apm_renamecmd
 
@@ -1644,8 +1635,8 @@ if { $bundler_all_deploy } {
   set bundler_enablevs 0
   if { [string match *\-block $iapp__asmDeployMode] || [string match *\-block $iapp__apmDeployMode] } {
     set bundler_vs_cmd [format "ltm virtual %s/%s disabled" $app_path $vs__Name]
-    debug [list bundler check_deploy_mode] "iapp__(asm|apm)DeployMode specified block mode, disabling virtual server" 0
-    debug [list bundler check_deploy_mode tmsh_modify] $bundler_vs_cmd 0
+    debug [list bundler check_deploy_mode] "iapp__(asm|apm)DeployMode specified block mode, disabling virtual server" 5
+    debug [list bundler check_deploy_mode tmsh_modify] $bundler_vs_cmd 1
     tmsh::modify $bundler_vs_cmd
     set bundler_enablevs 1
   }
@@ -1694,9 +1685,7 @@ if { $bundler_all_deploy } {
 
   set bundler_icall_src [string map $bundler_script_map $bundler_icall_tmpl]  
   debug [list bundler icall_src] [format "%s" $bundler_icall_src] 10
-  debug [list bundler icall_script] "creating postdeploy script" 0
-  #tmsh::create sys icall script postdeploy_bundler definition \{ $bundler_icall_src \}
-  debug [list bundler icall_handler] [format "creating iCall handler; executing postdeploy script at: %s" $bundler_icall_time] 0
+  debug [list bundler icall_handler] [format "creating iCall handler; executing postdeploy script at: %s" $bundler_icall_time] 7
 
   set fn [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app]
   catch {
@@ -1705,7 +1694,7 @@ if { $bundler_all_deploy } {
       close $fh
   } {}    
  
-  debug [list bundler deploy] "Bundled policy deployment will complete momentarily..." 0
+  debug [list bundler deploy] "Bundled policy deployment will complete momentarily..." 5
 }
 
 if { [string length $vs__RouteAdv] > 0 && $vs__RouteAdv ne "disabled" } {
@@ -1715,7 +1704,7 @@ if { [string length $vs__RouteAdv] > 0 && $vs__RouteAdv ne "disabled" } {
     "always" { set routeadv_mode "none" }
     default { error "The value specified for the Route Advertisement mode (vs__RouteAdv) is invalid" }
   }
-  debug [list virtual_address route-adv] [format "enabling route advertisement for virtual address %s with mode %s (postdeploy_final)" $vs_dest_addr $routeadv_mode] 0
+  debug [list virtual_address route-adv] [format "enabling route advertisement for virtual address %s with mode %s (postdeploy_final)" $vs_dest_addr $routeadv_mode] 5
   lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm virtual-address /%s/%s route-advertisement enabled" $partition $vs_dest_addr]]
   lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm virtual-address /%s/%s server-scope %s" $partition $vs_dest_addr $routeadv_mode]]
 }
@@ -1748,8 +1737,7 @@ set postfinal_script_map [list %APP_NAME%  $::app \
 
 set postfinal_icall_src [string map $postfinal_script_map $postfinal_icall_tmpl]  
 debug [list postfinal icall_src] [format "%s" $postfinal_icall_src] 10
-debug [list postfinal icall_script] "creating postdeploy_final script" 0
-debug [list postfinal icall_handler] [format "creating iCall handler; executing postdeploy_final script at: %s" $postfinal_icall_time] 0
+debug [list postfinal icall_handler] [format "creating iCall handler; executing postdeploy_final script at: %s" $postfinal_icall_time] 7
 
 set fn [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app]
 catch {
@@ -1776,7 +1764,7 @@ catch {
 } {}    
 
 if { $iapp__strictUpdates eq "disabled" } {
-  debug [list strict_updates] "disabling strict updates" 0
+  debug [list strict_updates] "disabling strict updates" 5
   tmsh::modify [format "sys application service %s/%s strict-updates disabled" $app_path $app]
 }
 

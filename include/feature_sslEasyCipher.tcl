@@ -7,6 +7,6 @@
 	}
 
 	if { $feature__sslEasyCipher ne "disabled" && [info exists feature_sslEasyCipher_strings($feature__sslEasyCipher)]} {
-		debug [list client_ssl create ssl_easy_cipher] [format "sslEasyCipher is not disabled, setting vs__ProfileClientSSLCipherString=%s" $feature_sslEasyCipher_strings($feature__sslEasyCipher)] 0
+		debug [list client_ssl create ssl_easy_cipher] [format "sslEasyCipher is not disabled, setting vs__ProfileClientSSLCipherString=%s" $feature_sslEasyCipher_strings($feature__sslEasyCipher)] 5
 		set vs__ProfileClientSSLCipherString $feature_sslEasyCipher_strings($feature__sslEasyCipher)
 	}

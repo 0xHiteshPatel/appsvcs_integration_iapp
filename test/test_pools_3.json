@@ -1,14 +1,13 @@
 {
 	"name":"test_pools",
 	"parent":"include_defaults.json",
-   "test_delete_override":"true",
    "test_parent":"test_pools",
 	"strings":[
 		{ "pool__addr":"%TEST_VS_IP%" },
-		{ "pool__port":"80" },
+		{ "pool__port":"8081" },
 		{ "pool__DefaultPoolIndex":"1" },
-      { "pool__MemberDefaultPort":"8080" }
-	],
+      { "pool__MemberDefaultPort":"" }
+      	],
    "tables":[
       {
          "name":"monitor__Monitors",

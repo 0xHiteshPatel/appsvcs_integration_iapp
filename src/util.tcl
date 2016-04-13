@@ -57,7 +57,7 @@ proc get_mode { } {
   set app $tmsh::app_name
   set partition [lindex [split $folder /] 1]
   set newdeploy [catch {tmsh::get_config sys application service /$partition/$app.app/$app}]
-  debug [list get_mode] [format "starting folder=%s partition=%s newdeploy=%s" $folder $partition $newdeploy] 0
+  debug [list get_mode] [format "starting folder=%s partition=%s newdeploy=%s" $folder $partition $newdeploy] 10
 
   if { ! $newdeploy } {
     set ::asoobj [lindex [lindex [tmsh::get_config sys application service /$partition/$app.app/$app] 0] 4]
@@ -66,16 +66,16 @@ proc get_mode { } {
   if { [string tolower $::iapp__routeDomain] eq "auto"} {
     set obj [tmsh::get_config auth partition $partition default-route-domain]
     set routedomainid [tmsh::get_field_value [lindex $obj 0] default-route-domain]
-    debug [list get_mode set_route_domain] [format "Using partition default-route-domain; routedomainid=%s" $routedomainid] 0
+    debug [list get_mode set_route_domain] [format "Using partition default-route-domain; routedomainid=%s" $routedomainid] 10
   } else { 
     set routedomainid $::iapp__routeDomain
-    debug [list get_mode set_route_domain] [format "Using route domain override; routedomainid=%s" $routedomainid] 0
+    debug [list get_mode set_route_domain] [format "Using route domain override; routedomainid=%s" $routedomainid] 10
   }
 
   # Check for a mode override in $iapp__mode variable
   if { [string tolower $::iapp__mode] ne "auto" } {
     if { $::iapp__mode > 0 && $::iapp__mode < 4 } {
-      debug [list get_mode mode_override] [format "Mode override detected.  Setting mode to %s" $::iapp__mode] 0
+      debug [list get_mode mode_override] [format "Mode override detected.  Setting mode to %s" $::iapp__mode] 10
       return [list $::iapp__mode $folder $partition $routedomainid $newdeploy]
     } else {
       error "The mode override specified is invalid."
@@ -84,10 +84,10 @@ proc get_mode { } {
   
   # Check for a partition that starts with apic_ and return APIC mode (3) and RD if found
   if { [string match -nocase "apic_*" $partition] } {
-    debug [list get_mode apic] "partition starts with apic_, assuming APIC deployment mode (3)" 0
+    debug [list get_mode apic] "partition starts with apic_, assuming APIC deployment mode (3)" 10
     set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
     set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
-    debug [list get_mode apic] [format "rdobjs=%s routedomainid=%s" $rdobjs $routedomainid] 0
+    debug [list get_mode apic] [format "rdobjs=%s routedomainid=%s" $rdobjs $routedomainid] 10
     return [list 3 $folder $partition $routedomainid $newdeploy]
   }
 
@@ -95,19 +95,19 @@ proc get_mode { } {
   # edge-<#>_<#>_virtualserver-<#>-serviceprofile-<#>
   # and return NSX mode (4) 
   if { [regexp -nocase {^edge-[0-9]+_[0-9]+_virtualserver-[0-9]+-serviceprofile-[0-9]+$} $::app] } {
-    debug [list get_mode nsx] "app name matches NSX regexp, assuming NSX deployment mode (4)" 0
+    debug [list get_mode nsx] "app name matches NSX regexp, assuming NSX deployment mode (4)" 10
     return [list 4 $folder $partition $routedomainid $newdeploy]    
   }
 
   # If we get here we can safely assume that this is either a Standalone or BIG-IQ Cloud mode deployment
   # The only way we currently have to check for BIG-IQ Cloud mode is to see if app_stats was sent
   if { [info exists ::app_stats] } {
-    debug [list get_mode bigiq] "all other modes checked for and app_stats set, assuming BIG-IQ Cloud deployment mode (2)" 0
+    debug [list get_mode bigiq] "all other modes checked for and app_stats set, assuming BIG-IQ Cloud deployment mode (2)" 10
     return [list 2 $folder $partition $routedomainid $newdeploy]
   }
 
   # Default is Standalone mode
-  debug [list get_mode standalone] "no integration vendor found, assuming Standalone deployment mode (1)" 0 
+  debug [list get_mode standalone] "no integration vendor found, assuming Standalone deployment mode (1)" 10
   return [list 1 $folder $partition $routedomainid $newdeploy]
 }
 
@@ -126,7 +126,7 @@ proc generic_add_option { debug_id input_var option_string custom_format replace
       } else {
         set cmd [format " $option_string \"%s\"" $input_var]
       }
-      debug [lappend debug_id generic_add_option] [format "cmd=%s" $cmd] 0
+      debug [lappend debug_id generic_add_option] [format "cmd=%s" $cmd] 10
   }
   return $cmd
 }
@@ -152,10 +152,10 @@ proc replace_profile { obj oldprofile newprofile } {
       set context [lindex $contextobj 1]
       #debug [format "\[replace_profile\] found profile name=$name context=$context" $name $context]
       if { $name eq $oldprofile } {
-          debug [list replace_profile] [format "replace profile '%s' with '%s' context=%s" $name $newprofile $context] 0
+          debug [list replace_profile] [format "replace profile '%s' with '%s' context=%s" $name $newprofile $context] 10
           append newprofiles [format "%s { context %s } " $newprofile $context]
       } else {
-          debug [list replace_profile] [format "preserve profile '%s' context=%s" $name $context] 0
+          debug [list replace_profile] [format "preserve profile '%s' context=%s" $name $context] 10
           append newprofiles [format "%s { context %s } " $name $context]
       }
   }
@@ -212,13 +212,9 @@ proc create_obj_name { append } {
 #       $value = new value of the variable
 # Return: none
 proc change_var { name value } {
-  # if { $::mode != 1 } {
-  #   debug [list change_var skip] "not in mode 1 deployment... skipping" 0
-  #   return ""
-  # }
-  debug [list change_var] "updating variable $name to $value (executes post-deployment)" 7
+  debug [list change_var] "updating variable $name to $value (executes post-deployment)" 10
   set varcmd [create_escaped_tmsh [format "tmsh::modify sys application service %s/%s variables modify \{ %s \{ value \"%s\" \} \}" $::app_path $::app $name $value]]
-  #tmsh::modify $varcmd
+  debug [list change_var tmsh_modify_deferred] $varcmd 1
   lappend ::postfinal_deferred_cmds $varcmd  
   set [subst ::$name] $value
   set ::aso_config($name) $value
@@ -229,10 +225,6 @@ proc change_var { name value } {
 # Input: $name = name of variable
 # Return: 1=value is different; 0=value not different OR not a redeploy
 proc is_new_value { name } {
-  # if { $::mode != 1 } {
-  #   return 0
-  # }
-  
   if { $::newdeploy } {
     return 0
   }
@@ -254,9 +246,6 @@ proc get_var { name { orig 0 }} {
   }
   debug [list get_var] [format "start name=%s" $name] 10
    
-  #set varcmd [format "sys application service %s/%s %s \{ %s \{ value \} \}" $::app_path $::app $type $name]
-  #set varobj [tmsh::get_config $varcmd]
-  #set varvalue [lindex [lindex [lindex [lindex [lindex $varobj 0] 4] 1] 1] 1]
   if { $orig == 0 && [info exists ::aso_config($name)] } {
     set varvalue $::aso_config($name)
     debug [list get_var] [format "name=%s value=%s" $name $varvalue] 10
@@ -298,9 +287,9 @@ proc handle_opt_remove_on_redeploy { name checkvalue option module } {
   if { [set [subst ::$name]] == $checkvalue && \
        [is_new_value $name] && \
        $::redeploy } {
-        debug [list handle_opt_remove_on_redeploy] [format "%s %s on redeploy, setting %s to none" $name $checkvalue $option] 7
+        debug [list handle_opt_remove_on_redeploy] [format "%s %s on redeploy, setting %s to none" $name $checkvalue $option] 10
         set cmd [format "ltm virtual %s/%s %s none" $::app_path $vsname $option]
-        debug [list handle_opt_remove_on_redeploy tmsh_modify] $cmd 0
+        debug [list handle_opt_remove_on_redeploy tmsh_modify] $cmd 1
         tmsh::modify $cmd
         return 1
   }
@@ -358,18 +347,15 @@ proc load_provisioned { } {
 proc single_column_table_to_list { table key } {
   set retlist {}
   foreach row $table {
-    #debug "row=$row"
     array unset column
 
     # extract the iApp table data - borrowed from f5.lbaas.tmpl
     foreach column_data [lrange [split [join $row] "\n"] 1 end-1] {
       set name [lindex $column_data 0]
       set column($name) [lrange $column_data 1 end]
-      #debug " col=$name val=$column($name)"
     }
     if { [info exists column($key)] && [string length $column($key)] > 0 } {
       lappend retlist "$column($key)"
-      #debug "  lappend $column($key)"
     }
     
   }
@@ -384,7 +370,7 @@ proc single_column_table_to_list { table key } {
 #        $tmsh = the portion of the tmsh command get a list of all-properties
 #        $template = the object name to use as a list of available options
 proc process_options_string { option_str tmsh template } {
-  debug [list process_options_string] $option_str 0
+  debug [list process_options_string] $option_str 10
   set ret ""
 
   # Get all the options passed in array format
@@ -402,7 +388,7 @@ proc process_options_string { option_str tmsh template } {
     append ret [format "%s \"%s\" " $option $value]
   }
   array unset options
-  debug [list process_options_string return] $ret 0
+  debug [list process_options_string return] $ret 10
   return $ret
 }
 
@@ -416,7 +402,6 @@ proc process_options_string { option_str tmsh template } {
 proc get_items_starting_with { prefix string {splitchar " "} {strip 0}} {
   set parts [psplit $string $splitchar]
   debug [list get_items_starting_with start] "prefix=$prefix string=$string splitchar=$splitchar strip=$strip" 10
-  #debug [list get_items_starting_with parts] $parts 10
   set retlist []
   foreach part $parts {
     if { [string match $prefix* $part] } {

@@ -29,7 +29,7 @@
 #                      a tmsh::create command
 
 proc custom_extensions_start {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Example 1: Parse a string of the format "key1=val1;key2=val2;key3=val3" and populate an array.
   # The we call the custom_example proc to dump some info to the /var/tmp/scriptd.out log
@@ -50,7 +50,7 @@ proc custom_extensions_start {} {
 }
 
 proc custom_extensions_before_pools {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Call our custom_example_1 proc to dump some info to the debug log.
   upvar custom_field1_kvp kvp_array
@@ -58,7 +58,7 @@ proc custom_extensions_before_pools {} {
 }
 
 proc custom_extensions_before_pool {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Call our custom_example_1 proc to dump some info to the debug log.
   upvar custom_field1_kvp kvp_array
@@ -66,7 +66,7 @@ proc custom_extensions_before_pool {} {
 }
 
 proc custom_extensions_after_pool {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Call our custom_example_1 proc to dump some info to the debug log.
   upvar custom_field1_kvp kvp_array
@@ -74,7 +74,7 @@ proc custom_extensions_after_pool {} {
 }
 
 proc custom_extensions_after_pools {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Call our custom_example_1 proc to dump some info to the debug log.
   upvar custom_field1_kvp kvp_array
@@ -82,7 +82,7 @@ proc custom_extensions_after_pools {} {
 }
 
 proc custom_extensions_before_vs {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Call our custom_example_1 proc to dump some info to the debug log.
   upvar custom_field1_kvp kvp_array
@@ -90,7 +90,7 @@ proc custom_extensions_before_vs {} {
 }
 
 proc custom_extensions_after_vs {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Call our custom_example_1 proc to dump some info to the debug log.
   upvar custom_field1_kvp kvp_array
@@ -98,7 +98,7 @@ proc custom_extensions_after_vs {} {
 }
 
 proc custom_extensions_end {} {
-  debug "[lindex [info level 0] 0]" "entering proc" 0
+  debug "[lindex [info level 0] 0]" "entering proc" 6
 
   # Call our custom_example_1 proc to dump some info to the debug log.
   upvar custom_field1_kvp kvp_array
@@ -122,10 +122,10 @@ proc custom_example_1 { kvp_array_in } {
   set current_proc [lindex [info level 0] 0]
   array set kvp_array $kvp_array_in
 
-  debug [list $current_proc] "entering proc kvp_array_in=$kvp_array_in" 0
+  debug [list $current_proc] "entering proc kvp_array_in=$kvp_array_in" 6
   
   if { [info exists kvp_array(custom_example)] && $kvp_array(custom_example) == 1} {
-   debug [list $current_proc] "This is an example of a custom extension called from $calling_proc" 0
+   debug [list $current_proc] "This is an example of a custom extension called from $calling_proc" 6
   }
 }
 
@@ -134,10 +134,10 @@ proc custom_example_2 { cmd } {
   set calling_proc [lindex [info level -1] 0]
   set current_proc [lindex [info level 0] 0]
 
-  debug [list $current_proc] "entering proc cmd=$cmd" 0
+  debug [list $current_proc] "entering proc cmd=$cmd" 6
   
   if { [string length $cmd] > 0 } {
-    debug [list $current_proc] "Called from $calling_proc - About the execute tmsh::create $cmd" 0
+    debug [list $current_proc] "Called from $calling_proc - About the execute tmsh::create $cmd" 6
     tmsh::create $cmd
   }
 }
