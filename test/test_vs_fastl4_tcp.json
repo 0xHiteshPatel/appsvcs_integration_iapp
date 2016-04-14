@@ -10,7 +10,8 @@
       { "vs__IpProtocol":"tcp" },
       { "vs__SNATConfig":"automap" },
       { "vs__ProfileClientProtocol":"/Common/fastL4" },
-      { "vs__ProfileServerProtocol":"" }
+      { "vs__ProfileServerProtocol":"" },
+      { "vs__AdvOptions":"vlans-enabled;vlans=set_add:test_appsvcs_vlan1,test_appsvcs_vlan2" }
 	],
    "tables":[
       {

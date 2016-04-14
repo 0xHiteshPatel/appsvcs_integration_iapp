@@ -6,8 +6,8 @@
 		{ "pool__addr":"0.0.0.0" },
 		{ "pool__port":"0" },
 		{ "pool__DefaultPoolIndex":"" },
-      { "vs__Name":"test_vs_ip_forward_vs" },
-      { "vs__Description":"IP Forwarding Virtual Server" },
+      { "vs__Name":"test_vs_ip_forward_emptypool_vs" },
+      { "vs__Description":"IP Forwarding Virtual Server with an empty, non-associated pool" },
       { "vs__IpProtocol":"any" },
       { "vs__SNATConfig":"" },
       { "vs__ProfileClientProtocol":"/Common/fastL4" },
@@ -23,12 +23,16 @@
       {
          "name":"pool__Pools",
          "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
-         "rows" : [ ]
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "", "none"] }
+         ]
       },
       {
          "name":"pool__Members",
          "columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
-         "rows" : [ ]
+         "rows" : [
+            { "row": [ "0", "0.0.0.0", "80", "0", "1", "0", "enabled",  "none"] }
+         ]
       }   
 	]
 }

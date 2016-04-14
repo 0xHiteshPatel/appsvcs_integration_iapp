@@ -10,8 +10,9 @@
       { "vs__IpProtocol":"udp" },
       { "vs__SNATConfig":"automap" },
       { "vs__ProfileClientProtocol":"/Common/fastL4" },
-      { "vs__ProfileServerProtocol":"" }
-	],
+      { "vs__ProfileServerProtocol":"" },
+      { "vs__AdvOptions":"vlans-disabled;vlans=set_none" }
+      	],
    "tables":[
       {
          "name":"monitor__Monitors",

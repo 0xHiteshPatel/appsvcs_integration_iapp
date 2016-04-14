@@ -362,7 +362,7 @@ proc single_column_table_to_list { table key } {
   return $retlist
 }
 
-# Process a string in the format <option>=<value>[;<option2>=<value2>] and return a 
+# Process a string in the format <option>[=<value>][;<option2>[=<value2>]] and return a 
 # properly formatted TMSH string.  If $tmsh is specified than options will be verified
 # using the object in $template.  This works for things like profiles, but not virtual 
 # servers.  Specifying no value for $tmsh turns off checking
@@ -385,6 +385,56 @@ proc process_options_string { option_str tmsh template } {
       }
     }
 
+    # Handle options that have no value
+    if { [string length $value] == 0 } {
+      debug [list process_options_string $option] [format "found empty value, appending option '%s' only" $option] 10
+      append ret [format "%s " $option]
+      continue
+    }
+
+    # Handle TMOS set value operations (add,delete,replace,default,none).  Input format for the value is:
+    #   set_<operation>:item1[,item2]
+    # Operations other than valid ones will fall through this logic to the default behaviour below
+    set set_skip 0
+    if { [string match "set_*" $value] } {
+      set set_cmd_prefix ""
+      set set_cmd_postfix " \} "
+      switch -glob [string tolower $value] {
+        set_add:* {
+          set set_cmd_prefix "add \{ "
+        }
+        set_delete:* {
+          set set_cmd_prefix "delete \{ "
+        }
+        set_replace:* {
+          set set_cmd_prefix "replace-all-with \{ "
+        }
+        set_default {
+          set set_cmd_prefix "default "
+          set set_cmd_postfix ""
+          set value ""
+        }
+        set_none {
+          set set_cmd_prefix "none "
+          set set_cmd_postfix ""
+          set value ""
+        }
+        default {
+          set set_skip 1
+        }
+      }
+      debug [list process_options_string $option] [format "found set_ value, prefix='%s' postfix='%s' skip=%s" $set_cmd_prefix $set_cmd_postfix $set_skip] 10
+
+      if { !$set_skip } {
+        set set_list [string map {, " "} [lindex [psplit $value ':'] 1]]
+        debug [list process_options_string $option] [format " set_list=%s" $set_list] 10
+        append ret [format "%s %s %s %s" $option $set_cmd_prefix $set_list $set_cmd_postfix]
+        continue
+      }
+    }
+
+    # Handle the default behaviour
+    debug [list process_options_string $option] [format "dropped to default"] 10
     append ret [format "%s \"%s\" " $option $value]
   }
   array unset options
