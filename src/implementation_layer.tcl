@@ -406,7 +406,7 @@ foreach poolRow $pool__Pools {
     if { [string first "/" $ip] >= 0 } { set default_folder "" }
     set node_status [catch {tmsh::get_config ltm node $default_folder$ip}]
     if { $node_status == 1 && ![has_routedomain $ip]} {
-      set ip "$ip%$rd"
+      set ip [get_dest_addr $ip]
     }
 
     # TODO: Is this still required?
@@ -439,7 +439,15 @@ foreach poolRow $pool__Pools {
       set options [format " %s" [process_options_string $options "" ""]]
     }
 
-    append memberstr [format " %s:%s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $ip $port $connlimit $ratio $prigrp $options $::pool_state($state)]
+    if { $node_status } { 
+      # Node did not exist, get the correctly formatted ip, port string
+      set dest [get_dest_str $ip $port]
+    } else {
+      # Node did exist, create <node name>:<port> string
+      set dest [format "%s:%s" $ip $port]
+    }
+
+    append memberstr [format " %s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $dest $connlimit $ratio $prigrp $options $::pool_state($state)]
   }
   append memberstr " \} "
 
@@ -1006,14 +1014,12 @@ if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
 set cmd [format "ltm virtual %s/%s " $app_path $vs__Name]
 
 # Setup our listener destination address
-if { ![has_routedomain $pool__addr]} {
-  set vs_dest_addr "$pool__addr%$rd"
-} else {
-  set vs_dest_addr "$pool__addr"
-}
+set vs_dest_addr [get_dest_addr $pool__addr]
 
 # Keep vs_dest_addr as is for use by other features, create vs_dest with full <ip>%<rd>:<port> format
-set vs_dest "$vs_dest_addr:$pool__port"
+set vs_dest [get_dest_str $vs_dest_addr $pool__port]
+
+debug [list virtual_server set_dest] [format "vs_dest_addr=%s vs_dest=%s" $vs_dest_addr $vs_dest] 7
 
 # Set virtual server options we support.  This array assumes a format " <option> <input value>" for the TMSH command.
 array set vs_options {
@@ -1388,6 +1394,44 @@ if { $pool__addr ne "255.255.255.254" } {
   debug [list virtual_server tmsh_create] $cmd 1
   tmsh::create $cmd
   set stats_vs 1
+
+  # Process the additional listeners table
+  set redirect_listeners []
+  lappend redirect_listeners [format "%s:80" $vs_dest_addr]
+
+  set vs_origcmd $cmd
+  set vs_listener_list [single_column_table_to_list $vs__Listeners "Listener"]
+  set vs_listener_idx 0
+  foreach vs_listener $vs_listener_list {
+    set vs_listener [lindex $vs_listener 0]
+    debug [list virtual_server add_listeners $vs_listener_idx] $vs_listener 7
+    
+    # If this row had the ';redirect' option specified save it for later and skip this row
+    if { [string match "*\;redirect" $vs_listener] } {
+      set vs_listener [string map {"\;redirect" ""} $vs_listener]
+      debug [list virtual_server add_listeners redirect] $vs_listener 7
+      lappend redirect_listeners $vs_listener
+      continue
+    }
+
+    # Setup our new tmsh command string
+    set vs_listener_name [format "%s_%s" $vs__Name $vs_listener_idx]
+    regexp {^(.*)[:.](\d{1,5})$} $vs_listener --> vs_listener_addr vs_listener_port
+
+    set vs_listener_dest [get_dest_str $vs_listener_addr $vs_listener_port]
+
+    debug [list virtual_server add_listeners $vs_listener_idx] [format "name=%s addr=%s port=%s dest=%s" $vs_listener_name $vs_listener_addr $vs_listener_port $vs_listener_dest] 7    
+    set vs_listener_cmd [string map [list $vs__Name $vs_listener_name "$vs_dest_addr:$pool__port" $vs_listener_dest] $vs_origcmd]
+    # If our listener address is IPv6 we need to fixup the VS source filter and destination mask 
+    if { [is_ipv6 $vs_listener_addr] } {
+      set vs_listener_cmd [string map [list $vs__SourceAddress [format "::%%%s/0" $rd]] $vs_listener_cmd]
+      set vs_listener_cmd [string map [list $pool__mask [format "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" $pool__mask]] $vs_listener_cmd]
+    } 
+
+    debug [list virtual_server add_listeners $vs_listener_idx tmsh_create] $vs_listener_cmd 1
+    tmsh::create $vs_listener_cmd
+    incr vs_listener_idx
+  }
 } else {
   debug [list virtual_server skip_create] "found 255.255.255.254 as pool__addr, skipping creation" 2
 }
@@ -1396,34 +1440,51 @@ if { $pool__addr ne "255.255.255.254" } {
 custom_extensions_after_vs
 
 # Create and additional virtual server on port 80 for feature__redirectToHTTPS
-if { $feature__redirectToHTTPS eq "enabled" } {
-  debug [list virtual_server feature__redirectToHTTPS create_redirect_vs] [format "feature__redirectToHTTPS is enabled, creating redirect virtual server on %s:80" $vs_dest_addr] 5
+if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" } {
+  set redirect_listener_idx 0
+  foreach redirect_listener $redirect_listeners {
+    regexp {^(.*)[:.](\d{1,5})$} $redirect_listener --> redirect_listener_addr redirect_listener_port
 
-  set redirect_cmd [format "ltm virtual %s/%s_redirect destination %s:80 " $app_path $vs__Name $vs_dest_addr]
-  array set vs_redirect_options {
-   "pool__mask" "mask"
-   "vs__IpProtocol" "ip-protocol"
-   "vs__SourceAddress" "source"
- }
 
-  # Process the vs_options array
-  foreach {optionvar optioncmd} [array get vs_redirect_options] {
-    append redirect_cmd [generic_add_option [list virtual_server feature__redirectToHTTPS options] [set [subst $optionvar]] $optioncmd "" 0]
+    set redirect_listener_dest [get_dest_str $redirect_listener_addr $redirect_listener_port]
+    debug [list virtual_server feature__redirectToHTTPS $redirect_listener_idx] [format "creating redirect virtual server on %s" $redirect_listener_dest] 5
+    
+    array set redirect_listener_options {
+     "redirect_listener_mask" "mask"
+     "redirect_listener_src" "source"
+     "vs__IpProtocol" "ip-protocol"
+    }
+
+    if { [is_ipv6 $redirect_listener_addr] } {
+      set redirect_listener_src [format "::0.0.0.0%%%s/0" $rd]
+      set redirect_listener_mask "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    } else {
+      set redirect_listener_src $vs__SourceAddress
+      set redirect_listener_mask "255.255.255.255"      
+    }
+
+    set redirect_listener_cmd [format "ltm virtual %s/%s_redirect_%s destination %s " $app_path $vs__Name $redirect_listener_idx $redirect_listener_dest]
+
+    # Process the vs_options array
+    foreach {optionvar optioncmd} [array get redirect_listener_options] {
+      append redirect_listener_cmd [generic_add_option [list virtual_server feature__redirectToHTTPS $redirect_listener_idx options] [set [subst $optionvar]] $optioncmd "" 0]
+    }
+
+    # The HSTS spec recommends that when redirected a 301 Redirect is used, rather than a 302 like _sys_https_redirect uses
+    if { [string match "enabled*" $feature__securityEnableHSTS] } {
+      debug [list virtual_server feature__redirectToHTTPS $redirect_listener_idx hsts_check] [format "feature__securityEnableHSTS is enabled, using %s" $hstsredirectrule] 5
+      append redirect_listener_cmd " rules { $hstsredirectrule } "
+    } else {
+      append redirect_listener_cmd " rules { /Common/_sys_https_redirect } "
+    }
+
+    append redirect_listener_cmd $vsprofiles_redirect
+    append redirect_listener_cmd [generic_add_option [list virtual_server feature__redirectToHTTPS $redirect_listener_idx options] $vs__ProfileHTTP "" "" 0]
+    append redirect_listener_cmd " \}"
+    debug [list virtual_server feature__redirectToHTTPS $redirect_listener_idx tmsh_create] $redirect_listener_cmd 1
+    tmsh::create $redirect_listener_cmd
+    incr redirect_listener_idx
   }
-
-  # The HSTS spec recommends that when redirected a 301 Redirect is used, rather than a 302 like _sys_https_redirect uses
-  if { [string match "enabled*" $feature__securityEnableHSTS] } {
-    debug [list virtual_server feature__redirectToHTTPS hsts_check] [format "feature__securityEnableHSTS is enabled, using %s" $hstsredirectrule] 5
-    append redirect_cmd " rules { $hstsredirectrule } "
-  } else {
-    append redirect_cmd " rules { /Common/_sys_https_redirect } "
-  }
-
-  append redirect_cmd $vsprofiles_redirect
-  append redirect_cmd [generic_add_option [list virtual_server feature__redirectToHTTPS options] $vs__ProfileHTTP "" "" 0]
-  append redirect_cmd " \}"
-  debug [list virtual_server feature__redirectToHTTPS tmsh_create] $redirect_cmd 1
-  tmsh::create $redirect_cmd
 }
 
 # Create iCall statistics publisher

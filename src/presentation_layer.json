@@ -432,6 +432,26 @@
 			"description":"Virtual Server Configuration",
 			"fields":[
 				{
+					"name":"Listeners",
+					"description":"Virtual Server: Additional Listeners",
+					"help":"A list of additional listeners to create in the format <address>:<port>[;redirect].  IPv4 and IPv6 listeners are supported.  If the redirect flag is present than additional HTTP redirect VS will be created.  All listeners will be configured identically.",
+					"type":"table",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001",
+					"fields":[
+						{
+							"name":"Listener",
+							"description":"Listener:",
+							"help":"Listener to create",
+							"type":"string",
+							"required":false,
+							"display":"large",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						}
+					]
+				},			
+				{
 					"name":"Name",
 					"description":"Virtual Server: Name",
 					"help":"The name of the Virtual Server.  If no value is specified the name will be set to <iapp_name>_vs",

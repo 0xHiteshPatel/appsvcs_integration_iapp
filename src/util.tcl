@@ -267,7 +267,7 @@ proc get_var { name { orig 0 }} {
 #        $module = the BIG-IP module that enables the option
 # Return: 1=Option removed; 0=no action taken
 proc handle_opt_remove_on_redeploy { name checkvalue option module } {
-  if { ! $::redeploy } {
+  if { ! $::redeploy || $::pool__addr eq "255.255.255.254" } {
     debug [list handle_opt_remove_on_redeploy $name] "not a redeployment, skipping" 10
     return 0
   }
@@ -456,4 +456,52 @@ proc curl_save_file { url filename } {
   }
 
   return
+}
+
+# Borrowed from tcllib ::ip::IPv4?
+# Check a string to see if it's an IPv6 address
+# Input: string = string to check
+# Output: 1 = is IPv6
+#         0 = not IPv6
+proc is_ipv6 { addr } {
+  if {[string first : $addr] >= 0} {
+      return 1
+  }
+  return 0
+}
+
+# Return a route-domain aware destination address
+# Input: string = addr to check/modify
+# Return: string = the correctly formatted destination address
+proc get_dest_addr { addr } {
+  if { [is_ipv6 $addr] } {
+    set addr [string map {[ "" ] ""} $addr]
+  }
+
+  if { ![has_routedomain $addr]} {
+    return [format "%s%%%s" $addr $::rd]
+  } else {
+    return $addr
+  }
+}
+
+# Return a IPv4/v6 route-domain aware destination string
+# Input: string addr = The address to use
+#        strint port = The port number
+# Return: string = the correctly formatted destination string
+proc get_dest_str { addr port } {
+  if { [is_ipv6 $addr] } {
+    set addr [string map {[ "" ] ""} $addr]
+    if { ![has_routedomain $addr] } {
+      return [format "%s%%%s.%s" $addr $::rd $port]
+    } else {
+      return [format "%s.%s" $addr $port]
+    }
+  }
+
+  if { ![has_routedomain $addr]} {
+    return [format "%s%%%s:%s" $addr $::rd $port]
+  } else {
+    return [format "%s:%s" $addr $port]
+  }
 }

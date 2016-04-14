@@ -26,9 +26,13 @@ def get_exitcode_stdout_stderr(cmd):
 
 def process_file(template_fn):
 	global vs_nextip
-	global member_nextip
 	global vs_subnet
+	global vs6_nextip
+	global vs6_subnet
+	global member_nextip
 	global member_subnet
+	global member6_nextip
+	global member6_subnet
 	retlist = []
 	retlist.append(False)
 	retlist.append("")
@@ -39,8 +43,11 @@ def process_file(template_fn):
 			for line in template:
 				line = re.sub(r'\%TEST_NAME\%', template_fn.split('.')[0], line)
 				vs_ip_match = re.match( r'.*%TEST_VS_IP%.*', line)
+				vs6_ip_match = re.match( r'.*%TEST_VS6_IP%.*', line)
 				member_ip_match = re.match( r'.*%TEST_MEMBER_IP%.*', line)
+				member6_ip_match = re.match( r'.*%TEST_MEMBER6_IP%.*', line)
 				snat_ip_match = re.match( r'.*%TEST_RANGE_(.*)_IP%.*', line)
+				snat6_ip_match = re.match( r'.*%TEST_RANGE6_(.*)_IP%.*', line)
 				version_match = re.match( r'.*%TEST_DEV_VERSION_(.*)%.*', line)
 				delete_override_match = re.match( r'.*\"test_delete_override\":\"true\".*', line)
 				parent_match = re.match( r'.*\"test_parent\":\"(.*)\".*', line)
@@ -73,9 +80,17 @@ def process_file(template_fn):
 					line = re.sub(r'\%TEST_VS_IP\%', "%s%s" % (vs_subnet, vs_nextip), line)
 					vs_nextip += 1
 
+				if vs6_ip_match:
+					line = re.sub(r'\%TEST_VS6_IP\%', "%s%s" % (vs6_subnet, vs6_nextip), line)
+					vs6_nextip += 1
+
 				if member_ip_match:
 					line = re.sub(r'\%TEST_MEMBER_IP\%', "%s%s" % (member_subnet, member_nextip), line)
 					member_nextip += 1
+
+				if member6_ip_match:
+					line = re.sub(r'\%TEST_MEMBER6_IP\%', "%s%s" % (member6_subnet, member6_nextip), line)
+					member6_nextip += 1
 
 				if snat_ip_match:
 					snat_ips = []
@@ -83,6 +98,13 @@ def process_file(template_fn):
 						snat_ips.append("%s%s" % (member_subnet, member_nextip))
 						member_nextip += 1
 					line = re.sub(r'\%TEST_RANGE_.*_IP\%', "%s" % (','.join(snat_ips)), line)
+
+				if snat6_ip_match:
+					snat6_ips = []
+					for s6ip in range(member6_nextip, member6_nextip+int(snat6_ip_match.group(1))):
+						snat6_ips.append("%s%s" % (member6_subnet, member6_nextip))
+						member6_nextip += 1
+					line = re.sub(r'\%TEST_RANGE6_.*_IP\%', "%s" % (','.join(snat6_ips)), line)
 					
 				tmp.write(line)
 
@@ -93,14 +115,22 @@ def process_file(template_fn):
 def run_test():
 	global vs_subnet
 	global vs_nextip
+	global vs6_subnet
+	global vs6_nextip
 	global member_subnet
 	global member_nextip
+	global member6_subnet
+	global member6_nextip
 	global version
 
 	vs_subnet = '.'.join(args.vssubnet.split('.')[0:-1]) + '.'
 	vs_nextip = int(args.vssubnet.split('.')[-1])
+	vs6_subnet = ':'.join(args.vs6subnet.split(':')[0:-1]) + ':'
+	vs6_nextip = int(args.vs6subnet.split(':')[-1])
 	member_subnet = '.'.join(args.membersubnet.split('.')[0:-1]) + '.'
 	member_nextip = int(args.membersubnet.split('.')[-1])
+	member6_subnet = ':'.join(args.member6subnet.split(':')[0:-1]) + ':'
+	member6_nextip = int(args.member6subnet.split(':')[-1])
 
 	test_templates = sorted(glob.glob(args.glob))
 
@@ -108,8 +138,10 @@ def run_test():
 
 	print "Starting test run at %s" % str(datetime.datetime.now().isoformat())
 	print "# of test templates found: %s" % len(test_templates)
-	print "VS Subnet: %s, nextip %s%s" % (vs_subnet, vs_subnet, vs_nextip)
-	print "Member Subnet: %s, nextip %s%s" % (member_subnet, member_subnet, member_nextip)
+	print "IPv4 VS Subnet: %s, nextip %s%s" % (vs_subnet, vs_subnet, vs_nextip)
+	print "IPv6 VS Subnet: %s, nextip %s%s" % (vs6_subnet, vs6_subnet, vs6_nextip)
+	print "IPv4 Member Subnet: %s, nextip %s%s" % (member_subnet, member_subnet, member_nextip)
+	print "IPv6 Member Subnet: %s, nextip %s%s" % (member6_subnet, member6_subnet, member6_nextip)
 	print "Device Version: %s" % version
 	print "Loading test config (test_config.conf)..."
 	exitcode, out, err = get_exitcode_stdout_stderr("scp test_config.conf root@%s:/var/tmp" % args.host)
@@ -151,7 +183,9 @@ def run_test():
 					if dexitcode == 0:
 						print "DELETE_OK"
 						vs_nextip = int(args.vssubnet.split('.')[-1])
+						vs6_nextip = int(args.vs6subnet.split(':')[-1])
 						member_nextip = int(args.membersubnet.split('.')[-1])
+						member6_nextip = int(args.member6subnet.split(':')[-1])
 					else:
 						print "DELETE_FAIL: %s %s" % (dout, derr)
 						return(1)
@@ -185,7 +219,6 @@ def get_version():
 
 	if resp.status_code == 200:
 		for item in resp.json()["items"]:
-			print item
 			if 'active' in item.keys() and item["active"] == True:
 				version = item["version"]
 				parts = version.split('.')
@@ -203,8 +236,10 @@ parser.add_argument("host",             help="The IP/Hostname of the target BIG-
 parser.add_argument("-g", "--glob",     help="The file glob to select tests", default="test_*.json")
 parser.add_argument("-u", "--username", help="The BIG-IP username", default="admin")
 parser.add_argument("-p", "--password", help="The BIG-IP password", default="admin")
-parser.add_argument("-v", "--vssubnet", help="The starting IP to use for Virtual Server IPs", default="172.16.0.100")
-parser.add_argument("-m", "--membersubnet", help="The starting IP to use for Pool Member IPs", default="10.0.0.10")
+parser.add_argument("-v", "--vssubnet", help="The starting IP to use for IPv4 Virtual Server IPs", default="172.16.0.100")
+parser.add_argument("-V", "--vs6subnet",help="The starting IP to use for IPv6 Virtual Server IPs", default="2001:dead:beef:1::10")
+parser.add_argument("-m", "--membersubnet", help="The starting IP to use for IPv4 Pool Member IPs", default="10.0.0.10")
+parser.add_argument("-M", "--member6subnet", help="The starting IP to use for IPv6 Pool Member IPs", default="2001:dead:beef:2::10")
 parser.add_argument("-n", "--nodelete", help="Don't delete deployments automatically", action="store_true")
 parser.add_argument("-c", "--runcount", help="The number of times to run tests", type=int, default=1)
 parser.add_argument("-r", "--retries", help="The number of times to retry tests upon failure", type=int, default=3)

@@ -3,7 +3,7 @@
 	"parent":"include_defaults.json",
    "test_parent":"test_pools",
 	"strings":[
-		{ "pool__addr":"%TEST_VS_IP%" },
+		{ "pool__addr":"255.255.255.254" },
 		{ "pool__port":"8081" },
 		{ "pool__DefaultPoolIndex":"1" },
       { "pool__MemberDefaultPort":"" }
