@@ -403,9 +403,17 @@ foreach poolRow $pool__Pools {
 
     # Add a route domain if it wasn't included and we don't already have a node object created
     set default_folder "/Common/"
+    set node_exist -1
     if { [string first "/" $ip] >= 0 } { set default_folder "" }
-    set node_status [catch {tmsh::get_config ltm node $default_folder$ip}]
-    if { $node_status == 1 && ![has_routedomain $ip]} {
+    set node_status [catch {tmsh::get_config ltm node $default_folder$ip} node_status_ret]
+    if { [string match "*address*" $node_status_ret] } {
+      set node_exist 1
+    } else {
+      set node_exist 0
+    }
+
+    debug [list pools $poolIdx member_str node_exist $default_folder$ip] $node_exist 7
+    if { $node_exist == 0 && ![has_routedomain $ip]} {
       set ip [get_dest_addr $ip]
     }
 
@@ -439,12 +447,12 @@ foreach poolRow $pool__Pools {
       set options [format " %s" [process_options_string $options "" ""]]
     }
 
-    if { $node_status } { 
-      # Node did not exist, get the correctly formatted ip, port string
-      set dest [get_dest_str $ip $port]
-    } else {
+    if { $node_exist } {
       # Node did exist, create <node name>:<port> string
       set dest [format "%s:%s" $ip $port]
+    } else {
+      # Node did not exist, get the correctly formatted ip, port string
+      set dest [get_dest_str $ip $port]
     }
 
     append memberstr [format " %s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $dest $connlimit $ratio $prigrp $options $::pool_state($state)]
