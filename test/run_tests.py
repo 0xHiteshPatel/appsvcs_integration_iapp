@@ -263,7 +263,9 @@ if args.runcount > 1 and args.nodelete:
 	print "A '-c' option > 1 and the '-n' are not valid.  Please choose only one"
 	exit(1)
 
-skip_list = map(int, args.ignore.split(','))
+skip_list = []
+if len(args.ignore) > 0:
+	skip_list = map(int, args.ignore.split(','))
 
 sessionid = str(int(time.time()))
 print "Starting test run, sessionid is %s" % sessionid
