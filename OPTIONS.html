@@ -444,7 +444,7 @@ always</td>
 <tr>
   <td>vs.ProfileDefaultPersist</td>
   <td>$vs__ProfileDefaultPersist</td>
-  <td>The default persistence profile</td>
+  <td>The default persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -453,7 +453,7 @@ always</td>
 <tr>
   <td>vs.ProfileFallbackPersist</td>
   <td>$vs__ProfileFallbackPersist</td>
-  <td>The fallback persistence profile</td>
+  <td>The fallback persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -806,7 +806,7 @@ disabled</td>
 <tr>
   <td>feature.insertXForwardedFor</td>
   <td>$feature__insertXForwardedFor</td>
-  <td>Insert the X-Forwarded-For header.  The auto option will enable this feature if a http profile is attached, otherwise disable</td>
+  <td>Insert the X-Forwarded-For header.  The auto option will enable this feature if a HTTP profile and SNAT is configured, otherwise disable</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>auto,
@@ -817,7 +817,7 @@ disabled</td>
 <tr>
   <td>feature.redirectToHTTPS</td>
   <td>$feature__redirectToHTTPS</td>
-  <td>Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a client-ssl profile is configured, otherwise disable</td>
+  <td>Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a HTTP profile is configured and the TCP port is 443, otherwise disable</td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>auto,

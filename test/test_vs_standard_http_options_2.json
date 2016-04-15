@@ -13,6 +13,8 @@
       { "vs__ProfileHTTP":"create:server-agent-name=AppSvcs_On_Fleek;request-chunking=rechunk;header-erase=X-EraseMe-One\\;X-EraseMe-Two" },
       { "vs__ProfileOneConnect":"create:max-age=4000;source-mask=255.255.0.0" },
       { "vs__ProfileCompression":"create:cpu-saver=enabled;cpu-saver-high=50;cpu-saver-low=30;vary-header=disabled" },
+      { "vs__ProfileDefaultPersist":"/Common/cookie"},
+      { "vs__ProfileFallbackPersist":"/Common/source_addr"},
       { "vs__Irules":"" }
 	],
    "tables":[

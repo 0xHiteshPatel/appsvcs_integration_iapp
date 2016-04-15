@@ -908,16 +908,20 @@ if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
 custom_extensions_before_vs
 
 # Create virtual Server
-# Process the 'auto' flag for feature__redirectToHTTPS
-if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" && $pool__addr ne "255.255.255.254"} {
-  debug [list virtual_server feature__redirectToHTTPS] "found auto flag and port is 443, setting feature to enabled" 5
-  set feature__redirectToHTTPS enabled
-}
 
-# Process the 'auto' flag for feature__insertXForwardedFor
-if { $feature__insertXForwardedFor eq "auto" && [expr {$pool__port eq "443" || $pool__port eq "80"}] && $vs__SNATConfig ne ""} {
-  debug [list virtual_server feature__insertXForwardedFor] "found auto flag, port is 443 or 80 and SNAT enabled, setting feature to enabled" 5
-  set feature__insertXForwardedFor enabled
+# Process the HTTP dependent features
+if { [string length $vs__ProfileHTTP] > 0 } {
+  # Process the 'auto' flag for feature__redirectToHTTPS
+  if { $feature__redirectToHTTPS eq "auto" && $pool__port eq "443" && $pool__addr ne "255.255.255.254"} {
+    debug [list virtual_server feature__redirectToHTTPS] "found auto flag and port is 443, setting feature to enabled" 5
+    set feature__redirectToHTTPS enabled
+  }
+
+  # Process the 'auto' flag for feature__insertXForwardedFor
+  if { $feature__insertXForwardedFor eq "auto" && $vs__SNATConfig ne ""} {
+    debug [list virtual_server feature__insertXForwardedFor] "found auto flag, port is 443 or 80 and SNAT enabled, setting feature to enabled" 5
+    set feature__insertXForwardedFor enabled
+  }
 }
 
 # Process the vs__ProfileSecurityIPBlacklist option.
@@ -1053,6 +1057,60 @@ array set vs_options_custom {
  "vs__ProfileDefaultPersist" " persist replace-all-with \{ %s \} "
  "vs__ProfileSecurityLogProfiles" " security-log-profiles replace-all-with \{ %s \} "
 }
+
+# Process the create: option for persistence profiles  
+array set persist_create_defaults {
+  "cookie" { default "/Common/cookie" }
+  "dest-addr" { default "/Common/dest_addr" }
+  "hash" { default "/Common/hash" }
+  "msrdp" { default "/Common/msrdp" }
+  "sip" { default "/Common/sip_info" }
+  "source-addr" { default "/Common/source_addr" }
+  "ssl" { default "/Common/ssl" }
+  "universal" { default "/Common/universal" }
+}
+
+# Loop over the two fields that allow this option
+foreach persist_var [list vs__ProfileDefaultPersist vs__ProfileFallbackPersist] {
+  set persist_val [set [subst $persist_var]]
+  set persist_type ""
+  if { [regexp -nocase {^create:} $persist_val] } {
+    set persist_val [string map {"create:" ""} $persist_val]
+    
+    # Process the string, check to see the persistence type was specified and is valid
+    array set persist_options [process_kvp_string $persist_val]
+    if { ! [info exists persist_options(type)] } {
+      error "The create string specified for $persist_var needs to include a 'type=(cookie|dest-addr|hash|msrdp|sip|source-addr|ssl|universal)' option"
+    }
+
+    if { ! [info exists persist_create_defaults($persist_options(type))] } {
+      error "The persistence type '$persist_options(type)' specified for $persist_var is not valid"
+    }
+
+    # Set some inital values
+    array set persist_attr [subst $::persist_create_defaults($persist_options(type))]
+    set persist_name [format "persistence_%s" $persist_options(type)]
+    set persist_cmd [format "ltm persistence %s %s/%s " $persist_options(type) $app_path $persist_name]
+
+    # Remove the 'type=XXX;' field from the create string
+    set persist_val [string map [list "type=$persist_options(type);" ""] $persist_val]
+
+    # Process the rest of the options and get the TMSH string portion for options
+    set persist_option_cmd [process_options_string $persist_val "persistence $persist_options(type)" $persist_attr(default) 1]
+    debug [list virtual_server persistence create_handler $persist_var $persist_options(type)] [format "%s" $persist_option_cmd] 7
+
+    # Build our full TMSH command
+    append persist_cmd $persist_option_cmd
+
+    # Reset the APL var to point to the new profile name
+    set [subst $persist_var] [format "%s/%s" $app_path $persist_name]
+    debug [list virtual_server persistence create_handler $persist_var $persist_options(type)] [format "%s=%s" $persist_var [set [subst $persist_var]]] 1
+    debug [list virtual_server persistence create_handler $persist_var $persist_options(type) tmsh_create] [format "%s" $persist_cmd] 1
+    tmsh::create $persist_cmd
+  }
+}
+
+
 
 handle_opt_remove_on_redeploy vs__ProfilePerRequest "" "per-flow-request-access-policy" "apm"
 handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intelligence-policy" "ltm"
@@ -1241,52 +1299,38 @@ if { $feature__insertXForwardedFor eq "enabled"} {
 }
 
 # Process the create: option for profiles in the array below.  
-# Profiles that we support the "create:option=value[,option2=value2]" format for option customization
-array set create_supported {
- "vs__ProfileClientProtocol" { tmsh "tcp" default "/Common/tcp-wan-optimized" append "_clientside" }
- "vs__ProfileServerProtocol" { tmsh "tcp" default "/Common/tcp-lan-optimized" append "_serverside"}
- "vs__ProfileHTTP" { tmsh "http" default "/Common/http" append ""}
- "vs__ProfileOneConnect" { tmsh "one-connect" default "/Common/oneconnect" append ""}
- "vs__ProfileCompression" { tmsh "http-compression" default "/Common/httpcompression" append ""}
- "vs__ProfileRequestLogging" { tmsh "request-log" default "/Common/request-log" append ""}
- "vs__ProfileServerSSL" { tmsh "server-ssl" default "/Common/serverssl" append ""}
+# Profiles that we support the "create:option[=value][,option2[=value2]]" format for option customization
+array set profile_create_supported {
+ "vs__ProfileClientProtocol" { tmsh "profile tcp" default "/Common/tcp-wan-optimized" append "_clientside" }
+ "vs__ProfileServerProtocol" { tmsh "profile tcp" default "/Common/tcp-lan-optimized" append "_serverside"}
+ "vs__ProfileHTTP" { tmsh "profile http" default "/Common/http" append ""}
+ "vs__ProfileOneConnect" { tmsh "profile one-connect" default "/Common/oneconnect" append ""}
+ "vs__ProfileCompression" { tmsh "profile http-compression" default "/Common/httpcompression" append ""}
+ "vs__ProfileRequestLogging" { tmsh "profile request-log" default "/Common/request-log" append ""}
+ "vs__ProfileServerSSL" { tmsh "profile server-ssl" default "/Common/serverssl" append ""}
 }
 
-foreach {profilevar} [array names create_supported] {
-  array set profile_attr [subst $::create_supported($profilevar)]
-  array set create_options {}
-  set profilecmd $profile_attr(tmsh)
-  set profiledefault $profile_attr(default)
-  set profileval [set [subst $profilevar]]
-  set profileappend $profile_attr(append)
-  set profilename [format "%s_%s%s" $app $profilecmd $profileappend]
-  set profilestr [format "ltm profile %s %s/%s " $profilecmd $app_path $profilename]
-  if { [regexp -nocase {^create:} $profileval] } {
-    set defaultfound 0
-    set kvpstring [string map {"create\:" ""} $profileval]
-    debug [list virtual_server profiles create_handler] [format "processing create for %s=%s" $profilevar $profileval] 7
+# Loop through the array
+foreach {profile_var} [array names profile_create_supported] {
+  # Setup some base vars
+  array set profile_attr [subst $::profile_create_supported($profile_var)]
+  set profile_val [set [subst $profile_var]]
+  set profile_name [format "%s%s" [string map {" " "_"} $profile_attr(tmsh)] $profile_attr(append)]
+  set profile_cmd [format "ltm %s %s/%s " $profile_attr(tmsh) $app_path $profile_name]
 
-    # Get all the options passed in array format
-    array set create_options [process_kvp_string $kvpstring]
+  if { [regexp -nocase {^create:} $profile_val] } {
+    # Create the options portion of the TMSH command
+    set profile_option_cmd [process_options_string [string map {"create\:" ""} $profile_val] $profile_attr(tmsh) $profile_attr(default) 1]
+    debug [list virtual_server profiles create_handler $profile_var] [format "%s" $profile_option_cmd] 7
 
-    # Get the supported options for a profile type according to the 'default' key in the create_supported array
-    set profileobj [lindex [tmsh::get_config ltm profile $profilecmd $profiledefault all-properties] 0]
-    foreach {option value} [array get create_options] {
-      if { [is_valid_profile_option $profileobj $option] == 0 } {
-        error "The option \"$option\" for $profilecmd profile is not valid"
-      }
-      if { $option == "defaults-from" } {
-        set defaultfound 1
-      }
-      append profilestr [format "%s \"%s\" " $option $value]
-    }
-    array unset create_options
-    if { $defaultfound == 0 } {
-      append profilestr [format "defaults-from %s " $profiledefault]
-    }
-    set [subst $profilevar] [format "%s/%s" $app_path $profilename]
-    debug [list virtual_server profiles create_handler tmsh_create] [format "%s; %s=%s" $profilestr $profilevar [set [subst $profilevar]]] 1
-    tmsh::create $profilestr
+    # Build the final TMSH command
+    append profile_cmd $profile_option_cmd
+
+    # Replace the APL var with the new profile name
+    set [subst $profile_var] [format "%s/%s" $app_path $profile_name]
+    debug [list virtual_server profiles create_handler $profile_var] [format "%s=%s" $profile_var [set [subst $profile_var]]] 1
+    debug [list virtual_server profiles create_handler $profile_var tmsh_create] [format "%s" $profile_cmd] 1
+    tmsh::create $profile_cmd
   }
 }
 
@@ -1447,7 +1491,7 @@ if { $pool__addr ne "255.255.255.254" } {
 # Call the custom_extensions_after_vs proc to allow site-specific customizations
 custom_extensions_after_vs
 
-# Create and additional virtual server on port 80 for feature__redirectToHTTPS
+# Create an additional virtual server on port 80 for feature__redirectToHTTPS
 if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" } {
   set redirect_listener_idx 0
   foreach redirect_listener $redirect_listeners {

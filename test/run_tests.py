@@ -133,11 +133,14 @@ def run_test():
 	member6_nextip = int(args.member6subnet.split(':')[-1])
 
 	test_templates = sorted(glob.glob(args.glob))
+	if args.end == -1:
+		args.end = len(test_templates)
 
 	version = get_version()
 
 	print "Starting test run at %s" % str(datetime.datetime.now().isoformat())
 	print "# of test templates found: %s" % len(test_templates)
+	print "Start: %s, End: %s, Skip: %s" % (args.start, args.end, skip_list)
 	print "IPv4 VS Subnet: %s, nextip %s%s" % (vs_subnet, vs_subnet, vs_nextip)
 	print "IPv6 VS Subnet: %s, nextip %s%s" % (vs6_subnet, vs6_subnet, vs6_nextip)
 	print "IPv4 Member Subnet: %s, nextip %s%s" % (member_subnet, member_subnet, member_nextip)
@@ -154,6 +157,11 @@ def run_test():
 
 	testnum = 1
 	for test_template in test_templates:
+		if testnum < args.start or testnum > args.end or testnum in skip_list:
+			print "[%s/%s][%s/%s][%s] SKIPPED" % (run+1, args.runcount, testnum, len(test_templates), test_template)
+			testnum += 1
+			continue
+
 		(del_override, del_override_name, del_partition) = process_file(test_template)
 				
 		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 60 -w 1 %s %s_%s.tmp" % (args.username, args.password, args.host, test_template, sessionid)
@@ -245,12 +253,17 @@ parser.add_argument("-c", "--runcount", help="The number of times to run tests",
 parser.add_argument("-r", "--retries", help="The number of times to retry tests upon failure", type=int, default=3)
 parser.add_argument("-b", "--policyhost", help="The host to use for URL based bundled items", default="192.168.2.2")
 parser.add_argument("-D", "--debug",    help="Enabled debug output", action="store_true")
+parser.add_argument("-s", "--start",    help="Test number to start at", type=int, default="1")
+parser.add_argument("-e", "--end",    help="Test number to end at", type=int, default="-1")
+parser.add_argument("-i", "--ignore",    help="Comma seperated list of test numbers to ignore/skip", default="")
 
 args = parser.parse_args()
 
 if args.runcount > 1 and args.nodelete:
 	print "A '-c' option > 1 and the '-n' are not valid.  Please choose only one"
 	exit(1)
+
+skip_list = map(int, args.ignore.split(','))
 
 sessionid = str(int(time.time()))
 print "Starting test run, sessionid is %s" % sessionid

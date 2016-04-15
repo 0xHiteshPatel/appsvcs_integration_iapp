@@ -369,12 +369,19 @@ proc single_column_table_to_list { table key } {
 # Input: $option_str = string to process
 #        $tmsh = the portion of the tmsh command get a list of all-properties
 #        $template = the object name to use as a list of available options
-proc process_options_string { option_str tmsh template } {
+#        $add_default = add a 'defaults-from' option using the value of $template 
+#                       if not found in the string
+proc process_options_string { option_str tmsh template {add_default 0} } {
   debug [list process_options_string] $option_str 10
   set ret ""
 
   # Get all the options passed in array format
   array set options [process_kvp_string $option_str]
+
+  if { $add_default && ![info exists options(defaults-from)] } {
+    debug [list process_options_string add_default] "defaults-from $template" 10
+    set options(defaults-from) $template
+  }
 
   # Get the supported options for a profile type according to the 'default' key in the create_supported array
   foreach {option value} [array get options] {

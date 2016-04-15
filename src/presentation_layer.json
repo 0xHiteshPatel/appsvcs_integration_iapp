@@ -603,7 +603,7 @@
 				{
 					"name":"ProfileDefaultPersist",
 					"description":"Virtual Server: Default Persistence Profile",
-					"help":"The default persistence profile",
+					"help":"The default persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)",
 					"type":"string",
 					"default":"/Common/cookie",
 					"required":false,
@@ -614,7 +614,7 @@
 				{
 					"name":"ProfileFallbackPersist",
 					"description":"Virtual Server: Fallback Persistence Profile",
-					"help":"The fallback persistence profile",
+					"help":"The fallback persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)",
 					"type":"string",
 					"default":"/Common/source_addr",
 					"required":false,
@@ -1231,7 +1231,7 @@
 				{
 					"name":"insertXForwardedFor",
 					"description":"HTTP: Insert X-Forwarded-For Header",
-					"help":"Insert the X-Forwarded-For header.  The auto option will enable this feature if a http profile is attached, otherwise disable",
+					"help":"Insert the X-Forwarded-For header.  The auto option will enable this feature if a HTTP profile and SNAT is configured, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
@@ -1247,7 +1247,7 @@
 				{
 					"name":"redirectToHTTPS",
 					"description":"HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect",
-					"help":"Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a client-ssl profile is configured, otherwise disable",
+					"help":"Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a HTTP profile is configured and the TCP port is 443, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
