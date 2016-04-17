@@ -40,6 +40,7 @@ array set modenames {
 }
 
 array set __provision_cache {}
+array set __node_cache {}
 load_provisioned
 
 array set aso_config {}
@@ -104,7 +105,7 @@ array set table_defaults {
         ConnectionLimit 0
         Ratio 1
         PriorityGroup 0
-        AdvOptions none
+        AdvOptions ""
     }
     Pools {
       Index -1
@@ -112,7 +113,7 @@ array set table_defaults {
       Description ""
       LbMethod ""
       Monitor ""
-      AdvOptions none
+      AdvOptions ""
     }
     Monitors {
       Index -1
@@ -238,55 +239,42 @@ foreach monRow $monitor__Monitors {
   set cmd ""
   debug [list monitors $monIdx] [format "monRow=%s" $monRow] 9
 
-  array set column_defaults [subst $::table_defaults(Monitors)]
-  array unset column
-
-  # extract the iApp table data - borrowed from f5.lbaas.tmpl
-  foreach column_data [lrange [split [join $monRow] "\n"] 1 end-1] {
-      set name [lindex $column_data 0]
-      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
-  }
-
-  # fill in any empty table values - borrowed from f5.lbaas.tmpl
-  foreach name [array names column_defaults] {
-      if { ![info exists column($name)] || $column($name) eq "" } {
-          set column($name) $column_defaults($name)
-          debug [list monitors $monIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
-      }
-  }
+  array set monColumn {}
+  table_row_to_array $monRow monColumn ::table_defaults(Monitors)
+  debug [list monitors table_row_to_array return] [array get monColumn] 7
 
   # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
   # If a Index is not specified then skip this row in the table
-  if { $column(Index) < 0 } {
+  if { $monColumn(Index) < 0 } {
     debug [list monitors $monIdx check_index] "no index value found, skipping row" 9
     continue
-  } elseif { [info exists monNames($column(Index))] } {
-    error "A monitor with Index of \"$column(Index)\" was already specified"
+  } elseif { [info exists monNames($monColumn(Index))] } {
+    error "A monitor with Index of \"$monColumn(Index)\" was already specified"
   } else {
-    if {[string length $column(Name)] > 0 } {
-      if { [string match "/*" $column(Name)] } {
-        set monNames($column(Index)) $column(Name)
-        set monCreate($column(Index)) 0
+    if {[string length $monColumn(Name)] > 0 } {
+      if { [string match "/*" $monColumn(Name)] } {
+        set monNames($monColumn(Index)) $monColumn(Name)
+        set monCreate($monColumn(Index)) 0
       } else {
-        set monNames($column(Index)) [format "%s/%s" $app_path $column(Name)]
-        set monCreate($column(Index)) 1
+        set monNames($monColumn(Index)) [format "%s/%s" $app_path $monColumn(Name)]
+        set monCreate($monColumn(Index)) 1
       }
     } else {
-      set monNames($column(Index)) [format "%s/monitor_%s" $app_path $column(Index)]
-      set monCreate($column(Index)) 1
+      set monNames($monColumn(Index)) [format "%s/monitor_%s" $app_path $monColumn(Index)]
+      set monCreate($monColumn(Index)) 1
     }
   }
 
-  if { $monCreate($column(Index)) == 1 } {
-    if { [string length $column(Type)] <= 0 } {
-      error "A Monitor Type was not specified for monitor with Index $column(Index)"
+  if { $monCreate($monColumn(Index)) == 1 } {
+    if { [string length $monColumn(Type)] <= 0 } {
+      error "A Monitor Type was not specified for monitor with Index $monColumn(Index)"
     }
 
-    set cmd [format "ltm monitor %s %s " $column(Type) $monNames($monIdx)]
-    if { [string length $column(Options)] > 0 } {
-      set column(Options) [join $column(Options) " "]
-      debug [list monitors $monIdx options] [format "processing options string \"%s\"" $column(Options)] 10
-      append cmd [format " %s" [process_options_string $column(Options) "" ""]]
+    set cmd [format "ltm monitor %s %s " $monColumn(Type) $monNames($monIdx)]
+    if { [string length $monColumn(Options)] > 0 } {
+      set monColumn(Options) [join $monColumn(Options) " "]
+      debug [list monitors $monIdx options] [format "processing options string \"%s\"" $monColumn(Options)] 10
+      append cmd [format " %s" [process_options_string $monColumn(Options) "" ""]]
     }
 
     debug [list monitors $monIdx tmsh_create] $cmd 1
@@ -294,7 +282,6 @@ foreach monRow $monitor__Monitors {
   }
 
   incr monIdx
-  array unset column_defaults
 }
 
 # Call the custom_extensions_before_pool proc to allow site-specific customizations
@@ -310,168 +297,125 @@ array set poolIndexes {}
 array set poolNames {}
 foreach poolRow $pool__Pools {
   set cmd ""
-  set nummembers 0
+  set numMembers 0
 
   debug [list pools $poolIdx] [format "poolRow=%s" $poolRow] 9
 
   custom_extensions_before_pool
 
-  array set column_defaults [subst $::table_defaults(Pools)]
-  array unset column
-
-  # extract the iApp table data - borrowed from f5.lbaas.tmpl
-  foreach column_data [lrange [split [join $poolRow] "\n"] 1 end-1] {
-      set name [lindex $column_data 0]
-      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
-      #debug [format "column_data name=%s val=%s" $name $column($name)]
-  }
-
-  # fill in any empty table values - borrowed from f5.lbaas.tmpl
-  foreach name [array names column_defaults] {
-      if { ![info exists column($name)] || $column($name) eq "" } {
-          set column($name) $column_defaults($name)
-          debug [list pools $poolIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
-      }
-  }
+  array set poolColumn {}
+  table_row_to_array $poolRow poolColumn ::table_defaults(Pools) [list AdvOptions]
+  debug [list pools $poolIdx table_row_to_array return] [array get poolColumn] 7
 
   # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
   # If a Index is not specified then skip this row in the table
-  if { $column(Index) < 0 } {
+  if { $poolColumn(Index) < 0 } {
     debug [list pools $poolIdx] "no index value found, skipping row" 9
     continue
-  } elseif { [info exists poolIndexes($column(Index))] } {
-    error "A pool with Index of \"$column(Index)\" was already specified"
+  } elseif { [info exists poolIndexes($poolColumn(Index))] } {
+    error "A pool with Index of \"$poolColumn(Index)\" was already specified"
   } else {
-    set poolIndexes($column(Index)) 1
+    set poolIndexes($poolColumn(Index)) 1
   }
 
   # Check to see if a poolName was specified... if not set to $app_pool_$poolIdx
-  if { [string length $column(Name)] == 0 } {
-      set column(Name) [format "%s_pool_%s" $app $poolIdx]
-      debug [list pools $poolIdx] [format "no pool name specified... setting to %s" $column(Name)] 7
+  if { [string length $poolColumn(Name)] == 0 } {
+      set poolColumn(Name) [format "%s_pool_%s" $app $poolIdx]
+      debug [list pools $poolIdx] [format "no pool name specified... setting to %s" $poolColumn(Name)] 7
   }
-  set poolNames($column(Index)) $column(Name)
+  set poolNames($poolColumn(Index)) $poolColumn(Name)
 
   if { $poolIdx == $pool__DefaultPoolIndex } {
     # Set the default pool name for use later during virtual server creation
-    set default_pool_name $column(Name)
+    set default_pool_name $poolColumn(Name)
   }
 
-  set memberstr "members replace-all-with \{ "
+  # Process the pool__Members table
+  set memberStr "members replace-all-with \{ "
   foreach memberRow $pool__Members {
-    debug [list pools $poolIdx member_str] [format "memberRow=%s" $poolRow] 10
-    array set pool_column_defaults [subst $::table_defaults(Members)]
-    array unset pool_column
+    array set memberColumn {}
+    table_row_to_array $memberRow memberColumn ::table_defaults(Members) [list AdvOptions]
 
-    # extract the iApp table data - borrowed from f5.lbaas.tmpl
-    foreach pool_column_data [lrange [split [join $memberRow] "\n"] 1 end-1] {
-        set name [lindex $pool_column_data 0]
-        set pool_column($name) [lrange $pool_column_data 1 end]
-        #debug [format "$poolIdx member pool_column_data name=%s val=%s" $name $pool_column($name)]
-    }
-
-    # fill in any empty table values - borrowed from f5.lbaas.tmpl
-    foreach name [array names pool_column_defaults] {
-        if { ![info exists pool_column($name)] || $pool_column($name) eq "" } {
-            set pool_column($name) $pool_column_defaults($name)
-            debug [list pools $poolIdx member_str set_default] [format "value for %s not found... setting to default of %s" $name $pool_column_defaults($name)] 10
-        }
-    }
-
-    set idx $pool_column(Index)
-    set ip $pool_column(IPAddress)
-    set port $pool_column(Port)
-    set connlimit $pool_column(ConnectionLimit)
-    set state $pool_column(State)
-    set ratio $pool_column(Ratio)
-    set prigrp $pool_column(PriorityGroup)
-    set options [lindex $pool_column(AdvOptions) 0]    
-
-    if { $idx != $poolIdx } {
-      debug [list pools $poolIdx member_str] [format " %s/%s:%s not a member of pool %s skipping" $idx $ip $port $poolIdx] 10
+    set memberId [format "%s/%s:%s" $memberColumn(Index) $memberColumn(IPAddress) $memberColumn(Port)]
+    if { $memberColumn(Index) != $poolIdx } {
+      debug [list pools $poolIdx members $memberId skip_index] [format "not a member of pool %s skipping" $poolIdx] 11
       continue
     }
+    debug [list pools $poolIdx members $memberId config_raw] [array get memberColumn] 10
+
+    
+    set memberColumn(AdvOptions) [lindex $memberColumn(AdvOptions) 0]    
 
     # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
-    if { [string match 0.0.0.0* $ip] } {
-      debug [list pools $poolIdx member_str] "  ip=0.0.0.0, skipping" 7
+    if { [string match 0.0.0.0* $memberColumn(IPAddress)] } {
+      debug [list pools $poolIdx members $memberId skip_ip] "ip=0.0.0.0, skipping" 7
       continue
     } else {
-      incr nummembers
+      incr numMembers
     }
+
+    # Determine if a node object was specified rather than an IP address
+    set node_default_folder "/Common/"
+    if { [string first "/" $memberColumn(IPAddress)] >= 0 } { set node_default_folder "" }
+    set node_obj_name [format "%s%s" $node_default_folder $memberColumn(IPAddress)]
+    set node_exist [check_node_exist $node_obj_name]
 
     # Add a route domain if it wasn't included and we don't already have a node object created
-    set default_folder "/Common/"
-    set node_exist -1
-    if { [string first "/" $ip] >= 0 } { set default_folder "" }
-    set node_status [catch {tmsh::get_config ltm node $default_folder$ip} node_status_ret]
-    if { [string match "*address*" $node_status_ret] } {
-      set node_exist 1
-    } else {
-      set node_exist 0
-    }
-
-    debug [list pools $poolIdx member_str node_exist $default_folder$ip] $node_exist 7
-    if { $node_exist == 0 && ![has_routedomain $ip]} {
-      set ip [get_dest_addr $ip]
+    if { $node_exist == 0 && ![has_routedomain $memberColumn(IPAddress)]} {
+      set ip [get_dest_addr $memberColumn(IPAddress)]
     }
 
     # TODO: Is this still required?
     # Sometimes we receive a transposed ip/port from BIG-IQ... fix it here
-    if {[has_routedomain $port]} {
-      set port $column(IPAddress)
-      set ip $column(Port)
-      debug [list pools $poolIdx member_str] [format "  fixing ip=%s port=%s" $ip $port] 7
+    if {[has_routedomain $memberColumn(Port)]} {
+      set new_port $memberColumn(IPAddress)
+      set new_ip $memberColumn(Port)
+      set memberColumn(Port) $new_port
+      set memberColumn(IPAddress) $new_ip      
+      debug [list pools $poolIdx members $memberId fix_ip_port] [format "ip=%s port=%s" $memberColumn(IPAddress) $memberColumn(Port)] 7
     }
-    debug [list pools $poolIdx member_str] [format "  idx=%s ip=%s port=%s connlimit=%s ratio=%s prigrp=%s state=%s advoptions=%s" $idx $ip $port $connlimit $ratio $prigrp $state $options] 7
     
     # If we don't get a port in the pool member table than use the template value for pool__MemberDefaultPort
-    if { [string length $port] == 0} {
+    # If pool__MemberDefaultPort is empty than use the value for pool__port
+    if { [string length $memberColumn(Port)] == 0} {
       if { [string length $pool__MemberDefaultPort] == 0 } {
-        debug [list pools $poolIdx member_str] [format "  Pool member port was not specified, pool__MemberDefaultPort was blank, using pool__port=%s" $pool__port] 5
-        set port $pool__port
+        debug [list pools $poolIdx members $memberId port_sub_vs] [format "using %s" $pool__port] 5
+        set memberColumn(Port) $pool__port
       } else {
-        debug [list pools $poolIdx member_str] [format "  Pool member port was not specified, using pool__MemberDefaultPort=%s" $pool__MemberDefaultPort] 5
-        set port $pool__MemberDefaultPort
+        debug [list pools $poolIdx members $memberId port_sub_default] [format "using %s" $pool__MemberDefaultPort] 5
+        set memberColumn(Port) $pool__MemberDefaultPort
       }
     }
 
-    # iCR does not like table columns with empty values.  Workaround this by allow use of keyword 'none' and NOOP
-    if { [string tolower $options] == "none" } {
-      set options ""
-    }
-
-    if { [string length $options] > 0} {
-      debug [list pools $poolIdx member_str adv_options] "processing member advanced options string" 7
-      set options [format " %s" [process_options_string $options "" ""]]
+    debug [list pools $poolIdx members $memberId normalized_config] [array get memberColumn] 7
+    
+    if { [string length $memberColumn(AdvOptions)] > 0} {
+      debug [list pools $poolIdx members $memberId adv_options] "processing member advanced options string" 7
+      set memberColumn(AdvOptions) [format " %s" [process_options_string $memberColumn(AdvOptions) "" ""]]
     }
 
     if { $node_exist } {
       # Node did exist, create <node name>:<port> string
-      set dest [format "%s:%s" $ip $port]
+      set memberColumn(Dest) [format "%s:%s" $memberColumn(IPAddress) $memberColumn(Port)]
     } else {
       # Node did not exist, get the correctly formatted ip, port string
-      set dest [get_dest_str $ip $port]
+      set memberColumn(Dest) [get_dest_str $memberColumn(IPAddress) $memberColumn(Port)]
     }
 
-    append memberstr [format " %s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $dest $connlimit $ratio $prigrp $options $::pool_state($state)]
+    append memberStr [format " %s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $memberColumn(Dest) $memberColumn(ConnectionLimit) $memberColumn(Ratio) $memberColumn(PriorityGroup) $memberColumn(AdvOptions) $::pool_state($memberColumn(State))]
   }
-  append memberstr " \} "
+  append memberStr " \} "
 
   # Check to see if we really have any pool members after table processing
-  if { $nummembers == 0 } {
-    debug [list pools $poolIdx member_str] "  no true pool members found after table was processed, setting to none" 5
-    set memberstr " members none"
+  if { $numMembers == 0 } {
+    debug [list pools $poolIdx members] "no true pool members found after table was processed, setting to none" 5
+    set memberStr " members none"
   }
 
-  debug [list pools $poolIdx member_str] "memberstr=$memberstr" 7
+  debug [list pools $poolIdx member_str] "memberStr=$memberStr" 7
 
-  set idx $column(Index)
-  set name $column(Name)
-  set descr $column(Description)
-  set lbmethod $column(LbMethod)
-  set advoptions [lindex $column(AdvOptions) 0]
+  set poolColumn(AdvOptions) [lindex $poolColumn(AdvOptions) 0]
 
   # We support multiple monitors and the ability to specify the minimum number of monitors that need
   # to pass for the pool to be considered healthy.  The format of the Monitor string from the Pool table is:
@@ -481,7 +425,7 @@ foreach poolRow $pool__Pools {
   #                             pool to be considered available.
   #
   # If no value is specifed no monitor is associated with the pool
-  set monitor $column(Monitor)
+  set monitor $poolColumn(Monitor)
   if { [string length $monitor] > 0 } {
     # Monitor info entered
     if { [string match "*\;*" $monitor] } {
@@ -496,7 +440,7 @@ foreach poolRow $pool__Pools {
     } else {
       # Min monitors NOT specified, assume ALL monitors should pass and create list of monitors
       set monmin -1
-      set monlist [split [lindex $column(Monitor) 0] ,]
+      set monlist [split [lindex $poolColumn(Monitor) 0] ,]
     }
 
     # Get the names of the monitors that were created above (array keyed by monitor index) and
@@ -512,35 +456,35 @@ foreach poolRow $pool__Pools {
 
     # Setup our command
     if { $monmin > 0 } {
-      set monitorcmd [format "monitor min %s of { %s }" $monmin [join $monmapped " "]]
+      set monitorCmd [format "monitor min %s of { %s }" $monmin [join $monmapped " "]]
     } else {
-      set monitorcmd [format "monitor \"%s\"" [join $monmapped " and "]]
+      set monitorCmd [format "monitor \"%s\"" [join $monmapped " and "]]
     }
   } else {
     # No monitor specified, set to none
-    set monitorcmd "monitor none"
+    set monitorCmd "monitor none"
   }
 
   # iCR does not like table columns with empty values.  Workaround this by allow use of keyword 'none' and NOOP  
-  if { [string tolower $advoptions] == "none" } {
-    set advoptions ""
+  if { [string tolower $poolColumn(AdvOptions)] == "none" } {
+    set poolColumn(AdvOptions) ""
   }
 
   # Setup the base pool create command
-  set cmd [format "ltm pool %s/%s %s %s " $app_path $name $memberstr $monitorcmd]
+  set cmd [format "ltm pool %s/%s %s %s " $app_path $poolColumn(Name) $memberStr $monitorCmd]
 
   array set pool_options {
-    "lbmethod" "load-balancing-mode"
-    "descr" "description"
+    "poolColumn(LbMethod)" "load-balancing-mode"
+    "poolColumn(Description)" "description"
   }
 
   foreach {optionvar optioncmd} [array get pool_options] {
     append cmd [generic_add_option [list pools $poolIdx options] [set [subst $optionvar]] $optioncmd "" 0]
   }
 
-  if { [string length $advoptions] > 0 } {
+  if { [string length poolColumn(AdvOptions)] > 0 } {
     debug [list pools $poolIdx adv_options] "processing advanced options string" 7
-    append cmd [format " %s" [process_options_string $advoptions "" ""]]
+    append cmd [format " %s" [process_options_string $poolColumn(AdvOptions) "" ""]]
   }
 
   debug [list pools $poolIdx tmsh_create] $cmd 1
@@ -548,7 +492,6 @@ foreach poolRow $pool__Pools {
   
   custom_extensions_after_pool
   incr poolIdx
-  array unset column_defaults
 }
 
 if { ! [info exists poolIndexes($pool__DefaultPoolIndex)] && $pool__DefaultPoolIndex ne ""} {
@@ -588,70 +531,55 @@ foreach l7p_matchRow $l7policy__rulesMatch {
   debug [list l7policy match $l7p_matchIdx] [format "matchRow=%s" $l7p_matchRow] 9
 
   set l7p_rules($l7p_matchIdx) {}
-  array set column_defaults [subst $::table_defaults(L7P_Match)]
-  array unset column
-
-  # extract the iApp table data - borrowed from f5.lbaas.tmpl
-  foreach column_data [lrange [split [join $l7p_matchRow] "\n"] 1 end-1] {
-      set name [lindex $column_data 0]
-      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
-  }
-
-  # fill in any empty table values - borrowed from f5.lbaas.tmpl
-  foreach name [array names column_defaults] {
-      if { ![info exists column($name)] || $column($name) eq "" } {
-          set column($name) $column_defaults($name)
-          debug [list l7policy match $l7p_matchIdx set_default] [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
-      }
-  }
+  array set l7p_matchColumn {}
+  table_row_to_array $l7p_matchRow l7p_matchColumn ::table_defaults(L7P_Match)
 
   # Store the true name of the index in an array for use later 
-  set l7p_indexes($l7p_matchIdx) $column(Index)
+  set l7p_indexes($l7p_matchIdx) $l7p_matchColumn(Index)
 
   # Skip rows with an index < 0 excluding the default rule
-  if { [string tolower $column(Index)] != "default" && $column(Index) < 0 } {
+  if { [string tolower $l7p_matchColumn(Index)] != "default" && $l7p_matchColumn(Index) < 0 } {
     debug [list l7policy match] "skipping row, index < 0" 9
     continue
   }
 
   # Determine which profile is required in the policy for the specified operand
-  switch -glob [string tolower $column(Operand)] {
+  switch -glob [string tolower $l7p_matchColumn(Operand)] {
     client-ssl* { set l7p_requires("client-ssl") 1 }
     http*       { set l7p_requires("http") 1 }
     ssl*        { set l7p_requires("ssl-persistence") 1 }
     tcp*        { set l7p_requires("tcp") 1 }
     default { 
-      if { $column(Index) != "default" } {
-        error "Could not determine the correct profile type for L7 Policy Match, Index $column(Index), Operand $column(Operand)"
+      if { $l7p_matchColumn(Index) != "default" } {
+        error "Could not determine the correct profile type for L7 Policy Match, Index $l7p_matchColumn(Index), Operand $l7p_matchColumn(Operand)"
       }
     }
   }
 
   # Set our tmsh modifiers
-  if { [string tolower $column(Negate)] == "no" } { set column(Negate) "" }
-  if { [string tolower $column(Negate)] == "yes" } { set column(Negate) "not" }
-  if { [string tolower $column(Missing)] == "no" } { set column(Missing) "" }
-  if { [string tolower $column(Missing)] == "yes" } { set column(Missing) "missing" }
-  if { [string tolower $column(CaseSensitive)] == "no" } { set column(CaseSensitive) "case-insensitive" }
-  if { [string tolower $column(CaseSensitive)] == "yes" } { set column(CaseSensitive) "case-sensitive" }
+  if { [string tolower $l7p_matchColumn(Negate)] == "no" } { set l7p_matchColumn(Negate) "" }
+  if { [string tolower $l7p_matchColumn(Negate)] == "yes" } { set l7p_matchColumn(Negate) "not" }
+  if { [string tolower $l7p_matchColumn(Missing)] == "no" } { set l7p_matchColumn(Missing) "" }
+  if { [string tolower $l7p_matchColumn(Missing)] == "yes" } { set l7p_matchColumn(Missing) "missing" }
+  if { [string tolower $l7p_matchColumn(CaseSensitive)] == "no" } { set l7p_matchColumn(CaseSensitive) "case-insensitive" }
+  if { [string tolower $l7p_matchColumn(CaseSensitive)] == "yes" } { set l7p_matchColumn(CaseSensitive) "case-sensitive" }
   
   # Process the operand.  The '/' character gets replaced with a ' ' to build the tmsh
   # command.  Additionally the ',' character gets replaced with a ' ' to allow for multiple
   # values to be passed to the operand.
-  set l7p_match_oper [split $column(Operand) /]
+  set l7p_match_oper [split $l7p_matchColumn(Operand) /]
   if { [llength $l7p_match_oper] > 0 } {
     set l7p_rule_opertmp [join $l7p_match_oper " "]
     set l7p_rule_valtmp ""
-    if { [string length $column(Value)] > 0 } {
-      set l7p_rule_valtmp [format "%s %s values { \"%s\" }" $column(Negate) $column(Condition) [string map {, "\" \""} $column(Value)]]
+    if { [string length $l7p_matchColumn(Value)] > 0 } {
+      set l7p_rule_valtmp [format "%s %s values { \"%s\" }" $l7p_matchColumn(Negate) $l7p_matchColumn(Condition) [string map {, "\" \""} $l7p_matchColumn(Value)]]
     } 
-    set l7p_match_rules($l7p_matchIdx) [format "0 { %s %s %s %s }" $l7p_rule_opertmp $column(Missing) $column(CaseSensitive) $l7p_rule_valtmp]
+    set l7p_match_rules($l7p_matchIdx) [format "0 { %s %s %s %s }" $l7p_rule_opertmp $l7p_matchColumn(Missing) $l7p_matchColumn(CaseSensitive) $l7p_rule_valtmp]
     debug [list l7policy match $l7p_matchIdx] [format "rule=%s" $l7p_match_rules($l7p_matchIdx)] 7
   } else {
     set l7p_match_rules($l7p_matchIdx) ""
   }
   incr l7p_matchIdx
-  array unset column_defaults
 }
 
 # Iterate through the l7policy__rulesAction table and create our actions.
@@ -661,36 +589,20 @@ set l7p_action_found_default 0
 foreach l7p_actionRow $l7policy__rulesAction {
   debug [list l7policy action $l7p_actionIdx] [format "actionRow=%s" $l7p_actionRow] 9
 
-  array set column_defaults [subst $::table_defaults(L7P_Action)]
-  array unset column
-
-  # extract the iApp table data - borrowed from f5.lbaas.tmpl
-  foreach column_data [lrange [split [join $l7p_actionRow] "\n"] 1 end-1] {
-      set name [lindex $column_data 0]
-      set column($name) [string map {\n \\n \r \\r} [lrange $column_data 1 end]]
-      #debug [format "column_data name=%s val=%s" $name $column($name)]
-  }
-
-  # fill in any empty table values - borrowed from f5.lbaas.tmpl
-  foreach name [array names column_defaults] {
-      if { ![info exists column($name)] || $column($name) eq "" } {
-          set column($name) $column_defaults($name)
-          debug [list l7policy action $l7p_actionIdx set_default]  [format "value for %s not found... setting to default of %s" $name $column_defaults($name)] 10
-      }
-  }
+  array set l7p_actionColumn {}
+  table_row_to_array $l7p_actionRow l7p_actionColumn ::table_defaults(L7P_Action)
 
   # Skip rows with an index < 0 excluding the default rule
-  if { [string tolower $column(Index)] != "default" && $column(Index) < 0 } {
+  if { [string tolower $l7p_actionColumn(Index)] != "default" && $l7p_actionColumn(Index) < 0 } {
     debug [list l7policy action] "skipping row, index < 0" 9
     continue
   }
 
-  if { [string tolower $column(Index)] == "default" } {
+  if { [string tolower $l7p_actionColumn(Index)] == "default" } {
     set l7p_action_found_default 1
   }
 
-  #set column(Target) [string map {"\;" "\\\;"} $column(Target)]
-  set l7p_action_target_list [psplit $column(Target) |]
+  set l7p_action_target_list [psplit $l7p_actionColumn(Target) |]
   set l7p_action_targetIdx 0
   if { [llength $l7p_action_target_list] > 0 } {
     set l7p_action_rules($l7p_actionIdx) ""
@@ -701,7 +613,7 @@ foreach l7p_actionRow $l7policy__rulesAction {
     switch -glob [string tolower $l7p_action_target] {
       asm*            { 
                         set l7p_controls("asm") 1
-                        set l7p_asmrule($column(Index)) 1
+                        set l7p_asmrule($l7p_actionColumn(Index)) 1
                       }
       cache*          { set l7p_controls("cache") 1 }
       *compress*      { set l7p_controls("compression") 1 }
@@ -710,7 +622,7 @@ foreach l7p_actionRow $l7policy__rulesAction {
       l7dos*          { 
                         set l7p_controls("l7dos") 1
                         set l7p_controls("asm") 1 
-                        set l7p_l7dosrule($column(Index)) 1
+                        set l7p_l7dosrule($l7p_actionColumn(Index)) 1
                       }
       log*            { set l7p_controls("forwarding") 1 }
       request-adapt*  { set l7p_controls("request-adaption") 1 }
@@ -719,7 +631,7 @@ foreach l7p_actionRow $l7policy__rulesAction {
       tcp-nagle*      { set l7p_controls("forwarding") 1 }
       tcl*            { set l7p_controls("tcl") 1 }
       default { 
-        error "Could not determine the correct profile type for L7 Policy Action, Index $column(Index), Target $column(Target)"
+        error "Could not determine the correct profile type for L7 Policy Action, Index $l7p_actionColumn(Index), Target $l7p_actionColumn(Target)"
       }
     }
 
@@ -743,11 +655,10 @@ foreach l7p_actionRow $l7policy__rulesAction {
         set l7p_rule_targettmp [format "%s %s %s" [lindex $l7p_action_targets 0] [lindex $l7p_action_targets 1] [lindex $l7p_action_targets 2]]
         set l7p_rule_parameters [psplit [lindex $l7p_action_targets 3] ,]
         # Fix the list in the case that we got a reserved character
-        if { [llength $column(Parameter)] == 1 } {
-          set column(Parameter) [lindex $column(Parameter) 0]
+        if { [llength $l7p_actionColumn(Parameter)] == 1 } {
+          set l7p_actionColumn(Parameter) [lindex $l7p_actionColumn(Parameter) 0]
         }
-        #set l7p_rule_value [lindex [psplit $column(Parameter) ;] $l7p_action_targetIdx]
-        set l7p_rule_values [psplit [lindex [psplit $column(Parameter) |] $l7p_action_targetIdx] ,]
+        set l7p_rule_values [psplit [lindex [psplit $l7p_actionColumn(Parameter) |] $l7p_action_targetIdx] ,]
         debug [list l7policy action $l7p_actionIdx val_list $l7p_action_targetIdx] $l7p_rule_values 7
 
         set l7p_action_parIdx 0
@@ -798,7 +709,6 @@ foreach l7p_actionRow $l7policy__rulesAction {
     incr l7p_action_targetIdx
   }
   incr l7p_actionIdx
-  array unset column_defaults
 }
 
 if { [info exists l7p_controls("asm")] && ! $l7p_action_found_default } {
@@ -890,10 +800,10 @@ if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
   } else {
     debug [list l7policy tmsh_create] $l7p_cmd 1
     tmsh::create $l7p_cmd
-	if { $l7p_new_model } {
-		debug [list l7policy tmsh_publish] $l7p_publish_cmd 1
-		tmsh::publish $l7p_publish_cmd
-	}
+  	if { $l7p_new_model } {
+  		debug [list l7policy tmsh_publish] $l7p_publish_cmd 1
+  		tmsh::publish $l7p_publish_cmd
+  	}
 	
     # Add the created policy to the vs__AdvPolicies variable so we attach it to the 
     # Virtual Server when it's created.
@@ -1109,8 +1019,6 @@ foreach persist_var [list vs__ProfileDefaultPersist vs__ProfileFallbackPersist] 
     tmsh::create $persist_cmd
   }
 }
-
-
 
 handle_opt_remove_on_redeploy vs__ProfilePerRequest "" "per-flow-request-access-policy" "apm"
 handle_opt_remove_on_redeploy vs__ProfileSecurityIPBlacklist "none" "ip-intelligence-policy" "ltm"
@@ -1440,7 +1348,6 @@ if { [string length $vs__AdvPolicies] > 0 } {
 }
 
 # Create the virtual server
-
 set stats_vs 0
 if { $pool__addr ne "255.255.255.254" } {
   debug [list virtual_server tmsh_create] $cmd 1

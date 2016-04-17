@@ -21,7 +21,7 @@
 			"name":"pool__Pools",
          "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
          "rows" : [
-            { "row": [ "0", "", "", "round-robin", "0,1,2", "none"] }
+            { "row": [ "0", "", "", "round-robin", "0,1,2,3", "none"] }
          ]
       },
 		{

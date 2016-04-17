@@ -562,3 +562,68 @@ proc get_dest_str { addr port } {
     return [format "%s:%s" $addr $port]
   }
 }
+
+# Convert a APL table row into an array keyed on the column name
+# Input: list row = The APL TCL list object for the row
+#        string arrayRef = The name of the existing array to populate
+#        string defaultsRef = The name of the array to use for default values
+#        list nullColumns = A list of column names that may contain the keyword
+#                           'none'.  The value will be replaced with "" on return
+proc table_row_to_array { row array_ref {defaults_ref {}} {null_columns []} } {
+  debug [list table_row_to_array row] $row 10
+  debug [list table_row_to_array array_ref] $array_ref 10
+  debug [list table_row_to_array defaults_ref] $defaults_ref 10
+  debug [list table_row_to_array null_columns] $null_columns 10
+  
+  upvar $array_ref ret
+  array set defaults [subst [subst $$defaults_ref]]
+  
+  debug [list table_row_to_array default_vals] [array get defaults] 10
+
+  # extract the iApp table data - borrowed from f5.lbaas.tmpl
+  foreach data [lrange [split [join $row] "\n"] 1 end-1] {
+      set name [lindex $data 0]
+      set value [string map {\n \\n \r \\r} [lrange $data 1 end]]
+      if { [lsearch $null_columns $name] > -1 && [string tolower $value] eq "none" } {
+        set ret($name) ""
+        debug [list table_row_to_array set_null] [format "%s=%s" $name $ret($name)] 10
+      } else {
+        set ret($name) $value
+        debug [list table_row_to_array set_value] [format "%s=%s" $name $ret($name)] 10
+      }
+  }
+
+  # fill in any empty table values - borrowed from f5.lbaas.tmpl
+  if { [array size defaults] } {
+    foreach name [array names defaults] {
+      if { ![info exists ret($name)] || $ret($name) eq "" } {
+          set ret($name) $defaults($name)
+          debug [list table_row_to_array set_default] [format "%s=%s" $name $ret($name)] 10
+      }
+    }
+  }
+  return
+}
+
+# Check to see if a node object exists in the get_config.
+# Lookups are cached in ::__node_cache for re-use
+# Input:  string node_name = The object name to check for
+# Return: 0 = node does not exist
+#         1 = node does exist
+proc check_node_exist { node_name } {
+  if { ! [info exists ::__node_cache($node_name)] } {
+    set node_status [catch {tmsh::get_config ltm node $node_name} node_status_ret]
+    if { [string match "*address*" $node_status_ret] } {
+      set ::__node_cache($node_name) 1
+      debug [list check_node_exist $node_name cache_set] "1" 10
+      return 1
+    } else {
+      set ::__node_cache($node_name) 0
+      debug [list check_node_exist $node_name cache_set] "0" 10
+      return 0
+    }
+  } else {
+    debug [list check_node_exist $node_name cache_hit] "1" 10
+    return 1
+  }
+}

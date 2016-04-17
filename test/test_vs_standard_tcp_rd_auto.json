@@ -10,7 +10,7 @@
       { "vs__Name":"test_vs_standard_tcp_vs" },
       { "vs__Description":"Standard TCP Virtual Server deployed in Partition with Route Domain" },
       { "vs__IpProtocol":"tcp" },
-      { "vs__SNATConfig":"automap" }
+      { "vs__SNATConfig":"partition-default" }
 	],
    "tables":[
       {
