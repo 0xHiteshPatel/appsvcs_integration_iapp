@@ -1171,7 +1171,8 @@ if { [string length $vs__SNATConfig] > 0 } {
     }
     create:* {
       # split a string formatted like this: "<ip>[,<ip1>]"
-      set create_snat_iplist [split [lindex [split $vs__SNATConfig :] 1] ,]
+
+      set create_snat_iplist [split [string map {"create:" ""} $vs__SNATConfig] ,]
       set create_snat_poolname [format "%s/%s_snatpool" $app_path $app]
       set create_snat_poolcmd [format "ltm snatpool %s members replace-all-with { " $create_snat_poolname]
       foreach ip $create_snat_iplist {

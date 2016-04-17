@@ -10,7 +10,7 @@
       { "vs__Description":"Standard HTTP Virtual Server with IPv6 address" },
       { "vs__IpProtocol":"tcp" },
       { "vs__SourceAddress":"::/0" },
-      { "vs__SNATConfig":"" },
+      { "vs__SNATConfig":"create:%TEST_RANGE6_4_IP%" },
       { "vs__ProfileHTTP":"/Common/http" },
       { "vs__ProfileOneConnect":"/Common/oneconnect" },
       { "vs__ProfileCompression":"/Common/httpcompression" },
@@ -38,7 +38,10 @@
          "rows" : [
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
-            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER6_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER6_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER6_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
          ]
 		}      
 	]

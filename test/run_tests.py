@@ -33,6 +33,10 @@ def process_file(template_fn):
 	global member_subnet
 	global member6_nextip
 	global member6_subnet
+	global range_nextip
+	global range_subnet
+	global range6_nextip
+	global range6_subnet
 	retlist = []
 	retlist.append(False)
 	retlist.append("")
@@ -46,8 +50,8 @@ def process_file(template_fn):
 				vs6_ip_match = re.match( r'.*%TEST_VS6_IP%.*', line)
 				member_ip_match = re.match( r'.*%TEST_MEMBER_IP%.*', line)
 				member6_ip_match = re.match( r'.*%TEST_MEMBER6_IP%.*', line)
-				snat_ip_match = re.match( r'.*%TEST_RANGE_(.*)_IP%.*', line)
-				snat6_ip_match = re.match( r'.*%TEST_RANGE6_(.*)_IP%.*', line)
+				snat_ip_match = re.match( r'.*%TEST_RANGE_(\d)_IP%.*', line)
+				snat6_ip_match = re.match( r'.*%TEST_RANGE6_(\d)_IP%.*', line)
 				version_match = re.match( r'.*%TEST_DEV_VERSION_(.*)%.*', line)
 				delete_override_match = re.match( r'.*\"test_delete_override\":\"true\".*', line)
 				parent_match = re.match( r'.*\"test_parent\":\"(.*)\".*', line)
@@ -94,17 +98,17 @@ def process_file(template_fn):
 
 				if snat_ip_match:
 					snat_ips = []
-					for sip in range(member_nextip, member_nextip+int(snat_ip_match.group(1))):
-						snat_ips.append("%s%s" % (member_subnet, member_nextip))
-						member_nextip += 1
-					line = re.sub(r'\%TEST_RANGE_.*_IP\%', "%s" % (','.join(snat_ips)), line)
+					for sip in range(range_nextip-int(snat_ip_match.group(1)), range_nextip):
+						snat_ips.append("%s%s" % (range_subnet, range_nextip))
+						range_nextip -= 1
+					line = re.sub(r'\%TEST_RANGE_[\d]_IP\%', "%s" % (','.join(snat_ips)), line)
 
 				if snat6_ip_match:
 					snat6_ips = []
-					for s6ip in range(member6_nextip, member6_nextip+int(snat6_ip_match.group(1))):
-						snat6_ips.append("%s%s" % (member6_subnet, member6_nextip))
-						member6_nextip += 1
-					line = re.sub(r'\%TEST_RANGE6_.*_IP\%', "%s" % (','.join(snat6_ips)), line)
+					for s6ip in range(range6_nextip-int(snat6_ip_match.group(1)), range6_nextip):
+						snat6_ips.append("%s%s" % (range6_subnet, range6_nextip))
+						range6_nextip -= 1
+					line = re.sub(r'\%TEST_RANGE6_[\d]_IP\%', "%s" % (','.join(snat6_ips)), line)
 					
 				tmp.write(line)
 
@@ -121,6 +125,10 @@ def run_test():
 	global member_nextip
 	global member6_subnet
 	global member6_nextip
+	global range_subnet
+	global range_nextip
+	global range6_subnet
+	global range6_nextip
 	global version
 
 	vs_subnet = '.'.join(args.vssubnet.split('.')[0:-1]) + '.'
@@ -129,8 +137,12 @@ def run_test():
 	vs6_nextip = int(args.vs6subnet.split(':')[-1])
 	member_subnet = '.'.join(args.membersubnet.split('.')[0:-1]) + '.'
 	member_nextip = int(args.membersubnet.split('.')[-1])
+	range_subnet = '.'.join(args.membersubnet.split('.')[0:-1]) + '.'
+	range_nextip = int(254)
 	member6_subnet = ':'.join(args.member6subnet.split(':')[0:-1]) + ':'
 	member6_nextip = int(args.member6subnet.split(':')[-1])
+	range6_subnet = ':'.join(args.member6subnet.split(':')[0:-1]) + ':'
+	range6_nextip = int(8192)
 
 	test_templates = sorted(glob.glob(args.glob))
 	if args.end == -1:
@@ -192,13 +204,14 @@ def run_test():
 						print "DELETE_OK"
 						vs_nextip = int(args.vssubnet.split('.')[-1])
 						vs6_nextip = int(args.vs6subnet.split(':')[-1])
-						member_nextip = int(args.membersubnet.split('.')[-1])
-						member6_nextip = int(args.member6subnet.split(':')[-1])
 					else:
 						print "DELETE_FAIL: %s %s" % (dout, derr)
 						return(1)
 				else:
 					print ""
+
+				member_nextip = int(args.membersubnet.split('.')[-1])
+				member6_nextip = int(args.member6subnet.split(':')[-1])
 
 				os.remove("%s_%s.tmp" % (test_template, sessionid))
 				break
