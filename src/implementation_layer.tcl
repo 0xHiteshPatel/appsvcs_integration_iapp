@@ -1376,7 +1376,7 @@ if { $pool__addr ne "255.255.255.254" } {
 
     # Setup our new tmsh command string
     set vs_listener_name [format "%s_%s" $vs__Name $vs_listener_idx]
-    regexp {^(.*)[:.](\d{1,5})$} $vs_listener --> vs_listener_addr vs_listener_port
+    regexp {^(.*)[:.]([0-9]{1,5})$} $vs_listener --> vs_listener_addr vs_listener_port
 
     set vs_listener_dest [get_dest_str $vs_listener_addr $vs_listener_port]
 
@@ -1403,7 +1403,7 @@ custom_extensions_after_vs
 if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" } {
   set redirect_listener_idx 0
   foreach redirect_listener $redirect_listeners {
-    regexp {^(.*)[:.](\d{1,5})$} $redirect_listener --> redirect_listener_addr redirect_listener_port
+    regexp {^(.*)[:.]([0-9]{1,5})$} $redirect_listener --> redirect_listener_addr redirect_listener_port
 
 
     set redirect_listener_dest [get_dest_str $redirect_listener_addr $redirect_listener_port]
