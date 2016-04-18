@@ -135,7 +135,10 @@ array set table_defaults {
       Target error/error/error
       Parameter error      
     }
-
+    Listeners {
+      Listener ""
+      Destination ""     
+    }    
 }
 
 array set pool_state {
@@ -175,6 +178,23 @@ if { [string length $working] > 0 } {
 debug [list client_ssl create] "checking if client ssl cert & key were entered" 7
 set clientssl 0
 if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__ProfileClientSSLCert] > 0 && [string length $vs__ProfileClientSSL] == 0 } {
+  
+  set crypto_url_found 0
+  if { [string match "url=*" $vs__ProfileClientSSLKey] } {
+    set vs__ProfileClientSSLKey [load_crypto_object "key" $vs__ProfileClientSSLKey]
+    set crypto_url_found 1
+  }
+
+  if { [string match "url=*" $vs__ProfileClientSSLCert] } {
+    set vs__ProfileClientSSLCert [load_crypto_object "cert" $vs__ProfileClientSSLCert]
+    set crypto_url_found 1
+  }
+
+  if { [string match "url=*" $vs__ProfileClientSSLChain] } {
+    set vs__ProfileClientSSLChain [load_crypto_object "cert" $vs__ProfileClientSSLChain]
+    set crypto_url_found 1
+  }
+
   if { $vs__ProfileClientSSLKey == "auto" } {
     debug [list client_ssl create auto_key] [format "found auto option for key, setting vs__ProfileClientSSLKey=/Common/%s.key" $app] 5
     set vs__ProfileClientSSLKey "/Common/$app.key"
@@ -185,14 +205,18 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
     set vs__ProfileClientSSLCert "/Common/$app.crt"
   }
 
-  tmsh::get_config /sys file ssl-key $vs__ProfileClientSSLKey
-  tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLCert
-  debug [list client_ssl create check_exist] "ssl cert & key found... creating profile" 7
+  if { $crypto_url_found == 0 } {
+    tmsh::get_config /sys file ssl-key $vs__ProfileClientSSLKey
+    tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLCert
+    debug [list client_ssl create check_exist] "ssl cert & key found... creating profile" 7
+  }
 
   set cmd [format "ltm profile client-ssl %s_clientssl key %s cert %s" $app $vs__ProfileClientSSLKey $vs__ProfileClientSSLCert]
 
   if { [string length $vs__ProfileClientSSLChain] > 0 } {
-      tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLChain
+      if { $crypto_url_found == 0 } {
+        tmsh::get_config /sys file ssl-cert $vs__ProfileClientSSLChain
+      }
       debug [list client_ssl create cert_chain] "adding cert chain" 7
       append cmd [format " chain %s" $vs__ProfileClientSSLChain]
   }
@@ -1360,37 +1384,59 @@ if { $pool__addr ne "255.255.255.254" } {
   lappend redirect_listeners [format "%s:80" $vs_dest_addr]
 
   set vs_origcmd $cmd
-  set vs_listener_list [single_column_table_to_list $vs__Listeners "Listener"]
-  set vs_listener_idx 0
-  foreach vs_listener $vs_listener_list {
-    set vs_listener [lindex $vs_listener 0]
-    debug [list virtual_server add_listeners $vs_listener_idx] $vs_listener 7
+
+  debug [list virtual_server add_listeners] [format "listenerCount=%s" [llength $vs__Listeners]] 7
+
+  #set vs_listener_list [single_column_table_to_list $vs__Listeners "Listener"]
+  set listenerIdx 0
+  foreach listenerRow $vs__Listeners {
+    debug [list virtual_server add_listeners $listenerIdx] [format "listenerRow=%s" $listenerRow] 9
     
-    # If this row had the ';redirect' option specified save it for later and skip this row
-    if { [string match "*\;redirect" $vs_listener] } {
-      set vs_listener [string map {"\;redirect" ""} $vs_listener]
-      debug [list virtual_server add_listeners redirect] $vs_listener 7
-      lappend redirect_listeners $vs_listener
+    array set listenerColumn {}
+    table_row_to_array $listenerRow listenerColumn ::table_defaults(Listeners)
+    debug [list virtual_server add_listeners $listenerIdx table_row_to_array return] [array get listenerColumn] 7
+
+    set listenerColumn(Listener) [lindex $listenerColumn(Listener) 0]
+
+    if { [string length $listenerColumn(Listener)] == 0 } {
+      incr listenerIdx
       continue
     }
 
+    # If this row had the 'redirect' destination specified save it for later and skip this row
+    if { [string tolower $listenerColumn(Destination)] eq "redirect" } {
+      debug [list virtual_server add_listeners $listenerIdx redirect] $listenerColumn(Listener) 7
+      lappend redirect_listeners $listenerColumn(Listener)
+      incr listenerIdx      
+      continue
+    }
+
+    if { $listenerColumn(Destination) eq "" || [string tolower $listenerColumn(Destination)] eq "default"} {
+      set listenerColumn(Pool) $default_pool_name
+    } elseif { [string first "/" $listenerColumn(Destination)] >= 0 } {
+      set listenerColumn(Pool) $listenerColumn(Destination)
+    } else {
+      if { ![info exist poolNames($listenerColumn(Destination))] } {
+        error "The listener $listenerColumn(Listener) referenced a destination pool index $listenerColumn(Destination) which does not exist"
+      }
+      set listenerColumn(Pool) $poolNames($listenerColumn(Destination))
+    }
     # Setup our new tmsh command string
-    set vs_listener_name [format "%s_%s" $vs__Name $vs_listener_idx]
-    regexp {^(.*)[:.]([0-9]{1,5})$} $vs_listener --> vs_listener_addr vs_listener_port
+    set listenerColumn(Name) [format "%s_%s" $vs__Name $listenerIdx]
+    regexp {^(.*)[:.]([0-9]{1,5})$} $listenerColumn(Listener) --> listenerColumn(Addr) listenerColumn(Port)
+    set listenerColumn(Dest) [get_dest_str $listenerColumn(Addr) $listenerColumn(Port)]
 
-    set vs_listener_dest [get_dest_str $vs_listener_addr $vs_listener_port]
-
-    debug [list virtual_server add_listeners $vs_listener_idx] [format "name=%s addr=%s port=%s dest=%s" $vs_listener_name $vs_listener_addr $vs_listener_port $vs_listener_dest] 7    
-    set vs_listener_cmd [string map [list $vs__Name $vs_listener_name "$vs_dest_addr:$pool__port" $vs_listener_dest] $vs_origcmd]
+    debug [list virtual_server add_listeners $listenerIdx] [format "name=%s addr=%s port=%s dest=%s" $listenerColumn(Name) $listenerColumn(Addr) $listenerColumn(Port) $listenerColumn(Dest)] 7    
+    set vs_listener_cmd [string map [list $vs__Name $listenerColumn(Name) "$vs_dest_addr:$pool__port" $listenerColumn(Dest) $default_pool_name $listenerColumn(Pool)] $vs_origcmd]
     # If our listener address is IPv6 we need to fixup the VS source filter and destination mask 
-    if { [is_ipv6 $vs_listener_addr] } {
+    if { [is_ipv6 $listenerColumn(Addr)] } {
       set vs_listener_cmd [string map [list $vs__SourceAddress [format "::%%%s/0" $rd]] $vs_listener_cmd]
       set vs_listener_cmd [string map [list $pool__mask [format "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" $pool__mask]] $vs_listener_cmd]
     } 
 
-    debug [list virtual_server add_listeners $vs_listener_idx tmsh_create] $vs_listener_cmd 1
+    debug [list virtual_server add_listeners $listenerIdx tmsh_create] $vs_listener_cmd 1
     tmsh::create $vs_listener_cmd
-    incr vs_listener_idx
+    incr listenerIdx
   }
 } else {
   debug [list virtual_server skip_create] "found 255.255.255.254 as pool__addr, skipping creation" 2
@@ -1402,9 +1448,9 @@ custom_extensions_after_vs
 # Create an additional virtual server on port 80 for feature__redirectToHTTPS
 if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" } {
   set redirect_listener_idx 0
+  debug [list virtual_server feature__redirectToHTTPS redirect_listeners] $redirect_listeners 7
   foreach redirect_listener $redirect_listeners {
     regexp {^(.*)[:.]([0-9]{1,5})$} $redirect_listener --> redirect_listener_addr redirect_listener_port
-
 
     set redirect_listener_dest [get_dest_str $redirect_listener_addr $redirect_listener_port]
     debug [list virtual_server feature__redirectToHTTPS $redirect_listener_idx] [format "creating redirect virtual server on %s" $redirect_listener_dest] 5

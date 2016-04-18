@@ -627,3 +627,41 @@ proc check_node_exist { node_name } {
     return 1
   }
 }
+
+# Load a crypto cert/key from URL
+# Input: string type = key|cert
+#        string url = the URL to get
+# Return: string obj_name = the name of the created TMOS object
+proc load_crypto_object { type url } {
+  set url [string map {"url=" ""} $url]
+  debug [list load_crypto_object] [format "type=%s url=%s" $type $url] 10
+
+  set url_file_name [lindex [split $url /] end]
+  set obj_name [format "/Common/%s_%s" $::app $url_file_name]
+  set file_name [format "/var/tmp/appsvcs_%s_%s_%s" $::app $::bundler_timestamp $url_file_name]
+  debug [list load_crypto_object] [format "obj_name=%s file_name=%s" $obj_name $file_name] 10
+  
+  switch -glob $type {
+    cert  { set verify_cmd [format "/usr/bin/openssl verify %s" $file_name] }
+    key { set verify_cmd [format "/usr/bin/openssl rsa -noout -text -in %s" $file_name] }
+    default { error "The crypto type specified is not supported" }
+  }
+
+  curl_save_file $url $file_name
+
+  set verify_status [catch {eval exec $verify_cmd} verify_status_ret]
+  debug [list load_crypto_object verify_status $verify_status] $verify_status_ret 10
+  
+  if { $verify_status } {
+    file delete $file_name
+    error "While loading the $type: $verify_status_ret"
+  }
+
+  set cmd [format "sys file ssl-%s %s source-path file://%s" $type $obj_name $file_name]
+  debug [list load_crypto_object tmsh_create] $cmd 10
+  set create_status [catch {tmsh::create $cmd} create_status_ret]
+  debug [list load_crypto_object create_status $create_status] $create_status_ret 10
+  file delete $file_name
+    
+  return $obj_name
+}

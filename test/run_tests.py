@@ -169,10 +169,13 @@ def run_test():
 
 	testnum = 1
 	for test_template in test_templates:
+
 		if testnum < args.start or testnum > args.end or testnum in skip_list:
 			print "[%s/%s][%s/%s][%s] SKIPPED" % (run+1, args.runcount, testnum, len(test_templates), test_template)
 			testnum += 1
 			continue
+
+		test_name = test_template.split('.')[0]
 
 		(del_override, del_override_name, del_partition) = process_file(test_template)
 				
@@ -193,6 +196,22 @@ def run_test():
 
 			if not exitcode:
 				print "SUCCESS ",
+				if len(del_override_name) > 0:
+					res_name = del_override_name
+				else:
+					res_name = test_name
+
+				resultcmd = "ssh root@%s \"tmsh -c 'cd /%s/%s.app ; list ltm ; list asm ; list apm'\"" % (args.host, del_partition, res_name)
+				rexitcode, rout, rerr = get_exitcode_stdout_stderr(resultcmd)
+				with open ("%s/run/%s/%s/%s.result" % (os.getcwd(), sessionid, run+1, test_name), "wt") as resultfile:
+					resultfile.write(rout)
+				resultfile.close()
+
+				if rexitcode:
+					print "RESULT_FAIL",
+				else:
+					print "RESULT_OK",
+
 				if not args.nodelete and not del_override:
 					del_name = test_template.split('.')[0]
 					if len(del_override_name) > 0:
@@ -285,6 +304,7 @@ print "Starting test run, sessionid is %s" % sessionid
 
 for run in range(args.runcount):
 	print "=== Start Run %s/%s =======================" % (run+1, args.runcount)
+	os.makedirs("run/%s/%s/" % (sessionid, run+1))
 	if run_test() != 0:
 		exit(1)
 	print "=== End Run %s/%s =======================" % (run+1, args.runcount)

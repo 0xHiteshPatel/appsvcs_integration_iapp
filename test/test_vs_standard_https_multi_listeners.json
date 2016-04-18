@@ -37,7 +37,9 @@
 			"name":"pool__Pools",
          "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
          "rows" : [
-            { "row": [ "0", "", "", "round-robin", "0", "none"] }
+            { "row": [ "0", "", "", "round-robin", "0", "none"] },
+            { "row": [ "1", "", "", "round-robin", "0", "none"] },
+            { "row": [ "2", "", "", "round-robin", "0", "none"] }
          ]
       },
 		{
@@ -46,18 +48,24 @@
          "rows" : [
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
-            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "2", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "2", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "2", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
          ]
 		},
       {
          "name":"vs__Listeners",
-         "columnNames": ["Listener"],
+         "columnNames": ["Listener","Destination"],
          "rows" : [
-            { "row": ["%TEST_VS_IP%:445"] },
-            { "row": ["[%TEST_VS6_IP%]:443"] },
-            { "row": ["[%TEST_VS6_IP%]:81;redirect"] },
-            { "row": ["%TEST_VS6_IP%.443"] },
-            { "row": ["%TEST_VS_IP%:80;redirect"] }
+            { "row": ["%TEST_VS_IP%:445","default"] },
+            { "row": ["[%TEST_VS6_IP%]:443","1"] },
+            { "row": ["[%TEST_VS6_IP%]:81","redirect"] },
+            { "row": ["%TEST_VS6_IP%.443","2"] },
+            { "row": ["%TEST_VS_IP%:80","redirect"] }
          ]
       }
 	]
