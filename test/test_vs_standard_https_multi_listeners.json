@@ -64,7 +64,7 @@
             { "row": ["%TEST_VS_IP%:445","default"] },
             { "row": ["[%TEST_VS6_IP%]:443","1"] },
             { "row": ["[%TEST_VS6_IP%]:81","redirect"] },
-            { "row": ["%TEST_VS6_IP%.443","2"] },
+            { "row": ["%TEST_VS6_IP%.443","/Common/test_pool"] },
             { "row": ["%TEST_VS_IP%:80","redirect"] }
          ]
       }
