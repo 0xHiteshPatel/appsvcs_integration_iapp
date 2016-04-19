@@ -384,7 +384,8 @@ foreach poolRow $pool__Pools {
     if { [string first "/" $memberColumn(IPAddress)] >= 0 } { set node_default_folder "" }
     set node_obj_name [format "%s%s" $node_default_folder $memberColumn(IPAddress)]
     set node_exist [check_node_exist $node_obj_name]
-
+    debug [list pools $poolIdx members $memberId set_blank_folder] "folder=$node_default_folder name=$node_obj_name exist=$node_exist" 7
+    
     # Add a route domain if it wasn't included and we don't already have a node object created
     if { $node_exist == 0 && ![has_routedomain $memberColumn(IPAddress)]} {
       set ip [get_dest_addr $memberColumn(IPAddress)]

@@ -613,6 +613,7 @@ proc table_row_to_array { row array_ref {defaults_ref {}} {null_columns []} } {
 proc check_node_exist { node_name } {
   if { ! [info exists ::__node_cache($node_name)] } {
     set node_status [catch {tmsh::get_config ltm node $node_name} node_status_ret]
+    debug [list check_node_exist $node_name status] $node_status_ret 10
     if { [string match "*address*" $node_status_ret] } {
       set ::__node_cache($node_name) 1
       debug [list check_node_exist $node_name cache_set] "1" 10
@@ -623,8 +624,8 @@ proc check_node_exist { node_name } {
       return 0
     }
   } else {
-    debug [list check_node_exist $node_name cache_hit] "1" 10
-    return 1
+    debug [list check_node_exist $node_name cache_hit] $::__node_cache($node_name) 10
+    return $::__node_cache($node_name)
   }
 }
 
