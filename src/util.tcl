@@ -643,8 +643,8 @@ proc load_crypto_object { type url } {
   debug [list load_crypto_object] [format "obj_name=%s file_name=%s" $obj_name $file_name] 10
   
   switch -glob $type {
-    cert  { set verify_cmd [format "/usr/bin/openssl verify %s" $file_name] }
-    key { set verify_cmd [format "/usr/bin/openssl rsa -noout -text -in %s" $file_name] }
+    cert  { set verify_cmd [format "/usr/bin/openssl x509 -noout -in %s" $file_name] }
+    key { set verify_cmd [format "/usr/bin/openssl rsa -noout -in %s" $file_name] }
     default { error "The crypto type specified is not supported" }
   }
 
