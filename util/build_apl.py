@@ -26,6 +26,7 @@ def process_field (field, section, tab):
 		#tclstr = " tcl {\n%s\n}" % field["tcl"]
 		tclstr = """tcl {
 	tmsh::cd /
+	set results ""
     set cmds [list %s]
     foreach cmd $cmds {
       set objs [tmsh::get_config $cmd recursive]
