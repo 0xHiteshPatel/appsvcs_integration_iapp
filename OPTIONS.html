@@ -392,7 +392,7 @@ always</td>
   <td>$vs__ProfileClientProtocol</td>
   <td>The client-side protocol profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -401,7 +401,7 @@ always</td>
   <td>$vs__ProfileServerProtocol</td>
   <td>The server-side protocol profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -410,7 +410,7 @@ always</td>
   <td>$vs__ProfileHTTP</td>
   <td>The HTTP protocol profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -419,7 +419,7 @@ always</td>
   <td>$vs__ProfileOneConnect</td>
   <td>The oneconnect profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -428,7 +428,7 @@ always</td>
   <td>$vs__ProfileCompression</td>
   <td>The compression profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_005</td>
 </tr>
@@ -446,7 +446,7 @@ always</td>
   <td>$vs__ProfileRequestLogging</td>
   <td>The request logging profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_005</td>
 </tr>
@@ -455,7 +455,7 @@ always</td>
   <td>$vs__ProfileDefaultPersist</td>
   <td>The default persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -464,7 +464,7 @@ always</td>
   <td>$vs__ProfileFallbackPersist</td>
   <td>The fallback persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -473,7 +473,7 @@ always</td>
   <td>$vs__SNATConfig</td>
   <td>The SNAT option to use.  Specifiy 'automap','/Common/<existing_snat_pool_name>','partition-default','create:<ip1,>....<ipX>'.  The partition-default option references a SNAT pool created by Cisco APIC as part of the APIC partition</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -482,7 +482,7 @@ always</td>
   <td>$vs__ProfileServerSSL</td>
   <td>The server-ssl profile.  This field supports the 'create:' format for customization</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_005</td>
 </tr>
@@ -491,25 +491,25 @@ always</td>
   <td>$vs__ProfileClientSSL</td>
   <td>The path to an existing Client-SSL profile.  If specified this value overrides Client-SSL profile creation</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
 <tr>
   <td>vs.ProfileClientSSLCert</td>
   <td>$vs__ProfileClientSSLCert</td>
-  <td>The path to an existing SSL Certificate.  If the work 'auto' is specfied the value /Common/<iapp_name>.crt will be substituted</td>
+  <td>The path to an existing SSL Certificate.  If the word 'auto' is specfied the value /Common/<iapp_name>.crt will be substituted.  This field also supports the url=<url> format to load a PEM encoded resources.</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
 <tr>
   <td>vs.ProfileClientSSLKey</td>
   <td>$vs__ProfileClientSSLKey</td>
-  <td>The path to an existing SSL Key.  If the work 'auto' is specfied the value /Common/<iapp_name>.key will be substituted</td>
+  <td>The path to an existing SSL Key.  If the word 'auto' is specfied the value /Common/<iapp_name>.key will be substituted.  This field also supports the url=<url> format to load a PEM encoded resources.</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -518,7 +518,7 @@ always</td>
   <td>$vs__ProfileClientSSLChain</td>
   <td>The path to the SSL Certicate Chain bundle</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>
@@ -545,7 +545,7 @@ always</td>
   <td>$vs__ProfileSecurityLogProfiles</td>
   <td>A comma seperated list of existing security logging profiles</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_008</td>
 </tr>
@@ -563,7 +563,7 @@ always</td>
   <td>$vs__ProfileSecurityDoS</td>
   <td>The DoS Protection Policy to configure</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_016</td>
 </tr>
@@ -572,7 +572,7 @@ always</td>
   <td>$vs__ProfileAccess</td>
   <td>The APM Access Policy to configure.  To automatically associate a bundled APM policy after deployment use the value 'use-bundled'</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_011</td>
 </tr>
@@ -581,7 +581,7 @@ always</td>
   <td>$vs__ProfileConnectivity</td>
   <td>The APM Connectivity Policy to configure</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_011</td>
 </tr>
@@ -619,7 +619,7 @@ change</td>
   <td>$vs__Irules</td>
   <td>A comma seperated list of existing iRules to attach to the virtual server.  Ordering is preserved.</td>
   <td>[1, 2, 3, 4]</td>
-  <td>string</td>
+  <td>editchoice</td>
   <td></td>
   <td>0.3_001</td>
 </tr>

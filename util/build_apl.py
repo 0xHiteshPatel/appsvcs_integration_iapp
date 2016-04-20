@@ -11,6 +11,7 @@ def process_field (field, section, tab):
 	reqstr = ""
 	defstr = ""
 	dispstr = " display \"large\" "
+	tclstr = ""
 
 	if ('required' in field.keys() and field["required"] == True):
 		reqstr = " required"
@@ -21,6 +22,24 @@ def process_field (field, section, tab):
 	if 'display' in field.keys():
 		dispstr = " display \"%s\"" % field["display"]
 
+	if 'create_list' in field.keys():
+		#tclstr = " tcl {\n%s\n}" % field["tcl"]
+		tclstr = """tcl {
+	tmsh::cd /
+    set cmds [list %s]
+    foreach cmd $cmds {
+      set objs [tmsh::get_config $cmd recursive]
+      foreach obj $objs {
+      	set name [string map {"\\\"" ""} [tmsh::get_name $obj]]
+      	if { $name ne "" } {
+	        append results \"/$name\"
+	        append results \"\\n\"
+	    }
+      }  
+    }
+    return $results
+}
+		""" % ' '.join(field["create_list"])
 	if field["type"] == "text":
 		text.append("\t%s.%s \"%s\" \"%s\"" % (section, field["name"], field["description"], field["text"])) 
 	else:
@@ -51,13 +70,16 @@ def process_field (field, section, tab):
   			print "\t\t%s\"%s\"" % (tab, templist[-1])
 		print "\t%s}" % tab
 	elif field["type"] == "editchoice":
-		print "\t%seditchoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
-		templist = field["choices"]
-		for choice in templist[:-1]:
-  			print "\t\t%s\"%s\"," % (tab, choice)
+		if len(tclstr) > 0:
+			print "\t%seditchoice %s%s%s%s%s" % (tab, field["name"], reqstr, dispstr, defstr, tclstr)
 		else:
-  			print "\t\t%s\"%s\"" % (tab, templist[-1])
-		print "\t%s}" % tab
+			print "\t%seditchoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+			templist = field["choices"]
+			for choice in templist[:-1]:
+	  			print "\t\t%s\"%s\"," % (tab, choice)
+			else:
+	  			print "\t\t%s\"%s\"" % (tab, templist[-1])
+			print "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist":
 		if os.sep != "/":
 			field["glob"] = field["glob"].replace("/","\\")
