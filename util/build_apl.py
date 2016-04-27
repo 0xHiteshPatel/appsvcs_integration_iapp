@@ -12,6 +12,11 @@ def process_field (field, section, tab):
 	defstr = ""
 	dispstr = " display \"large\" "
 	tclstr = ""
+	optstr = ""
+	retstr = ""
+
+	if ('uivisible' not in field.keys()):
+		field["uivisible"] = True
 
 	if ('required' in field.keys() and field["required"] == True):
 		reqstr = " required"
@@ -23,23 +28,22 @@ def process_field (field, section, tab):
 		dispstr = " display \"%s\"" % field["display"]
 
 	if 'create_list' in field.keys():
-		#tclstr = " tcl {\n%s\n}" % field["tcl"]
-		tclstr = """tcl {
-	tmsh::cd /
-	set results ""
-    set cmds [list %s]
-    foreach cmd $cmds {
-      set objs [tmsh::get_config $cmd recursive]
-      foreach obj $objs {
-      	set name [string map {"\\\"" ""} [tmsh::get_name $obj]]
-      	if { $name ne "" } {
-	        append results \"/$name\"
-	        append results \"\\n\"
+		tclstr = """ tcl {
+		tmsh::cd /
+		set results ""
+	    set cmds [list %s]
+	    foreach cmd $cmds {
+	      set objs [tmsh::get_config $cmd recursive]
+	      foreach obj $objs {
+	      	set name [string map {"\\\"" ""} [tmsh::get_name $obj]]
+	      	if { $name ne "" } {
+		        append results \"/$name\"
+		        append results \"\\n\"
+		    }
+	      }  
 	    }
-      }  
-    }
-    return $results
-}
+	    return $results
+	}
 		""" % ' '.join(field["create_list"])
 	if field["type"] == "text":
 		text.append("\t%s.%s \"%s\" \"%s\"" % (section, field["name"], field["description"], field["text"])) 
@@ -47,7 +51,7 @@ def process_field (field, section, tab):
 		text.append("\t%s.%s \"%s\"" % (section, field["name"], field["description"]))
 
 	if field["type"] == "text":
-		print "\t%smessage %s" % (tab, field["name"])
+		retstr += "\t%smessage %s" % (tab, field["name"])
 	elif field["type"] == "boolean":
 		if 'default' in field.keys():
 			defstr = " default \"%s\"" % field["default"]
@@ -57,30 +61,30 @@ def process_field (field, section, tab):
 				field["default"] = "disabled"
 			defstr = " default \"%s\"" % field["default"]
 				
-		print "\t%schoice %s%s%s {\n\t\t%s\"enabled\",\n\t\t%s\"disabled\"\n\t%s}" % (tab, field["name"], defstr, reqstr, tab, tab, tab)
+		retstr += "\t%schoice %s%s%s {\n\t\t%s\"enabled\",\n\t\t%s\"disabled\"\n\t%s}" % (tab, field["name"], defstr, reqstr, tab, tab, tab)
 	elif field["type"] in validators.keys():
-		print "\t%sstring %s%s%s validator \"%s\"%s" % (tab, field["name"], reqstr, dispstr, validators[field["type"]], defstr)
+		retstr += "\t%sstring %s%s%s validator \"%s\"%s" % (tab, field["name"], reqstr, dispstr, validators[field["type"]], defstr)
 	elif field["type"] == "string":
-		print "\t%sstring %s%s%s%s" % (tab, field["name"], reqstr, dispstr, defstr)
+		retstr += "\t%sstring %s%s%s%s" % (tab, field["name"], reqstr, dispstr, defstr)
 	elif field["type"] == "choice":
-		print "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+		retstr += "\t%schoice %s%s%s%s {\n" % (tab, field["name"], reqstr, dispstr, defstr)
 		templist = field["choices"]
 		for choice in templist[:-1]:
-  			print "\t\t%s\"%s\"," % (tab, choice)
+  			retstr += "\t\t%s\"%s\",\n" % (tab, choice)
 		else:
-  			print "\t\t%s\"%s\"" % (tab, templist[-1])
-		print "\t%s}" % tab
+  			retstr += "\t\t%s\"%s\"\n" % (tab, templist[-1])
+		retstr += "\t%s}" % tab
 	elif field["type"] == "editchoice":
 		if len(tclstr) > 0:
-			print "\t%seditchoice %s%s%s%s%s" % (tab, field["name"], reqstr, dispstr, defstr, tclstr)
+			retstr += "\t%seditchoice %s%s%s%s%s" % (tab, field["name"], reqstr, dispstr, defstr, tclstr)
 		else:
-			print "\t%seditchoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+			retstr += "\t%seditchoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
 			templist = field["choices"]
 			for choice in templist[:-1]:
-	  			print "\t\t%s\"%s\"," % (tab, choice)
+	  			retstr += "\t\t%s\"%s\"," % (tab, choice)
 			else:
-	  			print "\t\t%s\"%s\"" % (tab, templist[-1])
-			print "\t%s}" % tab
+	  			retstr += "\t\t%s\"%s\"" % (tab, templist[-1])
+			retstr += "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist":
 		if os.sep != "/":
 			field["glob"] = field["glob"].replace("/","\\")
@@ -92,17 +96,17 @@ def process_field (field, section, tab):
 			file_parts = name_parts[-1].split('.')
 			filenames.append(file_parts[0])
 
-		print "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+		retstr += "\t%schoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
 
 		if len(files) > 0:
 			for choice in filenames[:-1]:
-	  			print "\t\t%s\"%s%s\"," % (tab, field["globprefix"], choice)
+	  			retstr += "\t\t%s\"%s%s\"," % (tab, field["globprefix"], choice)
 			else:
-	  			print "\t\t%s\"%s%s\"" % (tab, field["globprefix"], filenames[-1])
+	  			retstr += "\t\t%s\"%s%s\"" % (tab, field["globprefix"], filenames[-1])
 	  	else:
-	  		print "\t\t%s\"disabled\"" % tab
+	  		retstr += "\t\t%s\"disabled\"" % tab
 
-		print "\t%s}" % tab
+		retstr += "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist_multi":
 		types = {}		
 		globs = field["glob"]
@@ -118,18 +122,23 @@ def process_field (field, section, tab):
 				file_parts = name_parts[-1].split('.')
 				filenames.append(file_parts[0])
 				types[file_parts[0]] = globitem["prefix"]
-		print "\t%smultichoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+		retstr += "\t%smultichoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
 		if len(filenames) > 0:
 			for choice in filenames[:-1]:
-	  			print "\t\t%s\"%s%s\"," % (tab, types.get('%s' % choice), choice)
+	  			retstr += "\t\t%s\"%s%s\"," % (tab, types.get('%s' % choice), choice)
 			else:
-	  			print "\t\t%s\"%s%s\"" % (tab, types.get('%s' % filenames[-1]), filenames[-1])
+	  			retstr += "\t\t%s\"%s%s\"" % (tab, types.get('%s' % filenames[-1]), filenames[-1])
 	  	else:
-	  		print "\t\t%s\"** no bundled items **\"" % tab
-		print "\t%s}" % tab	
+	  		retstr += "\t\t%s\"** no bundled items **\"" % tab
+		retstr += "\t%s}" % tab
 	else:
 		print "Invalid type: %s field=%s section=%s" % (field["type"], field["name"], section["name"])
 		sys.exit()
+
+	if field['uivisible'] == True:
+		print retstr
+	else:
+		print "optional (\"dont\" == \"show\") {\n %s \n}" % retstr
 
 	return
 
