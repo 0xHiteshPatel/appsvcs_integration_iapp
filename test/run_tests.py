@@ -11,6 +11,7 @@ import shlex
 from subprocess import Popen, PIPE
 import time
 import requests
+import random
 
 def get_exitcode_stdout_stderr(cmd):
     """
@@ -57,7 +58,11 @@ def process_file(template_fn):
 				parent_match = re.match( r'.*\"test_parent\":\"(.*)\".*', line)
 				partition_match = re.match( r'.*\"partition\":\"(.*)\".*', line)
 				policyhost_match = re.match( r'.*%TEST_POLICY_HOST%.*', line)
-					
+				random_match = re.match( r'.*%RANDOM%.*', line)
+				
+				if random_match:
+					line = re.sub(r'\%RANDOM\%', str(random.randint(10000, 99999)), line)
+
 				if partition_match:
 					retlist[2] = partition_match.group(1)
 

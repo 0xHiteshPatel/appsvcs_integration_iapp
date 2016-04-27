@@ -517,13 +517,49 @@ proc curl_save_file { url filename } {
 
 # Borrowed from tcllib ::ip::IPv4?
 # Check a string to see if it's an IPv6 address
-# Input: string = string to check
+# Input: string addr = string to check
 # Output: 1 = is IPv6
 #         0 = not IPv6
 proc is_ipv6 { addr } {
+  if { [has_routedomain $addr] } {
+    set addr [lindex [split $addr %] 0]
+  }
   if {[string first : $addr] >= 0} {
       return 1
   }
+  return 0
+}
+
+# Borrowed from http://wiki.tcl.tk/989
+# Check a string to see if it's an IPv4 address
+# Input: string addr = string to check
+# Output: 1 = is IPv4
+#         0 = not IPv4
+proc is_ipv4 { addr } {
+  if { [has_routedomain $addr] } {
+    set addr [lindex [split $addr %] 0]
+  }
+  if {[regexp {^\d+\.\d+\.\d+\.\d+$} $addr]
+      && [scan $addr %d.%d.%d.%d a b c d] == 4
+      && 0 <= $a && $a <= 255 && 0 <= $b && $b <= 255
+      && 0 <= $c && $c <= 255 && 0 <= $d && $d <= 255} {
+    return 1
+  } else {
+    return 0
+  }  
+}
+
+# Check a string to see if it's a IPv4 or IPv6 address
+# Input: string addr = string to check
+# Output: >1 = is address (4 = IPv4, 6 = IPv6)
+#         0 = is NOT an address
+proc is_ip { addr } {
+  set v4 [is_ipv4 $addr]
+  debug [list is_ip $addr v4] $v4 10
+  if { $v4 } { return 4 }
+  set v6 [is_ipv6 $addr]
+  debug [list is_ip $addr v6] $v6 10
+  if { $v6 } { return 6 }
   return 0
 }
 
@@ -665,4 +701,49 @@ proc load_crypto_object { type url } {
   file delete $file_name
     
   return $obj_name
+}
+
+# Credit: http://www.egghelp.org/cgi-bin/tcl_archive.tcl?mode=download&id=97
+# Perform a DNS lookup of a hostname using nslookup.  Assumes DNS servers are already 
+# configured in TMOS
+# Input: string host = name of host to lookup
+#        int mode = 1 => Throw a hard error
+#                    0 => Return the error
+# Return: string return = First IP tied to hostname OR Error
+proc dns_lookup { host {mode 1} } {
+  set name "Unknown"
+  set ip "Unknown"
+  set errmsg "Unknown"
+  set host [lindex [string tolower $host] 0]
+  if {[catch {eval exec "/usr/bin/nslookup" [lindex $host 0]} buff]} {
+    foreach line [split $buff \n] {
+      if {[string first "${host}:" $line] != -1} {
+        set errmsg [string trim [lindex [split $line :] 1]]
+      }
+    }
+
+    if { $mode } {
+        error "An error occured trying to resolve $host: $errmsg"
+    } else {
+        return "Error: $errmsg"
+    }
+  }
+  set buff [split $buff \n]
+  set buff [lreplace $buff 0 1]
+  if {[regexp {name = (.*)\.} $buff -> name]} { set ip $host }
+
+  foreach data $buff {
+    switch [lindex $data 0] {
+      "Name:" {
+        set name [string trim [lindex [split $data :] 1]]
+      }
+      "Address:" {
+        set ip [string trim [lindex [split $data :] 1]]
+      }
+      "Addresses:" {
+        set ip [string trim [lindex [split $data :] 1]]
+      }
+    }
+  }
+  return "${ip}"
 }

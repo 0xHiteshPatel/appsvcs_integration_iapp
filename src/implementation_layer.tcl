@@ -263,6 +263,7 @@ foreach monRow $monitor__Monitors {
   set cmd ""
   debug [list monitors $monIdx] [format "monRow=%s" $monRow] 9
 
+  array unset monColumn
   array set monColumn {}
   table_row_to_array $monRow monColumn ::table_defaults(Monitors)
   debug [list monitors table_row_to_array return] [array get monColumn] 7
@@ -327,6 +328,7 @@ foreach poolRow $pool__Pools {
 
   custom_extensions_before_pool
 
+  array unset poolColumn
   array set poolColumn {}
   table_row_to_array $poolRow poolColumn ::table_defaults(Pools) [list AdvOptions]
   debug [list pools $poolIdx table_row_to_array return] [array get poolColumn] 7
@@ -357,6 +359,7 @@ foreach poolRow $pool__Pools {
   # Process the pool__Members table
   set memberStr "members replace-all-with \{ "
   foreach memberRow $pool__Members {
+    array unset memberColumn
     array set memberColumn {}
     table_row_to_array $memberRow memberColumn ::table_defaults(Members) [list AdvOptions]
 
@@ -365,12 +368,27 @@ foreach poolRow $pool__Pools {
       debug [list pools $poolIdx members $memberId skip_index] [format "not a member of pool %s skipping" $poolIdx] 11
       continue
     }
-    debug [list pools $poolIdx members $memberId config_raw] [array get memberColumn] 10
+    debug [list pools $poolIdx members $memberId config_raw] [array get memberColumn] 9
 
     
     set memberColumn(AdvOptions) [lindex $memberColumn(AdvOptions) 0]    
 
-    # Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
+    # We support for many option formats for the IPAddress field.  Examples are:
+    #  0.0.0.0                   Special value that signals to skip this pool member
+    #  x.x.x.x[%y][;nodename]    IPv4 Address w/w/o Route Domain or Node Name
+    #  abcd::0001[%y][;nodename] IPv6 Address w/w/o Route Domain or Node Name
+    #  /Common/node_name         Pre-existing node name
+    #  node_name                 Pre-existing node name without folder (default folder=Common)
+    #  hostname.org.com          A DNS Hostname (resolved on deployment)
+    #
+    # These options are processed as follows:
+    #  1) Skip row is IPAddress == "0.0.0.0*"
+    #  2) Determine if a node object was specified or not
+    #  3) If node object does not exist process as follows
+    #    3a) If a nodename option was specified create the node object
+    #    3b) If not IP than assume a hostname and resolve IP, create node using hostname, add node to member string
+
+    # 1) Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
     if { [string match 0.0.0.0* $memberColumn(IPAddress)] } {
       debug [list pools $poolIdx members $memberId skip_ip] "ip=0.0.0.0, skipping" 7
@@ -378,19 +396,7 @@ foreach poolRow $pool__Pools {
     } else {
       incr numMembers
     }
-
-    # Determine if a node object was specified rather than an IP address
-    set node_default_folder "/Common/"
-    if { [string first "/" $memberColumn(IPAddress)] >= 0 } { set node_default_folder "" }
-    set node_obj_name [format "%s%s" $node_default_folder $memberColumn(IPAddress)]
-    set node_exist [check_node_exist $node_obj_name]
-    debug [list pools $poolIdx members $memberId set_blank_folder] "folder=$node_default_folder name=$node_obj_name exist=$node_exist" 7
     
-    # Add a route domain if it wasn't included and we don't already have a node object created
-    if { $node_exist == 0 && ![has_routedomain $memberColumn(IPAddress)]} {
-      set ip [get_dest_addr $memberColumn(IPAddress)]
-    }
-
     # TODO: Is this still required?
     # Sometimes we receive a transposed ip/port from BIG-IQ... fix it here
     if {[has_routedomain $memberColumn(Port)]} {
@@ -400,7 +406,53 @@ foreach poolRow $pool__Pools {
       set memberColumn(IPAddress) $new_ip      
       debug [list pools $poolIdx members $memberId fix_ip_port] [format "ip=%s port=%s" $memberColumn(IPAddress) $memberColumn(Port)] 7
     }
-    
+ 
+    set node_default_folder "/Common/"
+    if { [string first "/" $memberColumn(IPAddress)] >= 0 } { set node_default_folder "" }
+    set node_create 0
+    if { [string first \; $memberColumn(IPAddress)] > 1 } {
+      set memberColumn(IPAddress) [lindex $memberColumn(IPAddress) 0]
+      set node_info [psplit $memberColumn(IPAddress) \;]
+      set memberColumn(IPAddress) [lindex $node_info 0]
+      set memberColumn(NodeName) [lindex $node_info 1]
+      set node_obj_name [format "%s%s" $node_default_folder $memberColumn(NodeName)]
+      debug [list pools $poolIdx members $memberId named_node node_obj_name] $node_obj_name 7
+    } else {
+      set node_obj_name [format "%s%s" $node_default_folder $memberColumn(IPAddress)]
+      debug [list pools $poolIdx members $memberId node_obj_name] $node_obj_name 7
+    }
+
+    # 2) Determine if a node object was specified rather than an IP address
+    set node_exist [check_node_exist $node_obj_name]
+    debug [list pools $poolIdx members $memberId set_blank_folder] "folder=$node_default_folder name=$node_obj_name exist=$node_exist" 7
+
+    debug [list pools $poolIdx members $memberId is_ip] "$memberColumn(IPAddress) [is_ip $memberColumn(IPAddress)]" 7
+
+    if { [info exists memberColumn(NodeName)] && $node_exist == 0 } {
+      set node_create 1
+    } else {
+      if { $node_exist == 0 && [is_ip $memberColumn(IPAddress)] == 0 } {
+        set memberColumn(NodeName) $memberColumn(IPAddress)
+        set memberColumn(IPAddress) [dns_lookup $memberColumn(IPAddress)]
+        debug [list pools $poolIdx members $memberId resolved_ip] $memberColumn(IPAddress) 7
+        set node_create 1
+      }
+    }
+
+    if { $node_create } {
+      set node_cmd [format "ltm node /%s/%s address %s" $partition $memberColumn(NodeName) $memberColumn(IPAddress)]
+      debug [list pools $poolIdx members $memberId named_node tmsh_create] $node_cmd 7
+      tmsh::create $node_cmd
+      set __node_cache($memberColumn(NodeName)) 1
+      set node_exist 1
+      set memberColumn(IPAddress) [format "/Common/%s" $memberColumn(NodeName)]
+    }
+
+    # Add a route domain if it wasn't included and we don't already have a node object created
+    if { $node_exist == 0 && ![has_routedomain $memberColumn(IPAddress)]} {
+      set memberColumn(IPAddress) [get_dest_addr $memberColumn(IPAddress)]
+    }
+
     # If we don't get a port in the pool member table than use the template value for pool__MemberDefaultPort
     # If pool__MemberDefaultPort is empty than use the value for pool__port
     if { [string length $memberColumn(Port)] == 0} {
@@ -556,6 +608,7 @@ foreach l7p_matchRow $l7policy__rulesMatch {
   debug [list l7policy match $l7p_matchIdx] [format "matchRow=%s" $l7p_matchRow] 9
 
   set l7p_rules($l7p_matchIdx) {}
+  array unset l7p_matchColumn
   array set l7p_matchColumn {}
   table_row_to_array $l7p_matchRow l7p_matchColumn ::table_defaults(L7P_Match)
 
@@ -614,6 +667,7 @@ set l7p_action_found_default 0
 foreach l7p_actionRow $l7policy__rulesAction {
   debug [list l7policy action $l7p_actionIdx] [format "actionRow=%s" $l7p_actionRow] 9
 
+  array unset l7p_actionColumn
   array set l7p_actionColumn {}
   table_row_to_array $l7p_actionRow l7p_actionColumn ::table_defaults(L7P_Action)
 
@@ -1393,6 +1447,7 @@ if { $pool__addr ne "255.255.255.254" } {
   foreach listenerRow $vs__Listeners {
     debug [list virtual_server add_listeners $listenerIdx] [format "listenerRow=%s" $listenerRow] 9
     
+    array unset listenerColumn
     array set listenerColumn {}
     table_row_to_array $listenerRow listenerColumn ::table_defaults(Listeners)
     debug [list virtual_server add_listeners $listenerIdx table_row_to_array return] [array get listenerColumn] 7
