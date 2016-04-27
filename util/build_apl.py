@@ -78,12 +78,12 @@ def process_field (field, section, tab):
 		if len(tclstr) > 0:
 			retstr += "\t%seditchoice %s%s%s%s%s" % (tab, field["name"], reqstr, dispstr, defstr, tclstr)
 		else:
-			retstr += "\t%seditchoice %s%s%s%s {" % (tab, field["name"], reqstr, dispstr, defstr)
+			retstr += "\t%seditchoice %s%s%s%s {\n" % (tab, field["name"], reqstr, dispstr, defstr)
 			templist = field["choices"]
 			for choice in templist[:-1]:
-	  			retstr += "\t\t%s\"%s\"," % (tab, choice)
+	  			retstr += "\t\t%s\"%s\",\n" % (tab, choice)
 			else:
-	  			retstr += "\t\t%s\"%s\"" % (tab, templist[-1])
+	  			retstr += "\t\t%s\"%s\"\n" % (tab, templist[-1])
 			retstr += "\t%s}" % tab
 	elif field["type"] == "dynamic_filelist":
 		if os.sep != "/":
