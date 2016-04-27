@@ -173,10 +173,19 @@ for section in data["sections"]:
 			process_field(field, section["name"], "")
 		else:
 			text.append("\t%s.%s \"%s\"" % (section["name"], field["name"], field["description"]))
-			print "\ttable %s {" % field["name"]
+
+			if ('uivisible' in field.keys() and field["uivisible"] == False):
+				print "optional (\"dont\" == \"show\") {\ntable %s {" % field["name"]
+			else:
+				print "\ttable %s {" % field["name"]
+
 			for table_field in field["fields"]:
 				process_field(table_field, "%s.%s" % (section["name"], field["name"]), "\t")
-			print "\t}"
+
+			if ('uivisible' in field.keys() and field["uivisible"] == False):
+				print "\t}\n}"
+			else:
+				print "\t}"
 
 	print "}"
 	print ""

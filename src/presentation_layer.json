@@ -163,6 +163,7 @@
 					"description":"Pool: Pool Table",
 					"help":"The pools to create.  Note that pool index must be >0 and sequential.",
 					"type":"table",
+					"uivisible":true,			
 					"modes":[1,2,3,4],
 					"minver":"2.0_001",
 					"fields": [
