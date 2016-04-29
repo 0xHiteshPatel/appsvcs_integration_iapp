@@ -670,8 +670,15 @@ proc check_node_exist { node_name } {
 #        string url = the URL to get
 # Return: string obj_name = the name of the created TMOS object
 proc load_crypto_object { type url } {
-  set url [string map {"url=" ""} $url]
   debug [list load_crypto_object] [format "type=%s url=%s" $type $url] 10
+  set url_map [list %APP_NAME%  $::app \
+                    %APP_PATH%  $::app_path \
+                    %VS_NAME%   $::vs__Name \
+                    %PARTITION% $::partition \
+                    "url="      ""]
+
+  set url [string map $url_map $url]  
+  debug [list load_crypto_object url_subst] $url 10
 
   set url_file_name [lindex [split $url /] end]
   set obj_name [format "/Common/%s_%s" $::app $url_file_name]
