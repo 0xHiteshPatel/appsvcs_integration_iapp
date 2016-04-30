@@ -1447,6 +1447,7 @@ if { $pool__addr ne "255.255.255.254" } {
   foreach listenerRow $vs__Listeners {
     debug [list virtual_server add_listeners $listenerIdx] [format "listenerRow=%s" $listenerRow] 9
     
+    set listenerMap [list]
     array unset listenerColumn
     array set listenerColumn {}
     table_row_to_array $listenerRow listenerColumn ::table_defaults(Listeners)
@@ -1459,12 +1460,35 @@ if { $pool__addr ne "255.255.255.254" } {
       continue
     }
 
+    set listenerColumn(Destination) [lindex $listenerColumn(Destination) 0]
+    array unset listenerDestOptions 
+    array set listenerDestOptions [process_kvp_string $listenerColumn(Destination)]
+    debug [list virtual_server add_listeners $listenerIdx dest_options] [array get listenerDestOptions] 7
+
     # If this row had the 'redirect' destination specified save it for later and skip this row
-    if { [string tolower $listenerColumn(Destination)] eq "redirect" } {
-      debug [list virtual_server add_listeners $listenerIdx redirect] $listenerColumn(Listener) 7
-      lappend redirect_listeners $listenerColumn(Listener)
-      incr listenerIdx      
-      continue
+    if { [info exists listenerDestOptions(redirect)] } {
+        debug [list virtual_server add_listeners $listenerIdx redirect] $listenerColumn(Listener) 7
+        lappend redirect_listeners $listenerColumn(Listener)
+        incr listenerIdx      
+        continue
+    }
+
+    # If this row had the 'nossl,noclientssl,noserverssl' destination specified do not attach SSL profiles to the virtual server
+    if { [info exists listenerDestOptions(nossl)] } {
+      debug [list virtual_server add_listeners $listenerIdx nossl] $listenerColumn(Listener) 7
+      lappend listenerMap "\"$vs__ProfileClientSSL\"" ""
+      lappend listenerMap "\"$vs__ProfileServerSSL\"" ""
+      set listenerColumn(Destination) [string map [list "\;nossl" ""] $listenerColumn(Destination)]
+    }
+    if { [info exists listenerDestOptions(noclientssl)] } {
+      debug [list virtual_server add_listeners $listenerIdx noclientssl] $listenerColumn(Listener) 7
+      lappend listenerMap "\"$vs__ProfileClientSSL\"" ""
+      set listenerColumn(Destination) [string map [list "\;noclientssl" ""] $listenerColumn(Destination)]
+    }
+    if { [info exists listenerDestOptions(noserverssl)] } {
+      debug [list virtual_server add_listeners $listenerIdx noserverssl] $listenerColumn(Listener) 7
+      lappend listenerMap "\"$vs__ProfileServerSSL\"" ""
+      set listenerColumn(Destination) [string map [list "\;noserverssl" ""] $listenerColumn(Destination)]
     }
 
     if { $listenerColumn(Destination) eq "" || [string tolower $listenerColumn(Destination)] eq "default"} {
@@ -1477,6 +1501,7 @@ if { $pool__addr ne "255.255.255.254" } {
       }
       set listenerColumn(Pool) $poolNames($listenerColumn(Destination))
     }
+
     # Setup our new tmsh command string
     set listenerColumn(Name) [format "%s_%s" $vs__Name $listenerIdx]
     regexp {^(.*)[:.]([0-9]{1,5})$} $listenerColumn(Listener) --> listenerColumn(Addr) listenerColumn(Port)
@@ -1489,6 +1514,8 @@ if { $pool__addr ne "255.255.255.254" } {
       set vs_listener_cmd [string map [list $vs__SourceAddress [format "::%%%s/0" $rd]] $vs_listener_cmd]
       set vs_listener_cmd [string map [list $pool__mask [format "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" $pool__mask]] $vs_listener_cmd]
     } 
+
+    set vs_listener_cmd [string map $listenerMap $vs_listener_cmd]
 
     debug [list virtual_server add_listeners $listenerIdx tmsh_create] $vs_listener_cmd 1
     tmsh::create $vs_listener_cmd

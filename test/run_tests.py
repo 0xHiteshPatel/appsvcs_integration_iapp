@@ -168,10 +168,10 @@ def run_test():
 	print out
 	print err
 
-    exitcode, out, err = get_exitcode_stdout_stderr("ssh root@%s 'tmsh -c \"delete ltm pool all; delete ltm node all\"'" % args.host)
-    print out
-    print err
-        
+	exitcode, out, err = get_exitcode_stdout_stderr("ssh root@%s 'tmsh -c \"delete ltm pool all; delete ltm node all\"'" % args.host)
+	print out
+	print err
+
 	exitcode, out, err = get_exitcode_stdout_stderr("ssh root@%s 'tmsh load sys config file /var/tmp/test_config.conf merge'" % args.host)
 	print out
 	print err
