@@ -38,7 +38,12 @@ Custom Extensions:
    - See include/custom_extensions.tcl for more info
 
 Virtual Server Options:
- - Multiple listeners
+ - Multiple listeners:
+   - IPv4 & IPv6 Address and L4 Port
+   - Remove SSL/TLS profile(s) (Client, Server, Both)
+   - Destinations:
+     - Pools
+     - Create additional HTTP->HTTPS Redirect
  - Administrative Attributes:
    - Name
    - Description
