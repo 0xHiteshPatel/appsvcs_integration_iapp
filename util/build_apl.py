@@ -33,7 +33,9 @@ def process_field (field, section, tab):
 		set results ""
 	    set cmds [list %s]
 	    foreach cmd $cmds {
-	      set objs [tmsh::get_config $cmd recursive]
+	      set objs [list]
+	      set objs_status [catch {tmsh::get_config $cmd recursive} objs]
+	      if { $objs_status == 1 } { return $results }
 	      foreach obj $objs {
 	      	set name [string map {"\\\"" ""} [tmsh::get_name $obj]]
 	      	if { $name ne "" } {
