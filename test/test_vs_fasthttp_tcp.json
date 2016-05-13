@@ -3,27 +3,22 @@
 	"parent":"include_defaults.json",
 	"strings":[
 		{ "pool__addr":"%TEST_VS_IP%" },
-		{ "pool__port":"81" },
+		{ "pool__port":"80" },
 		{ "pool__DefaultPoolIndex":"0" },
-      { "vs__Name":"test_vs_standard_tcp_options_vs" },
-      { "vs__Description":"Standard TCP Virtual Server Option Permutations" },
-      { "vs__SourceAddress":"10.0.0.0/8" },
+      { "vs__Name":"test_vs_fasthttp_tcp_vs" },
+      { "vs__Description":"FastHTTP TCP Virtual Server" },
       { "vs__IpProtocol":"tcp" },
-      { "vs__ConnectionLimit":"123456" },
-      { "vs__ProfileClientProtocol":"create:type=tcp;nagle=disabled;idle-timeout=600;fin-wait-timeout=300;defaults-from=/Common/tcp-wan-optimized" },
-      { "vs__ProfileServerProtocol":"create:type=tcp;nagle=enabled;idle-timeout=300;fin-wait-timeout=600;defaults-from=/Common/tcp-lan-optimized" },
-      { "vs__ProfileDefaultPersist":"/Common/source_addr" },
-      { "vs__SNATConfig":"create:%TEST_RANGE_4_IP%,%TEST_RANGE6_4_IP%" },
-      { "vs__OptionSourcePort":"change" },
-      { "vs__OptionConnectionMirroring":"enabled" },
-      { "vs__AdvOptions":"rate-limit-mode=object-source-destination;rate-limit-src-mask=8" }
+      { "vs__SNATConfig":"automap" },
+      { "vs__ProfileClientProtocol":"create:type=fasthttp;idle-timeout=600;insert-xforwarded-for=enabled;reset-on-timeout=enabled" },
+      { "vs__ProfileServerProtocol":"" },
+      { "vs__AdvOptions":"vlans-enabled;vlans=set_add:test_appsvcs_vlan1,test_appsvcs_vlan2" }
 	],
    "tables":[
       {
          "name":"monitor__Monitors",
          "columnNames": ["Index", "Name", "Type", "Options"],
          "rows" : [
-            { "row": [ "0", "/Common/tcp", "none", "none" ] }
+            { "row": [ "0", "/Common/http", "none", "none" ] }
          ]
       },
 		{

@@ -344,14 +344,14 @@ foreach poolRow $pool__Pools {
     set poolIndexes($poolColumn(Index)) 1
   }
 
-  # Check to see if a poolName was specified... if not set to $app_pool_$poolIdx
+  # Check to see if a poolName was specified... if not set to $app_pool_$poolColumn(Index)
   if { [string length $poolColumn(Name)] == 0 } {
-      set poolColumn(Name) [format "%s_pool_%s" $app $poolIdx]
+      set poolColumn(Name) [format "%s_pool_%s" $app $poolColumn(Index)]
       debug [list pools $poolIdx] [format "no pool name specified... setting to %s" $poolColumn(Name)] 7
   }
   set poolNames($poolColumn(Index)) $poolColumn(Name)
 
-  if { $poolIdx == $pool__DefaultPoolIndex } {
+  if { $poolColumn(Index) == $pool__DefaultPoolIndex } {
     # Set the default pool name for use later during virtual server creation
     set default_pool_name $poolColumn(Name)
   }
@@ -364,8 +364,8 @@ foreach poolRow $pool__Pools {
     table_row_to_array $memberRow memberColumn ::table_defaults(Members) [list AdvOptions]
 
     set memberId [format "%s/%s:%s" $memberColumn(Index) $memberColumn(IPAddress) $memberColumn(Port)]
-    if { $memberColumn(Index) != $poolIdx } {
-      debug [list pools $poolIdx members $memberId skip_index] [format "not a member of pool %s skipping" $poolIdx] 11
+    if { $memberColumn(Index) != $poolColumn(Index) } {
+      debug [list pools $poolIdx members $memberId skip_index] [format "not a member of pool %s skipping" $poolColumn(Index)] 11
       continue
     }
     debug [list pools $poolIdx members $memberId config_raw] [array get memberColumn] 9
@@ -527,7 +527,7 @@ foreach poolRow $pool__Pools {
       if { [info exists monNames($mon)] } {
         lappend monmapped $monNames($mon)
       } else {
-        error "The monitor index '$mon' specified in pool index '$poolIdx' does not exist"
+        error "The monitor index '$mon' specified in pool index '$poolColumn(Index)' does not exist"
       }
     }
 
@@ -580,7 +580,7 @@ custom_extensions_after_pools
 
 # Check to see if a vsName was specified... if not set to $app_vs
 if { [string length $vs__Name] == 0 } {
-    set vs__Name [format "%s_vs" $app]
+    set vs__Name [format "%s_vs_%s" $app $pool__port]
     change_var vs__Name $vs__Name
     debug [list virtual_server set_vs_name] [format "no VS Name specified... setting to %s" $vs__Name] 5
 }
@@ -1289,26 +1289,63 @@ if { $feature__insertXForwardedFor eq "enabled"} {
 # Process the create: option for profiles in the array below.  
 # Profiles that we support the "create:option[=value][,option2[=value2]]" format for option customization
 array set profile_create_supported {
- "vs__ProfileClientProtocol" { tmsh "profile tcp" default "/Common/tcp-wan-optimized" append "_clientside" }
- "vs__ProfileServerProtocol" { tmsh "profile tcp" default "/Common/tcp-lan-optimized" append "_serverside"}
- "vs__ProfileHTTP" { tmsh "profile http" default "/Common/http" append ""}
- "vs__ProfileOneConnect" { tmsh "profile one-connect" default "/Common/oneconnect" append ""}
- "vs__ProfileCompression" { tmsh "profile http-compression" default "/Common/httpcompression" append ""}
- "vs__ProfileRequestLogging" { tmsh "profile request-log" default "/Common/request-log" append ""}
- "vs__ProfileServerSSL" { tmsh "profile server-ssl" default "/Common/serverssl" append ""}
+ "vs__ProfileClientProtocol" { append "_clientside" }
+ "vs__ProfileServerProtocol" { append "_serverside"}
+ "vs__ProfileHTTP" { type "http" append ""}
+ "vs__ProfileOneConnect" { type "one-connect" append ""}
+ "vs__ProfileCompression" { type "http-compression" append ""}
+ "vs__ProfileRequestLogging" { type "request-log" append ""}
+ "vs__ProfileServerSSL" { type "server-ssl" append ""}
+}
+
+array set profile_create_defaults {
+  "tcp" { default "/Common/tcp" }
+  "udp" { default "/Common/udp" }
+  "fastl4" { default "/Common/fastL4" }
+  "fasthttp" { default "/Common/fasthttp" }
+  "sctp" { default "/Common/sctp" }
+  "ipother" { default "/Common/ipother" }
+  "http" { default "/Common/http" }
+  "one-connect" { default "/Common/oneconnect" }
+  "http-compression" { default "/Common/httpcompression" }
+  "request-log" { default "/Common/request-log" }
+  "server-ssl" { default "/Common/serverssl" }
 }
 
 # Loop through the array
 foreach {profile_var} [array names profile_create_supported] {
   # Setup some base vars
+  array unset profile_attr
   array set profile_attr [subst $::profile_create_supported($profile_var)]
   set profile_val [set [subst $profile_var]]
-  set profile_name [format "%s%s" [string map {" " "_"} $profile_attr(tmsh)] $profile_attr(append)]
-  set profile_cmd [format "ltm %s %s/%s " $profile_attr(tmsh) $app_path $profile_name]
-
   if { [regexp -nocase {^create:} $profile_val] } {
+    set profile_val [string map {"create:" ""} $profile_val]
+    
+    # Process the string, check to see the persistence type was specified and is valid
+    array unset profile_options
+    array unset profile_default_array
+    array set profile_options [process_kvp_string $profile_val]
+    if { ! [info exists profile_options(type)] } {
+      if { [info exists profile_attr(type)] } {
+        set profile_options(type) $profile_attr(type)
+      } else {
+        error "The create string specified for $profile_var needs to include a 'type' option specifying the type of profile to create"
+      }
+    }
+
+    if { ! [info exists profile_create_defaults($profile_options(type))] } {
+      error "The profile type '$profile_options(type)' specified for $profile_var is not valid"
+    }
+
+    # Remove the 'type=XXX;' field from the create string
+    set profile_val [string map [list "type=$profile_options(type);" ""] $profile_val]
+    set profile_name [format "profile_%s%s" $profile_options(type) $profile_attr(append)]
+    set profile_cmd [format "ltm profile %s %s/%s " $profile_options(type) $app_path $profile_name]
+    array set profile_default_array [subst $::profile_create_defaults($profile_options(type))]
+    set profile_default $profile_default_array(default)
+    
     # Create the options portion of the TMSH command
-    set profile_option_cmd [process_options_string [string map {"create\:" ""} $profile_val] $profile_attr(tmsh) $profile_attr(default) 1]
+    set profile_option_cmd [process_options_string $profile_val "profile $profile_options(type)" $profile_default 1]
     debug [list virtual_server profiles create_handler $profile_var] [format "%s" $profile_option_cmd] 7
 
     # Build the final TMSH command
@@ -1442,7 +1479,6 @@ if { $pool__addr ne "255.255.255.254" } {
 
   debug [list virtual_server add_listeners] [format "listenerCount=%s" [llength $vs__Listeners]] 7
 
-  #set vs_listener_list [single_column_table_to_list $vs__Listeners "Listener"]
   set listenerIdx 0
   foreach listenerRow $vs__Listeners {
     debug [list virtual_server add_listeners $listenerIdx] [format "listenerRow=%s" $listenerRow] 9
@@ -1503,8 +1539,8 @@ if { $pool__addr ne "255.255.255.254" } {
     }
 
     # Setup our new tmsh command string
-    set listenerColumn(Name) [format "%s_%s" $vs__Name $listenerIdx]
     regexp {^(.*)[:.]([0-9]{1,5})$} $listenerColumn(Listener) --> listenerColumn(Addr) listenerColumn(Port)
+    set listenerColumn(Name) [format "%s_%s_%s" [string map [list "_$pool__port" ""] $vs__Name] $listenerIdx $listenerColumn(Port)]
     set listenerColumn(Dest) [get_dest_str $listenerColumn(Addr) $listenerColumn(Port)]
 
     debug [list virtual_server add_listeners $listenerIdx] [format "name=%s addr=%s port=%s dest=%s" $listenerColumn(Name) $listenerColumn(Addr) $listenerColumn(Port) $listenerColumn(Dest)] 7    

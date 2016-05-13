@@ -372,7 +372,7 @@ proc single_column_table_to_list { table key } {
 #        $add_default = add a 'defaults-from' option using the value of $template 
 #                       if not found in the string
 proc process_options_string { option_str tmsh template {add_default 0} } {
-  debug [list process_options_string] $option_str 10
+  debug [list process_options_string] [format "option_str=%s tmsh=%s template=%s add_default=%s" $option_str $tmsh $template $add_default] 10
   set ret ""
 
   # Get all the options passed in array format
@@ -383,7 +383,7 @@ proc process_options_string { option_str tmsh template {add_default 0} } {
     set options(defaults-from) $template
   }
 
-  # Get the supported options for a profile type according to the 'default' key in the create_supported array
+  # Get the supported options for a profile type 
   foreach {option value} [array get options] {
     if { [string length $tmsh] > 0 } {
       set profileobj [lindex [tmsh::get_config ltm $tmsh $template all-properties] 0]

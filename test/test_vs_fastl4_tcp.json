@@ -9,7 +9,7 @@
       { "vs__Description":"FastL4 TCP Virtual Server" },
       { "vs__IpProtocol":"tcp" },
       { "vs__SNATConfig":"automap" },
-      { "vs__ProfileClientProtocol":"/Common/fastL4" },
+      { "vs__ProfileClientProtocol":"create:type=fastl4;idle-timeout=600;loose-close=enabled;tcp-close-timeout=600" },
       { "vs__ProfileServerProtocol":"" },
       { "vs__AdvOptions":"vlans-enabled;vlans=set_add:test_appsvcs_vlan1,test_appsvcs_vlan2" }
 	],
