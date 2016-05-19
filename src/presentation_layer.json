@@ -895,7 +895,18 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"2.0_001"
-				}	
+				},
+				{
+					"name":"VirtualAddrAdvOptions",
+					"description":"Virtual Address: Advanced Options",
+					"help":"The options to set in the global Virtual Address object.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				}				
 			]
 		},
 		{

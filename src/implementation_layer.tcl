@@ -1343,7 +1343,7 @@ foreach {profile_var} [array names profile_create_supported] {
     set profile_cmd [format "ltm profile %s %s/%s " $profile_options(type) $app_path $profile_name]
     array set profile_default_array [subst $::profile_create_defaults($profile_options(type))]
     set profile_default $profile_default_array(default)
-    
+
     # Create the options portion of the TMSH command
     set profile_option_cmd [process_options_string $profile_val "profile $profile_options(type)" $profile_default 1]
     debug [list virtual_server profiles create_handler $profile_var] [format "%s" $profile_option_cmd] 7
@@ -1893,6 +1893,16 @@ if { [string length $vs__RouteAdv] > 0 && $vs__RouteAdv ne "disabled" } {
   debug [list virtual_address route-adv] [format "enabling route advertisement for virtual address %s with mode %s (postdeploy_final)" $vs_dest_addr $routeadv_mode] 5
   lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm virtual-address /%s/%s route-advertisement enabled" $partition $vs_dest_addr]]
   lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm virtual-address /%s/%s server-scope %s" $partition $vs_dest_addr $routeadv_mode]]
+}
+
+if { [string length $vs__VirtualAddrAdvOptions] > 0 } {
+  set cmd [format "tmsh::modify ltm virtual-address /%s/%s" $partition $vs_dest_addr]
+  if { [string length $vs__VirtualAddrAdvOptions] > 0 } {
+    debug [list virtual_address adv_options] "processing advanced options string" 7
+    append cmd [format " %s" [process_options_string $vs__VirtualAddrAdvOptions "" ""]]
+  }  
+  debug [list virtual_address adv_options] $cmd 5
+  lappend postfinal_deferred_cmds [create_escaped_tmsh $cmd]
 }
 
 # Call the custom_extensions_end proc to allow site-specific customizations

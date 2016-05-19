@@ -53,6 +53,7 @@
 		{ "vs__AdvOptions":"" },
 		{ "vs__AdvProfiles":"" },
 		{ "vs__AdvPolicies":"" },
+		{ "vs__VirtualAddrAdvOptions":"" },
 		{ "l7policy__strategy":"/Common/first-match"},
 		{ "l7policy__defaultASM":"bypass"},
 		{ "l7policy__defaultL7DOS":"bypass"},
