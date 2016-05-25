@@ -15,9 +15,10 @@ sys application template /Common/appsvcs_integration_v1.0_001 {
 set startTime [clock seconds]
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set IMPLMAJORVERSION "1.0"
-set IMPLMINORVERSION "006"
+set IMPLMINORVERSION "007"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "001"
+set POSTDEPLOY_DELAY 15
 
 # Print a timestamped debug message to /var/tmp/scriptd.out
 # Input: string
@@ -60,7 +61,7 @@ proc get_mode { } {
   }
   
   # Check for a partition that starts with apic_ and return APIC mode (3) and RD if found
-  if { [string match -nocase "apic_*" $partition] } {
+  if { [string match -nocase "apic_*" $partition] || [string match -nocase "apic-*" $partition] } {
     debug "\[get_mode\]\[apic\] partition starts with apic_, assuming APIC deployment mode (3)"
     set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
     set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
@@ -1564,9 +1565,15 @@ puts "$logprefix Finished at [clock format $systemTime -format %D] [clock format
 
   debug "\[create_asm\] TMSH CREATE asm deploy script"
   tmsh::create sys icall script postdeploy_asm definition \{ $asm_icall_script_src \}
+  #debug "\[create_asm\] TMSH CREATE iCall handler"
+  #tmsh::create sys icall handler periodic postdeploy_load_asm first-occurrence now+1m interval 300 last-occurrence now+3m script postdeploy_asm status active
+  #debug "\[create_asm\] ASM policy deployment will complete in 1 minute..."
+
+  set asm_icall_time [clock format [expr {[clock seconds] + $::POSTDEPLOY_DELAY}] -format {%Y-%m-%d:%H:%M:%S}]
   debug "\[create_asm\] TMSH CREATE iCall handler"
-  tmsh::create sys icall handler periodic postdeploy_load_asm first-occurrence now+1m interval 300 last-occurrence now+3m script postdeploy_asm status active
-  debug "\[create_asm\] ASM policy deployment will complete in 1 minute..."
+  #debug [list asm icall_handler] [format "creating iCall handler; executing postdeploy script at: %s" $asm_icall_time] 0
+  tmsh::create sys icall handler periodic postdeploy_load_asm first-occurrence $asm_icall_time interval 3000 last-occurrence now+10m script postdeploy_asm status active
+  debug "\[create_asm\] ASM policy deployment will complete momentarily..."
 }
 # Call the custom_extensions_end proc to allow site-specific customizations
 custom_extensions_end
@@ -1757,7 +1764,7 @@ section extensions {
 
 
 text {
-	intro "F5 Application Services Integration iApp v1.0(006)_001 (Community Edition)"
+	intro "F5 Application Services Integration iApp v1.0(007)_001 (Community Edition)"
 	intro.hello "Introduction" "Please complete the following template"
 
 	iapp "iApp Options"

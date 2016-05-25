@@ -33,7 +33,13 @@ if { [string length $feature__easyASMPolicy] > 0 && $feature__easyASMPolicy ne "
 
   debug "\[create_asm\] TMSH CREATE asm deploy script"
   tmsh::create sys icall script postdeploy_asm definition \{ $asm_icall_script_src \}
+  #debug "\[create_asm\] TMSH CREATE iCall handler"
+  #tmsh::create sys icall handler periodic postdeploy_load_asm first-occurrence now+1m interval 300 last-occurrence now+3m script postdeploy_asm status active
+  #debug "\[create_asm\] ASM policy deployment will complete in 1 minute..."
+
+  set asm_icall_time [clock format [expr {[clock seconds] + $::POSTDEPLOY_DELAY}] -format {%Y-%m-%d:%H:%M:%S}]
   debug "\[create_asm\] TMSH CREATE iCall handler"
-  tmsh::create sys icall handler periodic postdeploy_load_asm first-occurrence now+1m interval 300 last-occurrence now+3m script postdeploy_asm status active
-  debug "\[create_asm\] ASM policy deployment will complete in 1 minute..."
+  #debug [list asm icall_handler] [format "creating iCall handler; executing postdeploy script at: %s" $asm_icall_time] 0
+  tmsh::create sys icall handler periodic postdeploy_load_asm first-occurrence $asm_icall_time interval 3000 last-occurrence now+10m script postdeploy_asm status active
+  debug "\[create_asm\] ASM policy deployment will complete momentarily..."
 }

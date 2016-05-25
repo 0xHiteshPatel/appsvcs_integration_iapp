@@ -39,7 +39,7 @@ proc get_mode { } {
   }
   
   # Check for a partition that starts with apic_ and return APIC mode (3) and RD if found
-  if { [string match -nocase "apic_*" $partition] } {
+  if { [string match -nocase "apic_*" $partition] || [string match -nocase "apic-*" $partition] } {
     debug "\[get_mode\]\[apic\] partition starts with apic_, assuming APIC deployment mode (3)"
     set rdobjs [tmsh::get_config net route-domain "/$partition/$partition" id]
     set routedomainid [tmsh::get_field_value [lindex $rdobjs 0] "id"]
