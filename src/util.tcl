@@ -220,6 +220,11 @@ proc get_var { name } {
 #        $module = the BIG-IP module that enables the option
 # Return: 1=Option removed; 0=no action taken
 proc handle_opt_remove_on_redeploy { name checkvalue option module } {
+  if { ! $::redeploy } {
+    debug "\[handle_opt_remove_on_redeploy\] not a redployment, skipping"
+    return 0
+  }
+  
   if { ! [is_provisioned $module] } {
     debug "\[handle_opt_remove_on_redeploy\] $name, $module not provisioned, skipping"
     return 0
