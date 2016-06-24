@@ -580,9 +580,12 @@ custom_extensions_after_pools
 
 # Check to see if a vsName was specified... if not set to $app_vs
 if { [string length $vs__Name] == 0 } {
-    set vs__Name [format "%s_vs_%s" $app $pool__port]
-    change_var vs__Name $vs__Name
-    debug [list virtual_server set_vs_name] [format "no VS Name specified... setting to %s" $vs__Name] 5
+  set vs__Name [format "%s_default_vs_%s" $app $pool__port]
+  set addl_vs_basename [format "%s_idx" $app]
+  change_var vs__Name $vs__Name
+  debug [list virtual_server set_vs_name] [format "no VS Name specified... setting to %s" $vs__Name] 5
+} else {
+  set addl_vs_basename [format "%s_idx" $vs__Name]
 }
 
 # Create L7 Traffic policy
@@ -1339,7 +1342,7 @@ foreach {profile_var} [array names profile_create_supported] {
 
     # Remove the 'type=XXX;' field from the create string
     set profile_val [string map [list "type=$profile_options(type);" ""] $profile_val]
-    set profile_name [format "profile_%s%s" $profile_options(type) $profile_attr(append)]
+    set profile_name [format "%s_profile_%s%s" $app $profile_options(type) $profile_attr(append)]
     set profile_cmd [format "ltm profile %s %s/%s " $profile_options(type) $app_path $profile_name]
     array set profile_default_array [subst $::profile_create_defaults($profile_options(type))]
     set profile_default $profile_default_array(default)
@@ -1473,7 +1476,7 @@ if { $pool__addr ne "255.255.255.254" } {
 
   # Process the additional listeners table
   set redirect_listeners []
-  lappend redirect_listeners [format "%s:80" $vs_dest_addr]
+  lappend redirect_listeners [list [format "%s:80" $vs_dest_addr] [format "%s_default_vs_redirect_80" $app]]
 
   set vs_origcmd $cmd
 
@@ -1500,11 +1503,12 @@ if { $pool__addr ne "255.255.255.254" } {
     array unset listenerDestOptions 
     array set listenerDestOptions [process_kvp_string $listenerColumn(Destination)]
     debug [list virtual_server add_listeners $listenerIdx dest_options] [array get listenerDestOptions] 7
-
+    regexp {^(.*)[:.]([0-9]{1,5})$} $listenerColumn(Listener) --> listenerColumn(Addr) listenerColumn(Port)
+    
     # If this row had the 'redirect' destination specified save it for later and skip this row
     if { [info exists listenerDestOptions(redirect)] } {
         debug [list virtual_server add_listeners $listenerIdx redirect] $listenerColumn(Listener) 7
-        lappend redirect_listeners $listenerColumn(Listener)
+        lappend redirect_listeners [list $listenerColumn(Listener) [format "%s_%s_redirect_%s" $addl_vs_basename $listenerIdx $listenerColumn(Port)]]
         incr listenerIdx      
         continue
     }
@@ -1539,8 +1543,7 @@ if { $pool__addr ne "255.255.255.254" } {
     }
 
     # Setup our new tmsh command string
-    regexp {^(.*)[:.]([0-9]{1,5})$} $listenerColumn(Listener) --> listenerColumn(Addr) listenerColumn(Port)
-    set listenerColumn(Name) [format "%s_%s_%s" [string map [list "_$pool__port" ""] $vs__Name] $listenerIdx $listenerColumn(Port)]
+    set listenerColumn(Name) [format "%s_%s_%s" $addl_vs_basename $listenerIdx $listenerColumn(Port)]
     set listenerColumn(Dest) [get_dest_str $listenerColumn(Addr) $listenerColumn(Port)]
 
     debug [list virtual_server add_listeners $listenerIdx] [format "name=%s addr=%s port=%s dest=%s" $listenerColumn(Name) $listenerColumn(Addr) $listenerColumn(Port) $listenerColumn(Dest)] 7    
@@ -1568,7 +1571,11 @@ custom_extensions_after_vs
 if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" } {
   set redirect_listener_idx 0
   debug [list virtual_server feature__redirectToHTTPS redirect_listeners] $redirect_listeners 7
-  foreach redirect_listener $redirect_listeners {
+  foreach redirect_listener_list $redirect_listeners {
+    set redirect_listener [lindex $redirect_listener_list 0]
+    set redirect_listener_name [lindex $redirect_listener_list 1]
+    debug [list virtual_server feature__redirectToHTTPS $redirect_listener_idx] [format "dest=%s name=%s" $redirect_listener $redirect_listener_name] 5
+    
     regexp {^(.*)[:.]([0-9]{1,5})$} $redirect_listener --> redirect_listener_addr redirect_listener_port
 
     set redirect_listener_dest [get_dest_str $redirect_listener_addr $redirect_listener_port]
@@ -1588,8 +1595,8 @@ if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" 
       set redirect_listener_mask "255.255.255.255"      
     }
 
-    set redirect_listener_cmd [format "ltm virtual %s/%s_redirect_%s destination %s " $app_path $vs__Name $redirect_listener_idx $redirect_listener_dest]
-
+    set redirect_listener_cmd [format "ltm virtual %s/%s destination %s " $app_path $redirect_listener_name $redirect_listener_dest]
+    
     # Process the vs_options array
     foreach {optionvar optioncmd} [array get redirect_listener_options] {
       append redirect_listener_cmd [generic_add_option [list virtual_server feature__redirectToHTTPS $redirect_listener_idx options] [set [subst $optionvar]] $optioncmd "" 0]
