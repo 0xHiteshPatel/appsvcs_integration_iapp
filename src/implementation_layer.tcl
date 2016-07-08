@@ -1081,7 +1081,7 @@ foreach persist_var [list vs__ProfileDefaultPersist vs__ProfileFallbackPersist] 
 
     # Set some inital values
     array set persist_attr [subst $::persist_create_defaults($persist_options(type))]
-    set persist_name [format "persistence_%s" $persist_options(type)]
+    set persist_name [format "%s_persistence_%s" $app $persist_options(type)]
     set persist_cmd [format "ltm persistence %s %s/%s " $persist_options(type) $app_path $persist_name]
 
     # Remove the 'type=XXX;' field from the create string
