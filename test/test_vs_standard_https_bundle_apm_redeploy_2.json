@@ -47,17 +47,7 @@
             { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
             { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
          ]
-      },
-      {
-         "name":"l7policy__rulesMatch",
-         "columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
-         "rows" : [ ]
-      },
-      {
-         "name":"l7policy__rulesAction",
-         "columnNames": ["Index","Target","Parameter"],
-         "rows" : [ ]
-       }                
+      }           
    ],
    "lists": [
       {

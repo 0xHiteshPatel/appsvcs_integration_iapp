@@ -95,12 +95,12 @@
 		},
 		{
 			"name":"l7policy__rulesMatch",
-			"columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+			"columnNames": ["Group","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
 			"rows" : [ ]
 		},
 		{
 			"name":"l7policy__rulesAction",
-			"columnNames": ["Index","Target","Parameter"],
+			"columnNames": ["Group","Target","Parameter"],
 			"rows" : [ ]
 		},
 		{

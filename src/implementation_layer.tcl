@@ -122,7 +122,7 @@ array set table_defaults {
       Options ""
     }
     L7P_Match {
-      Index -1
+      Group -1
       Operand ""
       Negate no
       Condition ""
@@ -131,7 +131,7 @@ array set table_defaults {
       Missing no
     }
     L7P_Action {
-      Index -1
+      Group -1
       Target error/error/error
       Parameter error      
     }
@@ -589,113 +589,157 @@ if { [string length $vs__Name] == 0 } {
 }
 
 # Create L7 Traffic policy
-set l7p_numMatches [llength $l7policy__rulesMatch]
-set l7p_numActions [llength $l7policy__rulesAction]
-
-debug "l7policy" [format "numMatches=%s numActions=%s" $l7p_numMatches, $l7p_numActions] 7
-if { $l7p_numActions != $l7p_numMatches } {
-  error "The number of rows in L7 Policy Match and Action tables must be equal"
-}
-
+set l7p_matchGroups [list]
+array set l7p_matchGroupMap {}
+array set l7p_matchRules {}
+set l7p_actionGroups [list]
+array set l7p_actionGroupMap {}
+array set l7p_actionRules {}
 array set l7p_requires {}
 array set l7p_controls {}
-array set l7p_match_rules {}
-array set l7p_action_rules {}
 array set l7p_asmrule {}
 array set l7p_l7dosrule {}
-array set l7p_indexes {}
 set l7p_defer_create 0
-# Iterate through the l7policy__rulesMatch table and create our conditions.
-set l7p_matchIdx 0  
-foreach l7p_matchRow $l7policy__rulesMatch {
-  debug [list l7policy match $l7p_matchIdx] [format "matchRow=%s" $l7p_matchRow] 9
 
-  set l7p_rules($l7p_matchIdx) {}
+set l7p_numMatchRows [llength $l7policy__rulesMatch]
+set l7p_numActionRows [llength $l7policy__rulesAction]
+debug "l7policy" [format "numMatchRows=%s numActionRows=%s" $l7p_numMatchRows, $l7p_numActionRows] 7
+
+# Prepare the l7p_matchGroups list and the associated l7p_matchGroupMap array.
+# The list holds an ordered set of the discreet groups received
+# The array holds a mapping of the group to it's associated rows in the table
+set l7p_matchIdx 0
+foreach l7p_matchRow $l7policy__rulesMatch {
+  debug [list l7policy match_prep $l7p_matchIdx] [format "matchRow=%s" $l7p_matchRow] 9
+
   array unset l7p_matchColumn
   array set l7p_matchColumn {}
   table_row_to_array $l7p_matchRow l7p_matchColumn ::table_defaults(L7P_Match)
 
-  # Store the true name of the index in an array for use later 
-  set l7p_indexes($l7p_matchIdx) $l7p_matchColumn(Index)
-
-  # Skip rows with an index < 0 excluding the default rule
-  if { [string tolower $l7p_matchColumn(Index)] != "default" && $l7p_matchColumn(Index) < 0 } {
-    debug [list l7policy match] "skipping row, index < 0" 9
+  if { [string tolower $l7p_matchColumn(Group)] != "default" && $l7p_matchColumn(Group) < 0 } {
+    debug [list l7policy match_prep] "skipping row, Group < 0" 9
+    incr l7p_matchIdx
     continue
   }
 
-  # Determine which profile is required in the policy for the specified operand
-  switch -glob [string tolower $l7p_matchColumn(Operand)] {
-    client-ssl* { set l7p_requires("client-ssl") 1 }
-    http*       { set l7p_requires("http") 1 }
-    ssl*        { set l7p_requires("ssl-persistence") 1 }
-    tcp*        { set l7p_requires("tcp") 1 }
-    default { 
-      if { $l7p_matchColumn(Index) != "default" } {
-        error "Could not determine the correct profile type for L7 Policy Match, Index $l7p_matchColumn(Index), Operand $l7p_matchColumn(Operand)"
-      }
-    }
+  if { ![info exists l7p_matchGroupMap($l7p_matchColumn(Group))] } {
+    set l7p_matchGroupMap($l7p_matchColumn(Group)) [list]
+    lappend l7p_matchGroups $l7p_matchColumn(Group) 
   }
-
-  # Set our tmsh modifiers
-  if { [string tolower $l7p_matchColumn(Negate)] == "no" } { set l7p_matchColumn(Negate) "" }
-  if { [string tolower $l7p_matchColumn(Negate)] == "yes" } { set l7p_matchColumn(Negate) "not" }
-  if { [string tolower $l7p_matchColumn(Missing)] == "no" } { set l7p_matchColumn(Missing) "" }
-  if { [string tolower $l7p_matchColumn(Missing)] == "yes" } { set l7p_matchColumn(Missing) "missing" }
-  if { [string tolower $l7p_matchColumn(CaseSensitive)] == "no" } { set l7p_matchColumn(CaseSensitive) "case-insensitive" }
-  if { [string tolower $l7p_matchColumn(CaseSensitive)] == "yes" } { set l7p_matchColumn(CaseSensitive) "case-sensitive" }
-  
-  # Process the operand.  The '/' character gets replaced with a ' ' to build the tmsh
-  # command.  Additionally the ',' character gets replaced with a ' ' to allow for multiple
-  # values to be passed to the operand.
-  set l7p_match_oper [split $l7p_matchColumn(Operand) /]
-  if { [llength $l7p_match_oper] > 0 } {
-    set l7p_rule_opertmp [join $l7p_match_oper " "]
-    set l7p_rule_valtmp ""
-    if { [string length $l7p_matchColumn(Value)] > 0 } {
-      set l7p_rule_valtmp [format "%s %s values { \"%s\" }" $l7p_matchColumn(Negate) $l7p_matchColumn(Condition) [string map {, "\" \""} $l7p_matchColumn(Value)]]
-    } 
-    set l7p_match_rules($l7p_matchIdx) [format "0 { %s %s %s %s }" $l7p_rule_opertmp $l7p_matchColumn(Missing) $l7p_matchColumn(CaseSensitive) $l7p_rule_valtmp]
-    debug [list l7policy match $l7p_matchIdx] [format "rule=%s" $l7p_match_rules($l7p_matchIdx)] 7
-  } else {
-    set l7p_match_rules($l7p_matchIdx) ""
-  }
+  lappend l7p_matchGroupMap($l7p_matchColumn(Group)) $l7p_matchIdx
   incr l7p_matchIdx
 }
 
-# Iterate through the l7policy__rulesAction table and create our actions.
+# Prepare the l7p_actionGroups list and the associated l7p_actionGroupMap array.
+# The list holds an ordered set of the discreet groups received
+# The array holds a mapping of the group to it's associated rows in the table
 set l7p_actionIdx 0
-set l7p_action_found_default 0
-
 foreach l7p_actionRow $l7policy__rulesAction {
-  debug [list l7policy action $l7p_actionIdx] [format "actionRow=%s" $l7p_actionRow] 9
+  debug [list l7policy action_prep $l7p_actionIdx] [format "actionRow=%s" $l7p_actionRow] 9
 
   array unset l7p_actionColumn
   array set l7p_actionColumn {}
   table_row_to_array $l7p_actionRow l7p_actionColumn ::table_defaults(L7P_Action)
 
-  # Skip rows with an index < 0 excluding the default rule
-  if { [string tolower $l7p_actionColumn(Index)] != "default" && $l7p_actionColumn(Index) < 0 } {
-    debug [list l7policy action] "skipping row, index < 0" 9
+  if { [string tolower $l7p_actionColumn(Group)] != "default" && $l7p_actionColumn(Group) < 0 } {
+    debug [list l7policy action_prep] "skipping row, index < 0" 9
+    incr l7p_actionIdx
     continue
   }
 
-  if { [string tolower $l7p_actionColumn(Index)] == "default" } {
-    set l7p_action_found_default 1
+  if { ![info exists l7p_actionGroupMap($l7p_actionColumn(Group))] } {
+    set l7p_actionGroupMap($l7p_actionColumn(Group)) [list]
+    lappend l7p_actionGroups $l7p_actionColumn(Group) 
   }
+  lappend l7p_actionGroupMap($l7p_actionColumn(Group)) $l7p_actionIdx
+  incr l7p_actionIdx
+}
 
-  set l7p_action_target_list [psplit $l7p_actionColumn(Target) |]
-  set l7p_action_targetIdx 0
-  if { [llength $l7p_action_target_list] > 0 } {
-    set l7p_action_rules($l7p_actionIdx) ""
+# Perform a sanity check.  The number of groups should match between the match and action tables
+foreach l7p_matchGroup $l7p_matchGroups {
+  if { ! [info exists l7p_actionGroupMap($l7p_matchGroup)] } {
+    error "The L7 Policy Match Group '$l7p_matchGroup' was specified, however, an associated Action Group was not found"
   }
+}
 
-  foreach l7p_action_target $l7p_action_target_list {
+# Iterate through the l7p_matchGroups list (and the associated mapping array) and create our conditions.
+foreach l7p_matchGroup $l7p_matchGroups {
+  debug [list l7policy match $l7p_matchGroup] [format "matchGroup=%s, mapping=%s" $l7p_matchGroup $l7p_matchGroupMap($l7p_matchGroup)] 9
+
+  #set l7p_matchRules($l7p_matchGroup) [list]
+  set l7p_matchRuleIdx 0
+  foreach l7p_matchRule $l7p_matchGroupMap($l7p_matchGroup) {
+    set l7p_matchRow [lindex $l7policy__rulesMatch $l7p_matchRule]
+    debug [list l7policy match $l7p_matchGroup $l7p_matchRuleIdx] [format "data=%s" $l7p_matchRow] 9
+  
+    array unset l7p_matchColumn
+    array set l7p_matchColumn {}
+    table_row_to_array $l7p_matchRow l7p_matchColumn ::table_defaults(L7P_Match)
+
     # Determine which profile is required in the policy for the specified operand
-    switch -glob [string tolower $l7p_action_target] {
+    switch -glob [string tolower $l7p_matchColumn(Operand)] {
+      client-ssl* { set l7p_requires("client-ssl") 1 }
+      http*       { set l7p_requires("http") 1 }
+      ssl*        { set l7p_requires("ssl-persistence") 1 }
+      tcp*        { set l7p_requires("tcp") 1 }
+      default { 
+        if { $l7p_matchColumn(Group) != "default" } {
+          error "Could not determine the correct profile type for L7 Policy Match, Group $l7p_matchColumn(Group), Operand $l7p_matchColumn(Operand)"
+        }
+      }
+    }
+
+    # Set our tmsh modifiers
+    if { [string tolower $l7p_matchColumn(Negate)] == "no" } { set l7p_matchColumn(Negate) "" }
+    if { [string tolower $l7p_matchColumn(Negate)] == "yes" } { set l7p_matchColumn(Negate) "not" }
+    if { [string tolower $l7p_matchColumn(Missing)] == "no" } { set l7p_matchColumn(Missing) "" }
+    if { [string tolower $l7p_matchColumn(Missing)] == "yes" } { set l7p_matchColumn(Missing) "missing" }
+    if { [string tolower $l7p_matchColumn(CaseSensitive)] == "no" } { set l7p_matchColumn(CaseSensitive) "case-insensitive" }
+    if { [string tolower $l7p_matchColumn(CaseSensitive)] == "yes" } { set l7p_matchColumn(CaseSensitive) "case-sensitive" }
+    
+    # Process the operand.  The '/' character gets replaced with a ' ' to build the tmsh
+    # command.  Additionally the ',' character gets replaced with a ' ' to allow for multiple
+    # values to be passed to the operand.
+    set l7p_match_oper [split $l7p_matchColumn(Operand) /]
+    if { [llength $l7p_match_oper] > 0 } {
+      set l7p_rule_opertmp [join $l7p_match_oper " "]
+      set l7p_rule_valtmp ""
+      if { [string length $l7p_matchColumn(Value)] > 0 } {
+        set l7p_rule_valtmp [format "%s %s values { \"%s\" }" $l7p_matchColumn(Negate) $l7p_matchColumn(Condition) [string map {, "\" \""} $l7p_matchColumn(Value)]]
+      } 
+      lappend l7p_matchRules($l7p_matchGroup) [format "%s { %s %s %s %s }" $l7p_matchRuleIdx $l7p_rule_opertmp $l7p_matchColumn(Missing) $l7p_matchColumn(CaseSensitive) $l7p_rule_valtmp]
+    } else {
+      lappend l7p_matchRules($l7p_matchGroup) ""      
+    }
+    debug [list l7policy match $l7p_matchGroup $l7p_matchRuleIdx] [format "rule=%s" [lindex $l7p_matchRules($l7p_matchGroup) $l7p_matchRuleIdx]] 7
+    incr l7p_matchRuleIdx
+  }
+}
+
+# Iterate through the l7p_actionGroups list (and the associated mapping array) and create our actions.
+foreach l7p_actionGroup $l7p_actionGroups {
+  debug [list l7policy action $l7p_actionGroup] [format "actionGroup=%s, mapping=%s" $l7p_actionGroup $l7p_actionGroupMap($l7p_actionGroup)] 9
+
+  #set l7p_actionRules($l7p_actionGroup) [list]
+  set l7p_actionRuleIdx 0
+  foreach l7p_actionRule $l7p_actionGroupMap($l7p_actionGroup) {
+    set l7p_actionRow [lindex $l7policy__rulesAction $l7p_actionRule]
+    debug [list l7policy action $l7p_actionGroup $l7p_actionRuleIdx] [format "data=%s" $l7p_actionRow] 9
+
+    array unset l7p_actionColumn
+    array set l7p_actionColumn {}
+    table_row_to_array $l7p_actionRow l7p_actionColumn ::table_defaults(L7P_Action)
+
+    if { [string tolower $l7p_actionColumn(Group)] == "default" } {
+      set l7p_action_found_default 1
+    }
+
+    # Determine which profile is required in the policy for the specified operand
+    switch -glob [string tolower $l7p_actionColumn(Target)] {
       asm*            { 
                         set l7p_controls("asm") 1
-                        set l7p_asmrule($l7p_actionColumn(Index)) 1
+#                        set l7p_asmrule($l7p_actionColumn(Group)) 1
+                        set l7p_asmrule($l7p_actionGroup) 1
                       }
       cache*          { set l7p_controls("cache") 1 }
       *compress*      { set l7p_controls("compression") 1 }
@@ -704,7 +748,8 @@ foreach l7p_actionRow $l7policy__rulesAction {
       l7dos*          { 
                         set l7p_controls("l7dos") 1
                         set l7p_controls("asm") 1 
-                        set l7p_l7dosrule($l7p_actionColumn(Index)) 1
+                        #set l7p_l7dosrule($l7p_actionColumn(Group)) 1
+                        set l7p_l7dosrule($l7p_actionGroup) 1
                       }
       log*            { set l7p_controls("forwarding") 1 }
       request-adapt*  { set l7p_controls("request-adaption") 1 }
@@ -713,7 +758,7 @@ foreach l7p_actionRow $l7policy__rulesAction {
       tcp-nagle*      { set l7p_controls("forwarding") 1 }
       tcl*            { set l7p_controls("tcl") 1 }
       default { 
-        error "Could not determine the correct profile type for L7 Policy Action, Index $l7p_actionColumn(Index), Target $l7p_actionColumn(Target)"
+        error "Could not determine the correct profile type for L7 Policy Action, Group $l7p_actionColumn(Group), Target $l7p_actionColumn(Target)"
       }
     }
 
@@ -725,13 +770,12 @@ foreach l7p_actionRow $l7policy__rulesAction {
     # entered parameter is checked to ensure a parameters are entered (can be blank) and the the 
     # tmsh command is created.
     set l7p_action_target_chunk ""
-    set l7p_action_targets [split $l7p_action_target /]
+    set l7p_action_targets [split $l7p_actionColumn(Target) /]
     switch [llength $l7p_action_targets] {
       3 {
         set l7p_rule_targettmp [join $l7p_action_targets " "]
-        #set l7p_action_rules($l7p_actionIdx) [format "%s \{ %s \}" $l7p_action_targetIdx $l7p_rule_targettmp]
-        set l7p_action_target_chunk [format "%s \{ %s \}" $l7p_action_targetIdx $l7p_rule_targettmp]
-        debug [list l7policy action $l7p_actionIdx 3_elements $l7p_action_targetIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 7
+        set l7p_action_target_chunk [format "%s \{ %s \}" $l7p_actionRuleIdx $l7p_rule_targettmp]
+        debug [list l7policy action $l7p_actionGroup $l7p_actionRuleIdx 3_elements] [format "chunk=%s" $l7p_action_target_chunk] 7
        }
       4 { 
         set l7p_rule_targettmp [format "%s %s %s" [lindex $l7p_action_targets 0] [lindex $l7p_action_targets 1] [lindex $l7p_action_targets 2]]
@@ -740,35 +784,41 @@ foreach l7p_actionRow $l7policy__rulesAction {
         if { [llength $l7p_actionColumn(Parameter)] == 1 } {
           set l7p_actionColumn(Parameter) [lindex $l7p_actionColumn(Parameter) 0]
         }
-        set l7p_rule_values [psplit [lindex [psplit $l7p_actionColumn(Parameter) |] $l7p_action_targetIdx] ,]
-        debug [list l7policy action $l7p_actionIdx val_list $l7p_action_targetIdx] $l7p_rule_values 7
+
+        set l7p_rule_values [psplit $l7p_actionColumn(Parameter) ,]
+        debug [list l7policy action $l7p_actionGroup $l7p_actionRuleIdx val_list] $l7p_actionColumn(Parameter) 7
 
         set l7p_action_parIdx 0
-        
-        set l7p_action_target_chunk [format "%s \{ %s " $l7p_action_targetIdx $l7p_rule_targettmp]
+          
+        set l7p_action_target_chunk [format "%s \{ %s " $l7p_actionRuleIdx  $l7p_rule_targettmp]
         foreach l7p_action_parameter $l7p_rule_parameters {
-          set l7p_action_parameter_value [lindex $l7p_rule_values $l7p_action_parIdx]
-
+          if { [llength $l7p_rule_parameters] == 1 } {
+            set l7p_action_parameter_value $l7p_actionColumn(Parameter)
+          } else {
+            set l7p_action_parameter_value [lindex $l7p_rule_values $l7p_action_parIdx]
+          }
+          
           # Special handling for forward/request/select/(pool|clone-pool).  Either a full path to 
           # a pool can be entered (eg: /Common/mypool) or the index of a pool created in the pool__Pools
           # table can be referenced.  If a pool index is referenced we replace it here with the name
           # of the pool
-          switch -regexp $l7p_action_target {
+          switch -regexp $l7p_actionColumn(Target) {
             ^.*(pool|clone-pool)$ {
               set l7p_action_parameter_poolidx -1 
               if { [regexp {^pool:[0-9]+$} $l7p_action_parameter_value] } {
                 set l7p_action_parameter_poolidx [lindex [split $l7p_action_parameter_value :] 1]
-                debug [list l7policy action $l7p_actionIdx pool_substitute] [format "idx=%s val=%s name=%s" $l7p_action_parameter_poolidx $l7p_action_parameter_value $poolNames($l7p_action_parameter_poolidx)] 7
+                debug [list l7policy action $l7p_actionGroup $l7p_actionRuleIdx pool_substitute] [format "idx=%s val=%s name=%s" $l7p_action_parameter_poolidx $l7p_action_parameter_value $poolNames($l7p_action_parameter_poolidx)] 7
                 set l7p_action_parameter_value [format "%s/%s" $app_path $poolNames($l7p_action_parameter_poolidx)]
               } 
             }
             ^asm.*enable.*$ {
               if { [regexp {^bundled:(.*$)} $l7p_action_parameter_value -> l7p_action_parameter_asmpolicy] } {
-                debug [list l7policy action $l7p_actionIdx asm_policy] [format "%s" $l7p_action_parameter_asmpolicy] 7
+                debug [list l7policy action $l7p_actionGroup $l7p_actionRuleIdx asm_policy] [format "%s" $l7p_action_parameter_asmpolicy] 7
                 if { ! [string match *$l7p_action_parameter_asmpolicy* $vs__BundledItems] } {
-                  error "L7 Policy Action Rule with Index $l7p_actionIdx specified a bundled policy that wasn't selected for deployment"
+                  error "L7 Policy Action Rule with Group $l7p_actionGroup Index $l7p_actionRuleIdx specified a bundled policy that wasn't selected for deployment"
                 }
                 #set l7p_action_parameter_asmpolicy [lindex [split $l7p_action_parameter_value :] 1]
+                set l7p_action_parameter_asmpolicy [string map [list "%APP_NAME%" $app] $l7p_action_parameter_asmpolicy]              
                 set l7p_action_parameter_value [format "%s/%s" $app_path $l7p_action_parameter_asmpolicy]
                 # Flag deferred creation of the policy because of bundled ASM policy
                 set l7p_defer_create 1
@@ -776,21 +826,19 @@ foreach l7p_actionRow $l7policy__rulesAction {
             }
           }
 
-          #append l7p_action_rules($l7p_actionIdx) [format "%s \"%s\" " $l7p_action_parameter $l7p_action_parameter_value]
           append l7p_action_target_chunk [format "%s \"%s\" " $l7p_action_parameter $l7p_action_parameter_value]
           incr l7p_action_parIdx
         }
-        #append l7p_action_rules($l7p_actionIdx) "\} "
         append l7p_action_target_chunk "\} "
-        debug [list l7policy action $l7p_actionIdx 4_element] [format "chunk=%s" $l7p_action_target_chunk] 7
+        debug [list l7policy action $l7p_actionGroup $l7p_actionRuleIdx 4_element] [format "chunk=%s" $l7p_action_target_chunk] 7
       }
-      default { error "The target $l7p_action_target could not be processed" }
+      default { error "The target $l7p_actionColumn(Target) could not be processed" }
     }
-    append l7p_action_rules($l7p_actionIdx) $l7p_action_target_chunk
-    debug [list l7policy action $l7p_actionIdx] [format "rule=%s" $l7p_action_rules($l7p_actionIdx)] 7
-    incr l7p_action_targetIdx
+    lappend l7p_actionRules($l7p_actionGroup) $l7p_action_target_chunk
+    debug [list l7policy action $l7p_actionGroup $l7p_actionRuleIdx] [format "rule=%s" [lindex $l7p_actionRules($l7p_actionGroup) $l7p_actionRuleIdx]] 7    
+    incr l7p_actionRuleIdx    
   }
-  incr l7p_actionIdx
+  debug [list l7policy action $l7p_actionGroup] [format "rules=%s" $l7p_actionRules($l7p_actionGroup)] 7    
 }
 
 if { [info exists l7p_controls("asm")] && ! $l7p_action_found_default } {
@@ -799,14 +847,15 @@ if { [info exists l7p_controls("asm")] && ! $l7p_action_found_default } {
 
 # Build our L7 ruleset
 set l7p_cmd_rules "rules replace-all-with \{ "
-for {set i 0} {$i < $l7p_matchIdx} {incr i} {
-  debug [list l7policy rules $i "match "] $l7p_match_rules($i) 7
-  debug [list l7policy rules $i action] $l7p_action_rules($i) 7
+set l7p_ruleIdx 0
+foreach l7p_matchGroup $l7p_matchGroups {
+  debug [list l7policy rules $l7p_matchGroup "match "] $l7p_matchRules($l7p_matchGroup) 7
+  debug [list l7policy rules $l7p_matchGroup action] $l7p_actionRules($l7p_matchGroup) 7
 
   # If an ASM target was selected we must add a bypass action to each action in the ruleset
   # that does not contain an ASM target
   set l7p_rule_asmdefault ""
-  if { ![info exists l7p_asmrule($i)] && [info exists l7p_controls("asm")] } {
+  if { ![info exists l7p_asmrule($l7p_matchGroup)] && [info exists l7p_controls("asm")] } {
     if { [string tolower $l7policy__defaultASM] != "bypass" } {
       set l7p_rule_asmdefault [format " 1 { asm request enable policy %s } " $l7policy__defaultASM]
       set l7p_controls("asm") 1
@@ -816,7 +865,7 @@ for {set i 0} {$i < $l7p_matchIdx} {incr i} {
   }
 
   set l7p_rule_l7dosdefault ""
-  if { ![info exists l7p_l7dosrule($i)] && [info exists l7p_controls("l7dos")] } {
+  if { ![info exists l7p_l7dosrule($l7p_matchGroup)] && [info exists l7p_controls("l7dos")] } {
     if { [string tolower $l7policy__defaultL7DOS] != "bypass" } {
       set l7p_rule_l7dosdefault [format " 2 { l7dos request enable from-profile %s } " $l7policy__defaultL7DOS]
       set l7p_controls("asm") 1
@@ -829,10 +878,12 @@ for {set i 0} {$i < $l7p_matchIdx} {incr i} {
   set l7p_rule_default [format "%s %s" $l7p_rule_asmdefault $l7p_rule_l7dosdefault]
 
   set l7p_rule_condpart ""
-  if { [string length $l7p_match_rules($i)] > 0 } {
-    set l7p_rule_condpart [format "conditions replace-all-with \{ %s \}" $l7p_match_rules($i)]
+  if { [llength $l7p_matchRules($l7p_matchGroup)] > 0 && [string length [lindex $l7p_matchRules($l7p_matchGroup) 0]] > 0 } {
+    set l7p_rule_condpart [format "conditions replace-all-with \{ %s \}" [join $l7p_matchRules($l7p_matchGroup) " "]]
   }
-  append l7p_cmd_rules [format "%s \{ %s actions replace-all-with \{ %s %s \} ordinal %s \} " $l7p_indexes($i) $l7p_rule_condpart $l7p_action_rules($i) $l7p_rule_default [expr {$i+1}]]
+  set l7p_rule_actionpart [format "actions replace-all-with \{ %s %s \}" [join $l7p_actionRules($l7p_matchGroup) " "] $l7p_rule_default]
+  append l7p_cmd_rules [format "%s \{ %s %s ordinal %s \} " $l7p_matchGroup $l7p_rule_condpart $l7p_rule_actionpart [expr {$l7p_ruleIdx+1}]]
+  incr l7p_ruleIdx
 }
 
 # Finish building the tmsh command and execute it
@@ -864,7 +915,7 @@ if { $l7p_new_model } {
 append l7p_cmd [format " strategy %s %s %s %s \}" $l7policy__strategy $l7p_cmd_requires $l7p_cmd_controls $l7p_cmd_rules]
 debug [list l7policy l7p_cmd] $l7p_cmd 7
 
-if { $l7p_matchIdx > 0 && $l7p_actionIdx > 0 } {
+if { [llength $l7p_matchGroups] > 0 && [llength $l7p_actionGroups] > 0 } {
   if { $l7p_defer_create > 0 } {
     debug [list l7policy defer_create] $l7p_cmd 1
     set l7p_cmd_create [format "tmsh::create %s" $l7p_cmd]
@@ -1195,7 +1246,7 @@ if { [llength $bundled_irules] > 0 } {
 
     if { [string match "irule:url=*" $bundled_irule] } {
       set bundled_irule_isurl 1
-      set bundled_irule_url [string map {"irule:url=" ""} $bundled_irule]
+      set bundled_irule_url [string map [list "irule:url=" "" "%APP_NAME%" $app] $bundled_irule]
 
       regexp {^.*/(.*).irule$} $bundled_irule_url -> bundled_irule
       set bundled_irule_filename [format "/var/tmp/appsvcs_irule_%s_%s_%s.irule" $::app $bundled_irule $bundler_timestamp]
@@ -1713,7 +1764,7 @@ if { [llength $bundler_asm_policies] > 0 } {
     set bundled_asm_isurl 0
     if { [string match "asm:url=*" $bundled_asm] } {
       set bundled_asm_isurl 1
-      set bundled_asm_url [string map {"asm:url=" ""} $bundled_asm] 
+      set bundled_asm_url [string map [list "asm:url=" "" "%APP_NAME%" $app] $bundled_asm] 
       regexp {^.*/(.*).xml$} $bundled_asm_url -> bundled_asm_stripped
       set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
     } else {
@@ -1760,7 +1811,7 @@ if { [llength $bundler_apm_policies] == 1 } {
   set bundled_apm_isurl 0
   if { [string match "apm:url=*" $bundled_apm] } {
     set bundled_apm_isurl 1
-    set bundled_apm_url [string map {"apm:url=" ""} $bundled_apm] 
+    set bundled_apm_url [string map [list "apm:url=" "" "%APP_NAME%" $app] $bundled_apm] 
     regexp {^.*/(.*).tar.gz$} $bundled_apm_url -> bundled_apm_stripped
     set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
   } else {

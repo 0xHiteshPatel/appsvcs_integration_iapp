@@ -47,10 +47,11 @@
       },
       {
          "name":"l7policy__rulesMatch",
-         "columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+         "columnNames": ["Group","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
          "rows" : [ 
             { "row": ["0","client-ssl/request/cipher-bits","no","equals","1024","no","no"] },
             { "row": ["1","http-basic-auth/request/username","no","contains","hansolo","no","no"] },
+            { "row": ["1","http-host/request/all","yes","equals","www.milleniumfalcon.com","no","no"] },
             { "row": ["2","http-host/request/all","yes","equals","www.yoda.com","yes","yes"] },
             { "row": ["3","http-uri/request/path","no","starts-with","/admiral,/akbar","no","no"] },
             { "row": ["4","ssl-extension/ssl-client-hello/server-name","no","ends-with","ssl.skywalker.com","no","no"] },
@@ -64,17 +65,19 @@
       },
       {
          "name":"l7policy__rulesAction",
-         "columnNames": ["Index","Target","Parameter"],
+         "columnNames": ["Group","Target","Parameter"],
          "rows" : [ 
             { "row": ["0","forward/request/reset","none"] },
             { "row": ["1","forward/request/select/pool","pool:1"] },
             { "row": ["2","forward/request/select/pool","/Common/test_pool"] },
             { "row": ["3","forward/request/reset","none"] },
             { "row": ["4","http-reply/response/redirect/location","http://www.c-3po.com"] },
-            { "row": ["5","log/request/write/message|forward/request/reset","Use the force!"] },
+            { "row": ["5","log/request/write/message","Use the force!"] },
+            { "row": ["5","forward/request/reset","none"] },
             { "row": ["6","http-set-cookie/response/insert/name,domain,path,value","Stay,,/,OnTarget"] },
             { "row": ["","error/error/error","error"]},
-            { "row": ["7","http-header/response/insert/name,value|forward/request/select/pool","X-Thats-No-Moon,[IP::client_addr]|pool:1"]},
+            { "row": ["7","http-header/response/insert/name,value","X-Thats-No-Moon,[IP::client_addr]"]},
+            { "row": ["7","forward/request/select/pool","pool:1"]},
             { "row": ["8","tcp-nagle/request/disable","none"]},
             { "row": ["default","forward/request/select/pool","pool:0"]}
          ]

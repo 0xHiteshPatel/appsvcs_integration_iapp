@@ -960,9 +960,9 @@
 					"minver":"2.0_001",
 					"fields":[
 						{
-							"name":"Index",
-							"description":"Index:",
-							"help":"The index for this match rule.  The corresponding action is configured by specifying a matching action with the same index",
+							"name":"Group",
+							"description":"Group:",
+							"help":"The group for this match rule.  The corresponding action is configured by specifying a matching action with the same group(s).  Multiple rows with the same group may be specified to create multiple match conditions.",
 							"type":"string",
 							"default":"",
 							"required":false,
@@ -1133,9 +1133,9 @@
 					"minver":"2.0_001",
 					"fields":[
 						{
-							"name":"Index",
-							"description":"Index:",
-							"help":"The index for this match rule.  The corresponding action is configured by specifying a matching action with the same index",
+							"name":"Group",
+							"description":"Group:",
+							"help":"The group for this action rule.  Multiple rows with the same group may be specified to create multiple action targets",
 							"type":"string",
 							"default":"",
 							"required":false,

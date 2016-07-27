@@ -698,9 +698,9 @@ change</td>
 </tr>
 <tr><td colspan=7><b>Table: rulesMatch</b></td></tr>
 <tr>
-  <td>l7policy.rulesMatch.Index</td>
-  <td>$l7policy.rulesMatch__Index</td>
-  <td>The index for this match rule.  The corresponding action is configured by specifying a matching action with the same index</td>
+  <td>l7policy.rulesMatch.Group</td>
+  <td>$l7policy.rulesMatch__Group</td>
+  <td>The group for this match rule.  The corresponding action is configured by specifying a matching action with the same group(s).  Multiple rows with the same group may be specified to create multiple match conditions.</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -772,9 +772,9 @@ yes</td>
 </tr>
 <tr><td colspan=7><b>Table: rulesAction</b></td></tr>
 <tr>
-  <td>l7policy.rulesAction.Index</td>
-  <td>$l7policy.rulesAction__Index</td>
-  <td>The index for this match rule.  The corresponding action is configured by specifying a matching action with the same index</td>
+  <td>l7policy.rulesAction.Group</td>
+  <td>$l7policy.rulesAction__Group</td>
+  <td>The group for this action rule.  Multiple rows with the same group may be specified to create multiple action targets</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -792,7 +792,7 @@ yes</td>
 <tr>
   <td>l7policy.rulesAction.Parameter</td>
   <td>$l7policy.rulesAction__Parameter</td>
-  <td>Specifies the value for the action. Possible values depend on the target.  Multiple values can be entered by seperating with a ';'</td>
+  <td>Specifies the value for the action. Possible values depend on the target.  Multiple values can be entered by seperating with a ';'.  To reference a bundled policy item for use with a supported target use the format 'bundled:<bundled item name>'</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>

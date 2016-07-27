@@ -51,16 +51,16 @@
       },
       {
          "name":"l7policy__rulesMatch",
-         "columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+         "columnNames": ["Group","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
          "rows" : [ 
-            { "row": ["2","http-host/request/all","yes","equals","www.yoda.com","yes","yes"] },
-            { "row": ["3","http-uri/request/path","no","starts-with","/admiral,/akbar","no","no"] },
+            { "row": ["0","http-host/request/all","yes","equals","www.yoda.com","yes","yes"] },
+            { "row": ["1","http-uri/request/path","no","starts-with","/admiral,/akbar","no","no"] },
             { "row": ["default","","no","","","no","no"]}
          ]
       },
       {
          "name":"l7policy__rulesAction",
-         "columnNames": ["Index","Target","Parameter"],
+         "columnNames": ["Group","Target","Parameter"],
          "rows" : [ 
             { "row": ["0","forward/request/select/pool","pool:1"] },
             { "row": ["1","asm/request/enable/policy","bundled:asm_example1"] },
