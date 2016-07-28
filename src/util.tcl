@@ -499,20 +499,27 @@ proc set_version_info {} {
 
 # Run the cURL command and save the URL to a file.  Throws a hard error if cURL 
 # exits uncleanly
-# Input: string = URL to fetch
-proc curl_save_file { url filename } {
-  debug [list curl_save_file start] "url=$url filename=$filename" 10
+# Input: string url = URL to fetch
+#        string filename = filename to save output to
+#        int error_exit = 1 => throw hard error on non 200 response code
+#                         >1 => ignore error and return response code
+proc curl_save_file { url filename {error_exit 1}} {
+  debug [list curl_save_file start] "url=$url filename=$filename error_exit=$error_exit" 9
   set status [catch {
     exec curl --connect-timeout 5 -k -s -w 'RESPCODE=\%\{response_code\}' -o $filename $url
   } message]
 
-  debug [list curl_save_file done] "status=$status message=$message" 10
+  debug [list curl_save_file done] "status=$status message=$message" 9
   
-  if { ![string match "*RESPCODE=200*" $message]} {
-    error "Error occured while trying to retrieve $url: $message"
+  if { ![string match "*RESPCODE=200*" $message] } {
+    if { $error_exit == 1} {
+      error "Error occured while trying to retrieve $url: $message"
+    } else {
+        return 0
+    }
   }
 
-  return
+  return 1
 }
 
 # Borrowed from tcllib ::ip::IPv4?

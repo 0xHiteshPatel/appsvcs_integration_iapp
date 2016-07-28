@@ -1244,32 +1244,52 @@ if { [llength $bundled_irules] > 0 } {
   foreach bundled_irule $bundled_irules {
     debug [list virtual_server bundled_irule create_irule] [format "deploying bundled iRule %s" $bundled_irule] 5
 
+    set bundled_irule_curl_mode -1
     if { [string match "irule:url=*" $bundled_irule] } {
-      set bundled_irule_isurl 1
-      set bundled_irule_url [string map [list "irule:url=" "" "%APP_NAME%" $app] $bundled_irule]
-
-      regexp {^.*/(.*).irule$} $bundled_irule_url -> bundled_irule
-      set bundled_irule_filename [format "/var/tmp/appsvcs_irule_%s_%s_%s.irule" $::app $bundled_irule $bundler_timestamp]
-      curl_save_file $bundled_irule_url $bundled_irule_filename
-      set bundled_irule_fh [open $bundled_irule_filename]
-      set bundled_irule_src [string map $bundled_irule_map [read $bundled_irule_fh]]
-      close $bundled_irule_fh
-      file delete $bundled_irule_filename
+      set bundled_irule_curl_mode 1
+    } elseif { [string match "irule:urloptional=*" $bundled_irule] } {
+      set bundled_irule_curl_mode 2
     } else { 
       if {! [info exists bundler_objects($bundled_irule)] } {
         error "A bundled iRule named '$bundled_irule' was not found in the template"
       }
       set bundled_irule_src [string map $bundled_irule_map [::base64::decode $bundler_data($bundled_irule)]]
       set bundled_irule [string map {"irule:" ""} $bundled_irule]
+      set bundled_irule_do_add 1
     }
 
-    set bundled_irule_cmd [format "ltm rule %s/%s \{%s\}" $app_path $bundled_irule $bundled_irule_src]
-    debug [list virtual_server bundled_irule $bundled_irule tmsh_create] $bundled_irule_cmd 1
-    tmsh::create $bundled_irule_cmd
-    if { [string length $vs__Irules] > 0 } {
-      append vs__Irules ","
+    debug [list virtual_server bundled_irule create_irule curl_mode] [format "mode=%s" $bundled_irule_curl_mode] 7
+    if { $bundled_irule_curl_mode > 0 } {
+      set bundled_irule_isurl 1
+      set bundled_irule_url [string map [list "irule:url=" "" "irule:urloptional=" "" "%APP_NAME%" $app] $bundled_irule]
+
+      regexp {^.*/(.*).irule$} $bundled_irule_url -> bundled_irule
+      set bundled_irule_filename [format "/var/tmp/appsvcs_irule_%s_%s_%s.irule" $::app $bundled_irule $bundler_timestamp]
+
+      set bundled_irule_curl_state [curl_save_file $bundled_irule_url $bundled_irule_filename $bundled_irule_curl_mode]
+      debug [list virtual_server bundled_irule create_irule curl_state] [format "state=%s" $bundled_irule_curl_state] 7
+
+      if { $bundled_irule_curl_state } {
+        set bundled_irule_fh [open $bundled_irule_filename]
+        set bundled_irule_src [string map $bundled_irule_map [read $bundled_irule_fh]]
+        close $bundled_irule_fh
+        file delete $bundled_irule_filename
+        set bundled_irule_do_add 1
+      } else {
+        set bundled_irule_do_add 0
+      }
     }
-    append vs__Irules [format "%s/%s" $app_path $bundled_irule]
+
+    debug [list virtual_server bundled_irule $bundled_irule do_add] [format "%s" $bundled_irule_do_add] 7
+    if { $bundled_irule_do_add } {
+      set bundled_irule_cmd [format "ltm rule %s/%s \{%s\}" $app_path $bundled_irule $bundled_irule_src]
+      debug [list virtual_server bundled_irule $bundled_irule tmsh_create] $bundled_irule_cmd 1
+      tmsh::create $bundled_irule_cmd
+      if { [string length $vs__Irules] > 0 } {
+        append vs__Irules ","
+      }
+      append vs__Irules [format "%s/%s" $app_path $bundled_irule]
+    }
   }
   debug [list virtual_server bundled_irule add_irule_to_vs] [format "vs__Irules=\"%s\"" $vs__Irules] 7
 }

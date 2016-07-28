@@ -77,7 +77,9 @@
          "value": [
 				"irule:bundle2",
 				"irule:url=http://%TEST_POLICY_HOST%/appsvcs/remote_1.irule",
-				"irule:url=http://%TEST_POLICY_HOST%/appsvcs/%APP_NAME%.irule",
+				"irule:urloptional=http://%TEST_POLICY_HOST%/appsvcs/remote_1_optional.irule",
+            "irule:urloptional=http://%TEST_POLICY_HOST%/appsvcs/remote_2_optional.irule",
+            "irule:url=http://%TEST_POLICY_HOST%/appsvcs/%APP_NAME%.irule",
             "irule:bundle1",
             "asm:asm_example1",
             "asm:asm_example2",
