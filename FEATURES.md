@@ -30,12 +30,17 @@ L4-7 Functionality:
    - Static Allowed Source Address List
  HTTP/HTTPS L7 Security:
   - HTTP Strict Transport Security Header Insertion
-  - Web Application Firewall (ASM) policy bundling/deployment
-  - Identity and Access Management (APM) policy bundling/deployment
+  - Web Application Firewall (ASM) policy bundling and deployment from URL
+  - Identity and Access Management (APM) policy bundling deployment from URL
 
 Custom Extensions:
  - Extensibility through custom TCL scripting
    - See include/custom_extensions.tcl for more info
+
+Virtual Address Options:
+ - Route Advertisement Control
+ - Advanced Option Support
+   - Access to any TMSH configurable attribute
 
 Virtual Server Options:
  - Multiple listeners:
@@ -75,6 +80,9 @@ Virtual Server Options:
    - iRules:
      - Reference pre-existing iRules (ordering preserved)
      - Bundled iRule support
+     - Dynamically load from URL
+       - Required URLs
+       - Optional URLs - allow deployment to succeed if iRule does not exist on remote server
    - Advanced Profile Support
      - Reference any pre-existing policy on the device
    - SSL/TLS:
