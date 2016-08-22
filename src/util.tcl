@@ -167,21 +167,35 @@ proc replace_profile { obj oldprofile newprofile } {
 # Input: $obj = tmsh obj to check
 #        $option = option name to look for
 # Return: 1=Valid option; 0=Invalid option
-proc is_valid_profile_option { obj option } {
-    #debug [format "\[is_valid_profile_option\] looking for %s" $option]
+proc is_valid_profile_option { obj option } { 
+    debug [list is_valid_profile_option obj] [format "%s" $obj] 11
+    debug [list is_valid_profile_option option] [format "looking for %s" $option] 11
     set found 0
     set fdx 0
     set fields [tmsh::get_field_names value $obj]
+    set fields2 [tmsh::get_field_names nested $obj]
+    debug [list is_valid_profile_option fields] [format "%s" $fields] 11
+    debug [list is_valid_profile_option fields2] [format "%s" $fields2] 11
     set field_count [llength $fields]
     while { $fdx < $field_count } {
         set field [lindex $fields $fdx]
         if { $field == $option } {
           #debug [format "\[is_valid_profile_option\]  found %s" $option]
-          set found 1
+          return 1
         }
         incr fdx
     }
-    return $found
+    set field_count [llength $fields2]
+    set fdx 0
+    while { $fdx < $field_count } {
+        set field [lindex $fields2 $fdx]
+        if { $field == $option } {
+          #debug [format "\[is_valid_profile_option\]  found %s" $option]
+          return 1
+        }
+        incr fdx
+    }
+    return 0
 }
 
 # Process a string in the format key1=val1[;keyX=valX] and return an array 
@@ -403,6 +417,7 @@ proc process_options_string { option_str tmsh template {add_default 0} } {
     #   set_<operation>:item1[,item2]
     # Operations other than valid ones will fall through this logic to the default behaviour below
     set set_skip 0
+    set set_raw 0
     if { [string match "set_*" $value] } {
       set set_cmd_prefix ""
       set set_cmd_postfix " \} "
@@ -415,6 +430,11 @@ proc process_options_string { option_str tmsh template {add_default 0} } {
         }
         set_replace:* {
           set set_cmd_prefix "replace-all-with \{ "
+        }
+        set_raw:* {
+          set set_cmd_prefix ""
+          set set_cmd_postfix ""
+          set set_raw 1
         }
         set_default {
           set set_cmd_prefix "default "
@@ -442,7 +462,11 @@ proc process_options_string { option_str tmsh template {add_default 0} } {
 
     # Handle the default behaviour
     debug [list process_options_string $option] [format "dropped to default"] 10
-    append ret [format "%s \"%s\" " $option $value]
+    if { $set_raw } {
+      append ret [format "%s %s " $option $value]
+    } else {
+      append ret [format "%s \"%s\" " $option $value]
+    }
   }
   array unset options
   debug [list process_options_string return] $ret 10

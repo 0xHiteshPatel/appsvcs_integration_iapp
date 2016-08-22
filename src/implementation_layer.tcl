@@ -238,9 +238,14 @@ if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__Profile
   set clientssl 1
 } else { 
   if { [string length $vs__ProfileClientSSL] > 0 } {
-    debug [list client_ssl associate] "ClientSSLProfile was provided... checking if it exists" 5
-    tmsh::get_config /ltm profile client-ssl $vs__ProfileClientSSL
-    set clientssl 2
+    if { ![string match "create:*" $vs__ProfileClientSSL] } {
+      debug [list client_ssl associate] "ClientSSLProfile was provided... checking if it exists" 5
+      tmsh::get_config /ltm profile client-ssl $vs__ProfileClientSSL
+      set clientssl 2
+    } else {
+      debug [list client_ssl create] "create ClientSSLProfile was provided..." 5
+      set clientssl 3
+    }
   } else {
     set clientssl 0
     if { [string length $vs__ProfileClientSSLKey] > 0 && [string length $vs__ProfileClientSSLCert] == 0 } {
@@ -1370,6 +1375,7 @@ array set profile_create_supported {
  "vs__ProfileCompression" { type "http-compression" append ""}
  "vs__ProfileRequestLogging" { type "request-log" append ""}
  "vs__ProfileServerSSL" { type "server-ssl" append ""}
+ "vs__ProfileClientSSL" { type "client-ssl" append ""}
 }
 
 array set profile_create_defaults {
@@ -1384,6 +1390,7 @@ array set profile_create_defaults {
   "http-compression" { default "/Common/httpcompression" }
   "request-log" { default "/Common/request-log" }
   "server-ssl" { default "/Common/serverssl" }
+  "client-ssl" { default "/Common/clientssl" }
 }
 
 # Loop through the array
@@ -1395,7 +1402,7 @@ foreach {profile_var} [array names profile_create_supported] {
   if { [regexp -nocase {^create:} $profile_val] } {
     set profile_val [string map {"create:" ""} $profile_val]
     
-    # Process the string, check to see the persistence type was specified and is valid
+    # Process the string, check to see the profile type was specified and is valid
     array unset profile_options
     array unset profile_default_array
     array set profile_options [process_kvp_string $profile_val]
@@ -1424,10 +1431,13 @@ foreach {profile_var} [array names profile_create_supported] {
 
     # Build the final TMSH command
     append profile_cmd $profile_option_cmd
-
+      
     # Replace the APL var with the new profile name
     set [subst $profile_var] [format "%s/%s" $app_path $profile_name]
     debug [list virtual_server profiles create_handler $profile_var] [format "%s=%s" $profile_var [set [subst $profile_var]]] 1
+
+    # Allow run-time substition of the app name
+    set profile_cmd [string map [list "%APP_NAME%" $app] $profile_cmd]       
     debug [list virtual_server profiles create_handler $profile_var tmsh_create] [format "%s" $profile_cmd] 1
     tmsh::create $profile_cmd
   }
@@ -1502,7 +1512,7 @@ if { $clientssl == 1 } {
 }
 
 # Client-SSL profile specified via vs__ProfileClientSSL
-if { $clientssl == 2 } {
+if { $clientssl == 2 || $clientssl == 3} {
   set vs_profiles(vs__ProfileClientSSL) ""
   debug [list virtual_server client_ssl associate_existing] [format "name=%s" $vs__ProfileClientSSL] 7
 }

@@ -15,7 +15,7 @@
       { "vs__ProfileDefaultPersist":"/Common/cookie" },
       { "vs__ProfileFallbackPersist":"/Common/source_addr" },
       { "vs__ProfileServerSSL":"create:handshake-timeout=30;defaults-from=/Common/serverssl" },
-      { "vs__ProfileClientSSL":"" },
+      { "vs__ProfileClientSSL":"create:cert-key-chain=set_raw:add{default{cert /Common/default.crt key /Common/default.key}};defaults-from=/Common/clientssl-secure" },
       { "vs__ProfileClientSSLCert":"/Common/default.crt" },
       { "vs__ProfileClientSSLKey":"/Common/default.key" },
       { "vs__ProfileClientSSLChain":"/Common/ca-bundle.crt" },
