@@ -14,15 +14,22 @@ def process_field (field, section, tab):
 	if 'default' in field.keys():
 		defstr = "%s" % field["default"]
 
-	print "  <td>%s.%s</td>" % (section, field["name"])
+	#print "  <td>%s.%s</td>" % (section, field["name"])
+	print "  <td>%s</td>" % (field["description"])
 	print "  <td>$%s__%s</td>" % (section, field["name"])
 	if 'help' in field.keys():
-		print "  <td>%s</td>" % field["help"]
+		tempstr = field["help"]
+		tempstr = tempstr.replace("&", "&amp;")
+		tempstr = tempstr.replace("<", "&lt;")
+		tempstr = tempstr.replace(">", "&gt;")
+		print "  <td>%s</td>" % tempstr
 	else:
-		print "  <td>%s</td>" % field["description"]
+		print "  <td><pre>%s</pre></td>" % field["description"]
 	print "  <td>%s</td>" % field["modes"]
 
 	print "  <td>%s</td>" % field["type"]
+	print "  <td>%s</td>" % defstr
+
 	if field["type"] == "choice":
 		choices = "-".join(field["choices"])
 		print "  <td>%s</td>" % ",\n".join(field["choices"])
@@ -53,13 +60,14 @@ validators = {
 }
 
 print "<table border=1 width=\"100%\">"
-print " <tr><th colspan=7><b>Generated from JSON v%s_%s</b></th></tr>" % (data["tmpl_majorversion"], data["pres_revision"])
+print " <tr><th colspan=8><b>Generated from JSON v%s_%s</b></th></tr>" % (data["tmpl_majorversion"], data["pres_revision"])
 print " <tr>"
 print "  <th>Display Name</th>"
 print "  <th>Var Name</th>"
 print "  <th>Description</th>"
 print "  <th>Supported Modes</th>"
 print "  <th>Type</th>"
+print "  <th>Default Value</th>"
 print "  <th>Options</th>"
 print "  <th>Min. Version</th>"
 print " </tr>"
