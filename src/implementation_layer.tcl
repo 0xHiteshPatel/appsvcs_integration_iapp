@@ -15,6 +15,10 @@ set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
 set POSTDEPLOY_DELAY 0
 
+if { [tmsh::get_field_value [lindex [tmsh::get_config sys scriptd log-level] 0] log-level] eq "debug" } {
+  set iapp__logLevel 10
+}
+  
 %insertfile:src/util.tcl%
 
 set_version_info
@@ -30,7 +34,6 @@ set bundler_deferred_cmds []
 set app $tmsh::app_name
 debug [list start] [format "Starting %s version IMPL=%s PRES=%s app_name=%s" $NAME $IMPLVERSION $PRESVERSION $app] 0
 debug [list version_info] [array get version_info] 3
-
 
 array set modenames {
   1 {Standalone}
@@ -743,7 +746,6 @@ foreach l7p_actionGroup $l7p_actionGroups {
     switch -glob [string tolower $l7p_actionColumn(Target)] {
       asm*            { 
                         set l7p_controls("asm") 1
-#                        set l7p_asmrule($l7p_actionColumn(Group)) 1
                         set l7p_asmrule($l7p_actionGroup) 1
                       }
       cache*          { set l7p_controls("cache") 1 }
@@ -753,7 +755,6 @@ foreach l7p_actionGroup $l7p_actionGroups {
       l7dos*          { 
                         set l7p_controls("l7dos") 1
                         set l7p_controls("asm") 1 
-                        #set l7p_l7dosrule($l7p_actionColumn(Group)) 1
                         set l7p_l7dosrule($l7p_actionGroup) 1
                       }
       log*            { set l7p_controls("forwarding") 1 }
