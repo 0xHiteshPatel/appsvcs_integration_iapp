@@ -37,7 +37,7 @@ debug [list version_info] [array get version_info] 3
 
 array set modenames {
   1 {Standalone}
-  2 {BIG-IQ Cloud}
+  2 {iWorkflow}
   3 {Cisco APIC}
   4 {VMware NSX}
 }
@@ -397,7 +397,7 @@ foreach poolRow $pool__Pools {
     #    3b) If not IP than assume a hostname and resolve IP, create node using hostname, add node to member string
 
     # 1) Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
-    # to expose the pool member IP as a tenant editable field in BIG-IQ (Cisco APIC needs this for Dynamic Endpoint Insertion)
+    # to expose the pool member IP as a tenant editable field in iWorkflow (Cisco APIC needs this for Dynamic Endpoint Insertion)
     if { [string match 0.0.0.0* $memberColumn(IPAddress)] } {
       debug [list pools $poolIdx members $memberId skip_ip] "ip=0.0.0.0, skipping" 7
       continue
@@ -406,7 +406,7 @@ foreach poolRow $pool__Pools {
     }
     
     # TODO: Is this still required?
-    # Sometimes we receive a transposed ip/port from BIG-IQ... fix it here
+    # Sometimes we receive a transposed ip/port from iWorkflow... fix it here
     if {[has_routedomain $memberColumn(Port)]} {
       set new_port $memberColumn(IPAddress)
       set new_ip $memberColumn(Port)
@@ -1703,10 +1703,10 @@ if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" 
 
 # Create iCall statistics publisher
 # CAVEATS: This is mode specific because $app_stats is not set unless deployment
-# is driven by BIG-IQ.  To accomodate all use cases we make this mode specific:
+# is driven by iWorkflow.  To accomodate all use cases we make this mode specific:
 # mode=1 (Standalone) : Look at $iapp__appStats from the presentation layer to control creation
-# mode=2 (BIGIQ Cloud): Look at $app_stats set by BIG-IQ to control creation
-# mode=3 (APIC)       : Look at $app_stats set by BIG-IQ to control creation
+# mode=2 (iWorkflow): Look at $app_stats set by iWorkflow to control creation
+# mode=3 (APIC)       : Look at $app_stats set by iWorkflow to control creation
 debug [list stats] [format "mode=%s app_stats=%s iapp__appStats=%s" $mode $app_stats $iapp__appStats] 7
 if { (($mode == 2 || $mode == 3 || $mode == 4) && $app_stats eq "enabled") || ($mode == 1 && $iapp__appStats eq "enabled") } {
   # Create the iCall stats publisher
