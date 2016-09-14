@@ -276,6 +276,12 @@ foreach monRow $monitor__Monitors {
   table_row_to_array $monRow monColumn ::table_defaults(Monitors)
   debug [list monitors table_row_to_array return] [array get monColumn] 7
 
+  # Fixup the Index in case a table with exactly one row and no Index is sent
+  if { [llength $monitor__Monitors] == 1 && $monColumn(Index) == -1 } {
+    debug [list monitors fixup_index] "setting Index to 0" 9
+    set monColumn(Index) 0
+  }
+
   # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
   # If a Index is not specified then skip this row in the table
   if { $monColumn(Index) < 0 } {
@@ -341,6 +347,12 @@ foreach poolRow $pool__Pools {
   table_row_to_array $poolRow poolColumn ::table_defaults(Pools) [list AdvOptions]
   debug [list pools $poolIdx table_row_to_array return] [array get poolColumn] 7
 
+  # Fixup the Index in case a table with exactly one row and no Index is sent
+  if { [llength $pool__Pools] == 1 && $poolColumn(Index) == -1 } {
+    debug [list pools $poolIdx fixup_index] "setting Index to 0" 9
+    set poolColumn(Index) 0
+  }
+
   # The BIG-IP UI sends empty rows... above this we set Index to -1 if it wasn't found
   # If a Index is not specified then skip this row in the table
   if { $poolColumn(Index) < 0 } {
@@ -372,6 +384,10 @@ foreach poolRow $pool__Pools {
     table_row_to_array $memberRow memberColumn ::table_defaults(Members) [list AdvOptions]
 
     set memberId [format "%s/%s:%s" $memberColumn(Index) $memberColumn(IPAddress) $memberColumn(Port)]
+
+    if { [llength $pool__Pools] == 1 &&  $memberColumn(Index) == -1 } {
+      set memberColumn(Index) 0
+    }
     if { $memberColumn(Index) != $poolColumn(Index) } {
       debug [list pools $poolIdx members $memberId skip_index] [format "not a member of pool %s skipping" $poolColumn(Index)] 11
       continue
