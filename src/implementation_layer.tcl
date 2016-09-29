@@ -103,7 +103,7 @@ array set table_defaults {
     Members {
         Index 0
         State enabled
-        IPAddress Error
+        IPAddress ""
         Port ""
         ConnectionLimit 0
         Ratio 1
@@ -388,10 +388,12 @@ foreach poolRow $pool__Pools {
     if { [llength $pool__Pools] == 1 &&  $memberColumn(Index) == -1 } {
       set memberColumn(Index) 0
     }
+
     if { $memberColumn(Index) != $poolColumn(Index) } {
       debug [list pools $poolIdx members $memberId skip_index] [format "not a member of pool %s skipping" $poolColumn(Index)] 11
       continue
     }
+
     debug [list pools $poolIdx members $memberId config_raw] [array get memberColumn] 9
 
     
@@ -406,16 +408,16 @@ foreach poolRow $pool__Pools {
     #  hostname.org.com          A DNS Hostname (resolved on deployment)
     #
     # These options are processed as follows:
-    #  1) Skip row is IPAddress == "0.0.0.0*"
+    #  1) Skip row if IPAddress == "0.0.0.0*" or is empty
     #  2) Determine if a node object was specified or not
     #  3) If node object does not exist process as follows
     #    3a) If a nodename option was specified create the node object
     #    3b) If not IP than assume a hostname and resolve IP, create node using hostname, add node to member string
-
-    # 1) Skip pool members with a 0.0.0.0 IP.  Added to allow creation of an empty pool when you still have 
+    
+    # 1) Skip pool members with a 0.0.0.0 or empty IP.  Added to allow creation of an empty pool when you still have 
     # to expose the pool member IP as a tenant editable field in iWorkflow (Cisco APIC needs this for Dynamic Endpoint Insertion)
-    if { [string match 0.0.0.0* $memberColumn(IPAddress)] } {
-      debug [list pools $poolIdx members $memberId skip_ip] "ip=0.0.0.0, skipping" 7
+    if { [string match 0.0.0.0* $memberColumn(IPAddress)] || [string length $memberColumn(IPAddress)] == 0 } {
+      debug [list pools $poolIdx members $memberId skip_ip] "ip=0.0.0.0 or empty, skipping" 7
       continue
     } else {
       incr numMembers

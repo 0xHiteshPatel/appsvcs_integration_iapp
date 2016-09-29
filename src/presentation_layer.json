@@ -33,7 +33,7 @@
 				{
 					"name":"appStats",
 					"description":"iApp: Statistics Handler Creation",
-					"help":"Control whether Virtual Server/Pool statistics handlers are created in Standalone or BIG-IQ Cloud mode",
+					"help":"Control whether Virtual Server/Pool statistics handlers are created in Standalone or iWorkflow mode",
 					"type":"boolean",
 					"default":true,
 					"required":false,
