@@ -14,6 +14,10 @@ python util/build_apl.py %BUNDLEDIR% src\presentation_layer.json > tmp\apl.build
 
 echo Generating docs...
 python util/build_doc.py src\presentation_layer.json > OPTIONS.html
+python util/build_doc_md.py src\presentation_layer.json > documentation\docs\presoref.md
+cd documentation
+mkdocs build --clean
+cd ..
 
 echo Assembling template...
 echo BUILDOPT=%BUILDOPT%

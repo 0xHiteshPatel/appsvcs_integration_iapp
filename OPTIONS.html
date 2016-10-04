@@ -14,7 +14,7 @@
 <tr>
   <td>iApp: Strict Updates</td>
   <td>$iapp__strictUpdates</td>
-  <td>Control Strict Updates mode (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211)</td>
+  <td>Control [Strict Updates](https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211) mode</td>
   <td>[1, 2, 3, 4]</td>
   <td>boolean</td>
   <td>True</td>
@@ -24,7 +24,7 @@
 <tr>
   <td>iApp: Statistics Handler Creation</td>
   <td>$iapp__appStats</td>
-  <td>Control whether Virtual Server/Pool statistics handlers are created in Standalone or BIG-IQ Cloud mode</td>
+  <td>Control whether Virtual Server/Pool statistics handlers are created in Standalone or iWorkflow mode</td>
   <td>[1, 2]</td>
   <td>boolean</td>
   <td>True</td>
@@ -91,7 +91,7 @@ redeploy-block</td>
 <tr>
   <td>Virtual Server: Address</td>
   <td>$pool__addr</td>
-  <td>The destination address of the Virtual Server</td>
+  <td>The destination address of the Virtual Server.  Specifying a value of '255.255.255.254' will skip Virtual Server creation.</td>
   <td>[1, 2, 3, 4]</td>
   <td>ipaddr</td>
   <td></td>
@@ -162,7 +162,7 @@ redeploy-block</td>
 <tr>
   <td>LB Method:</td>
   <td>$pool.Pools__LbMethod</td>
-  <td>The pool Load Balancing Method (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305)</td>
+  <td>The pool [Load Balancing Method](https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305) </td>
   <td>[1, 2, 3, 4]</td>
   <td>choice</td>
   <td>round-robin</td>
@@ -346,7 +346,7 @@ disabled</td>
 <tr>
   <td>Listener:</td>
   <td>$vs.Listeners__Listener</td>
-  <td>Listener to create</td>
+  <td>Listener to create in &lt;address&gt;:&lt;port&gt; format</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -356,7 +356,7 @@ disabled</td>
 <tr>
   <td>Destination</td>
   <td>$vs.Listeners__Destination</td>
-  <td>The destination for traffic bound for this listener.  If no value of the keyword 'default' is specified the default pool index will be used.  A pool index, existing pool path or the keyword 'redirect' can also be specified</td>
+  <td>The destination for traffic bound for this listener in the format (default|&lt;pool index&gt;|redirect|&lt;TMOS pool object path&gt;)[;(nossl|noclientssl|noserverssl)].  If no value or the keyword 'default' is specified the default pool index will be used.</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td></td>
@@ -579,7 +579,7 @@ always</td>
 <tr>
   <td>Virtual Server: Client SSL Cipher String</td>
   <td>$vs__ProfileClientSSLCipherString</td>
-  <td>The SSL Cipher String (https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html)</td>
+  <td>The SSL [Cipher String](https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html)</td>
   <td>[1, 2, 3, 4]</td>
   <td>string</td>
   <td>DEFAULT:!SSLV3</td>
@@ -742,7 +742,7 @@ change</td>
 <tr>
   <td>L7 Policy: Match Strategy</td>
   <td>$l7policy__strategy</td>
-  <td>The Matching Strategy to use for the L7 Policy.  https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html</td>
+  <td>The Matching Strategy to use for the [L7 Policy](https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html).</td>
   <td>[1, 2, 3, 4]</td>
   <td>editchoice</td>
   <td>/Common/first-match</td>
