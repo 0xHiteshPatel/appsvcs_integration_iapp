@@ -2,4 +2,4 @@ appsvcs_integration_v*-*_*.tmpl
 asm_policies/*.xml
 irules/*.irule
 parts/*
-documentation/site/*
+docs/site/*
