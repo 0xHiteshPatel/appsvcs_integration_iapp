@@ -1,14 +1,18 @@
 site_name: App Services Integration iApp
 
 pages:
-- ['index.md','Home']
-- ['design.md','Design Methodology & Goals']
-- ['datamodel.md','Data Model']
-- ['logdebug.md','Logging & Debugging']
-- ['execflow.md','Execution Flow']
-- ['policies.md','Policy Bundling & Deployment']
-- ['presoref.md','Presentation Layer Reference']
+- Home: 'index.md'
+- Design Methodology & Goals: 'design.md'
+- Data Model: 'datamodel.md'
+- Logging & Debugging: 'logdebug.md'
+- Execution Flow: 'execflow.md'
+- Policy Bundling & Deployment: 'policies.md'
+- Presentation Layer Reference: 'presoref.md'
 
 theme: readthedocs
+
+markdown_extensions:
+    - toc:
+    - admonition:
 
 repo_url: https://github.com/0xHiteshPatel/appsvcs_integration_iapp/
