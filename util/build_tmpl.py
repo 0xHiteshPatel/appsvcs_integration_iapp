@@ -61,6 +61,7 @@ def process_file(fin, fout, basedir, name_append, prepend):
 		line = re.sub(r'%PRESENTATION_REV%', version["pres_rev"], line)
 		line = re.sub(r'%PRESENTATION_TCL_ALLVARS%', version["allvars"], line)
 		line = re.sub(r'%NAME_APPEND%', name_append, line)
+		line = re.sub(r'%TMPL_NAME%', "appsvcs_integration_v%s_%s%s" % (version["impl_major"], version["pres_rev"], name_append), line)
 			
 		match = re.match( r'(.*)\%insertfile:(.*)\%(.*)', line)
 		if match:
