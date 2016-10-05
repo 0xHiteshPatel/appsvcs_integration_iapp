@@ -9,6 +9,7 @@ set startTime [clock seconds]
 set bundler_timestamp [clock format $startTime -format {%Y%m%d%H%M%S}]
 
 set NAME "F5 Application Services Integration iApp (Community Edition)"
+set TMPLNAME "%TMPL_NAME%"
 set IMPLMAJORVERSION "2.0"
 set IMPLMINORVERSION "001"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
@@ -32,7 +33,7 @@ set bundler_deferred_cmds []
 %insertfile:tmp/bundler.build%
 
 set app $tmsh::app_name
-debug [list start] [format "Starting %s version IMPL=%s PRES=%s app_name=%s" $NAME $IMPLVERSION $PRESVERSION $app] 0
+debug [list start] [format "Starting %s version IMPL=%s PRES=%s TMPLNAME=%s app_name=%s" $NAME $IMPLVERSION $PRESVERSION $TMPLNAME $app] 0
 debug [list version_info] [array get version_info] 3
 
 array set modenames {
@@ -161,7 +162,6 @@ foreach var $allVars {
     debug "input" [format "%s NOT sent, setting to blank" $var] 2
   }
 }
-#error "bah"
 
 # Call the custom_extensions_start proc to allow site-specific customizations
 custom_extensions_start
@@ -1285,7 +1285,8 @@ if { [llength $bundled_irules] > 0 } {
     debug [list virtual_server bundled_irule create_irule curl_mode] [format "mode=%s" $bundled_irule_curl_mode] 7
     if { $bundled_irule_curl_mode > 0 } {
       set bundled_irule_isurl 1
-      set bundled_irule_url [string map [list "irule:url=" "" "irule:urloptional=" "" "%APP_NAME%" $app] $bundled_irule]
+      #set bundled_irule_url [string map [list "irule:url=" "" "irule:urloptional=" "" "%APP_NAME%" $app] $bundled_irule]
+      set bundled_irule_url [url_subst $bundled_irule]
 
       regexp {^.*/(.*).irule$} $bundled_irule_url -> bundled_irule
       set bundled_irule_filename [format "/var/tmp/appsvcs_irule_%s_%s_%s.irule" $::app $bundled_irule $bundler_timestamp]
@@ -1813,7 +1814,8 @@ if { [llength $bundler_asm_policies] > 0 } {
     set bundled_asm_isurl 0
     if { [string match "asm:url=*" $bundled_asm] } {
       set bundled_asm_isurl 1
-      set bundled_asm_url [string map [list "asm:url=" "" "%APP_NAME%" $app] $bundled_asm] 
+      #set bundled_asm_url [string map [list "asm:url=" "" "%APP_NAME%" $app] $bundled_asm] 
+      set bundled_asm_url [url_subst $bundled_asm] 
       regexp {^.*/(.*).xml$} $bundled_asm_url -> bundled_asm_stripped
       set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
     } else {
@@ -1860,7 +1862,8 @@ if { [llength $bundler_apm_policies] == 1 } {
   set bundled_apm_isurl 0
   if { [string match "apm:url=*" $bundled_apm] } {
     set bundled_apm_isurl 1
-    set bundled_apm_url [string map [list "apm:url=" "" "%APP_NAME%" $app] $bundled_apm] 
+    #set bundled_apm_url [string map [list "apm:url=" "" "%APP_NAME%" $app] $bundled_apm] 
+    set bundled_apm_url [url_subst $bundled_apm] 
     regexp {^.*/(.*).tar.gz$} $bundled_apm_url -> bundled_apm_stripped
     set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
   } else {

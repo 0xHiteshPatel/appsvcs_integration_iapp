@@ -696,19 +696,36 @@ proc check_node_exist { node_name } {
   }
 }
 
+# Perform string substitution on a URL.  
+# Input: string url = the URL to manipulate
+# Output: string url = the final URL
+proc url_subst { url } {
+  debug [list url_subst] [format "url=%s" $url] 10
+  set url_map [list %APP_NAME%           $::app \
+                    %APP_PATH%           $::app_path \
+                    %PARTITION%          $::partition \
+                    %VS_NAME%            $::vs__Name \
+                    %VS_DESCR%           $::vs__Description \
+                    %EXT1%               $::extensions__Field1 \
+                    %EXT2%               $::extensions__Field2 \
+                    %EXT3%               $::extensions__Field2 \
+                    "url="               "" \
+                    "irule:url="         "" \
+                    "irule:urloptional=" "" \
+                    "asm:url="           "" \
+                    "apm:url="           "" ]
+
+  set url [string map $url_map $url]  
+  debug [list url_subst] [format "return=%s" $url] 10
+  return $url
+}
+
 # Load a crypto cert/key from URL
 # Input: string type = key|cert
 #        string url = the URL to get
 # Return: string obj_name = the name of the created TMOS object
 proc load_crypto_object { type url } {
-  debug [list load_crypto_object] [format "type=%s url=%s" $type $url] 10
-  set url_map [list %APP_NAME%  $::app \
-                    %APP_PATH%  $::app_path \
-                    %VS_NAME%   $::vs__Name \
-                    %PARTITION% $::partition \
-                    "url="      ""]
-
-  set url [string map $url_map $url]  
+  set url [url_subst $url]  
   debug [list load_crypto_object url_subst] $url 10
 
   set url_file_name [lindex [split $url /] end]
