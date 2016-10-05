@@ -56,7 +56,7 @@ Custom Extensions
 ^^^^^^^^^^^^^^^^^
 
 - Extensibility through custom TCL scripting
-	- See `include/custom_extensions.tcl <https://github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/include/custom_extensions.tcl>`_ for more info
+	- See `src/include/custom_extensions.tcl <https://github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/src/include/custom_extensions.tcl>`_ for more info
 
 Virtual Address Options
 ^^^^^^^^^^^^^^^^^^^^^^^
