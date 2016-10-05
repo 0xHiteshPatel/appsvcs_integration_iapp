@@ -35,7 +35,7 @@ def stringify_modes (modes):
 		ret.append(mode_map["%s" % mode])
 	return ", ".join(ret)
 
-def process_field (field, search, fh):
+def process_field (field, search, fh, mode=0):
 	reqstr = "No"
 	defstr = ""
 	
@@ -50,26 +50,33 @@ def process_field (field, search, fh):
 	else:
 		tempstr = field["description"]
 
-	fh.write('\t"Description","%s"\n' % tempstr)
-	fh.write('\t"Modes","%s"\n' % stringify_modes(field["modes"]))
-	fh.write('\t"Type","%s"\n' % field["type"])
-	fh.write('\t"Default","%s"\n' % defstr)
+	if(mode):
+		fh.write(':Description: %s\n' % tempstr)
+		fh.write(':Modes: %s\n' % stringify_modes(field["modes"]))
+		fh.write(':Type: %s\n' % field["type"])
+		fh.write(':Default: %s\n' % defstr)
+		fh.write(':Min. Version: %s\n' % field["minver"])
+	else:
+		fh.write('\t"Description","%s"\n' % tempstr)
+		fh.write('\t"Modes","%s"\n' % stringify_modes(field["modes"]))
+		fh.write('\t"Type","%s"\n' % field["type"])
+		fh.write('\t"Default","%s"\n' % defstr)
+		fh.write('\t"Min. Version","%s"\n' % field["minver"])
 
 
 	if field["type"] == "choice":
 		choices = "-".join(field["choices"])
-		#print "<tr><td>Choices:</td><td>%s</td></tr>" % ", ".join(field["choices"])
-		fh.write('\t"Choices","%s"\n' % ", ".join(field["choices"]))
+		if (mode):
+			fh.write(':Choices: %s\n' % ", ".join(field["choices"]))
+		else:
+			fh.write('\t"Choices","%s"\n' % ", ".join(field["choices"]))
 
-	fh.write('\t"Min. Version","%s"\n' % field["minver"])
-	
 	if len(search) > 0:
-		fh.write('\t"Examples",')
 		test_files = find_test_files(search)
-		fh.write('"%s"\n' % " | ".join(print_rst_links(test_files, "test/")))
-		#for template in find_test_files(search):
-		#	fh.write('`%s <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/%s.json>`_ | ' % (template, template)) 
-
+		if (mode):
+			fh.write(':Examples: %s\n' % " | ".join(print_rst_links(test_files, "test/")))
+		else:
+			fh.write('\t"Examples","%s"\n' % " | ".join(print_rst_links(test_files, "test/")))
 
 	return
 	
@@ -110,8 +117,9 @@ for section in data["sections"]:
 			# print "</td></tr>"
 			rst.write(print_rst_header("Field: %s__%s" % (section["name"], field["name"]), '^'))
 			rst.write(".. csv-table::\n")
-			rst.write("\t:widths: 20 80\n\n")
-			process_field(field, "%s__%s" % (section["name"], field["name"]), rst)
+			rst.write("\t:stub-columns: 1\n")
+			rst.write("\t:widths: 10 80\n\n")
+			process_field(field, "%s__%s" % (section["name"], field["name"]), rst, 0)
 			#print "</table>"
 			rst.write("\n")
 		else:
@@ -120,17 +128,20 @@ for section in data["sections"]:
 			rst.write("%s\n\n" % field["help"])
 			rst.write(".. csv-table::\n")
 			rst.write('\t:header: "Column","Details"\n')
-			rst.write("\t:widths: 20 80\n")
-			rst.write("\t:stub-columns: 1\n\n")
+			rst.write("\t:stub-columns: 1\n")
+			rst.write("\t:widths: 10 80\n\n")
 			
 			for table_field in field["fields"]:
 				column_filename = "%s_%s.rst" % (table_name, table_field["name"]) 
 				column = open("%s%s%s" % (sys.argv[2], os.sep, column_filename), 'w')
 				rst.write('\t"%s",.. include:: %s' % (table_field["name"], column_filename))
-				column.write(".. toctree::\n\t:hidden:\n\n")
-				column.write(".. csv-table::\n")
-				column.write("\t:widths: 20 80\n\n")
-				process_field(table_field, "", column)
+				#column.write(".. toctree::\n\t:hidden:\n\n")
+				#column.write(".. csv-table::\n")
+				#column.write("\t:widths: 20 80\n\n")
+				#column.write(".. toctree::\n\t:hidden:\n\n")
+				#column.write(".. csv-table::\n")
+				#column.write("\t:widths: 20 80\n\n")
+				process_field(table_field, "", column, 1)
 				rst.write('\n')
 
 			rst.write('\t"Examples",')
