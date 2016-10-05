@@ -4,8 +4,8 @@
 .. _F5 Networks: https://www.f5.com
 .. _GitHub Issues: https://github.com/0xHiteshPatel/appsvcs_integration_iapp/issues
 
-App Services Integration iApp Documentation
-===========================================
+App Services Integration iApp
+=============================
 
 Release Version: |release|
 

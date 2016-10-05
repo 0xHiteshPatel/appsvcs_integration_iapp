@@ -32,7 +32,7 @@ APL_ provides a set of field types that are used for data input to an iApp templ
 
 .. csv-table::
 	:header: "Field Type","Description","GUI/REST API Representation"
-	:widths: 20 20 60
+	:widths: 20 20 80
 
 	"`String`_","Used for arbritary string input.  Built-in validators may be used but are only used by the GUI.",.. include:: code_string_example.rst
 	"`Table`_","Used for input of table based data.  Arbritary input field types are specified as columns within the table.  User input is accomplished by sending a set of rows that maps to the input fields specified as columns.  Tables cannot be nested.",.. include:: code_table_example.rst
@@ -57,7 +57,7 @@ As an example when creating LTM Pools and Monitors, we use the Pool\_\_Pools and
 	+ HTTP 
 	+ TCP
 
-We would use the following tables (JSON format, Index fields/references are **bold**):
+We would use the following tables (JSON format):
 
 .. code:: json
 
@@ -67,16 +67,16 @@ We would use the following tables (JSON format, Index fields/references are **bo
 	        	"name":"monitor__Monitors",
 	        	"columnNames": ["Index", "Name", "Type", "Options"],
 	        	"rows" : [
-	            	{ "row": [ "**0**", "/Common/tcp", "none", "none" ] },
-	            	{ "row": [ "<b>1</b>", "/Common/http", "none", "none" ] }
+	            	{ "row": [ "0", "/Common/tcp", "none", "none" ] },
+	            	{ "row": [ "1", "/Common/http", "none", "none" ] }
 	         	]
 	    	},
 	      	{
 	        	"name":"pool__Pools",
 	        	"columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
 	        	"rows" : [
-	            	{ "row": [ "0", "pool_0", "", "round-robin", "<b>0,1</b>", "none"] },
-	            	{ "row": [ "1", "pool_1", "", "round-robin", "<b>0</b>", "none"] },
+	            	{ "row": [ "0", "pool_0", "", "round-robin", "0,1", "none"] },
+	            	{ "row": [ "1", "pool_1", "", "round-robin", "0", "none"] },
 	         	]
 	      	}
 	    ]
@@ -88,8 +88,9 @@ The BIG-IP platform allows very fine-grained control of options for L4-7 protoco
 
 Create String:
 ^^^^^^^^^^^^^^
+
 .. list-table::
-	:widths: 20 80
+	:widths: 10 90
 	:header-rows: 0
 	:stub-columns: 1
 
@@ -113,7 +114,7 @@ Advanced Options String:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table::
-	:widths: 20 80
+	:widths: 10 90
 	:header-rows: 0
 	:stub-columns: 1
 
