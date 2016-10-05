@@ -49,7 +49,7 @@ proc psplit { str seps {protector "\\"}} {
 # Figure out which type of environment we are executing in.
 # Return: list $mode $folder $partition $routedomainid $newdeploy
 # Modes: 1 = Standalone
-#        2 = BIG-IQ Cloud
+#        2 = iWorkflow
 #        3 = Cisco APIC
 #        4 = VMware NSX
 proc get_mode { } {
