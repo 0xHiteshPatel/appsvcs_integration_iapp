@@ -32,7 +32,7 @@ echo "Generating docs..."
 rm docs/presoref/*.rst
 python util/build_doc_rst.py src/presentation_layer.json docs/presoref/
 cd docs
-make html
+make clean html
 cd ..
 
 rm tmp/apl.build

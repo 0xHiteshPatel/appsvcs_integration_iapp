@@ -115,6 +115,7 @@ for section in data["sections"]:
 			# print "<table><tr><td colspan=2>"
 			# print "## Field: %s__%s" % (section["name"], field["name"])
 			# print "</td></tr>"
+			rst.write(".. _preso-%s-%s:\n\n" % (section["name"], field["name"]))
 			rst.write(print_rst_header("Field: %s__%s" % (section["name"], field["name"]), '^'))
 			rst.write(".. csv-table::\n")
 			rst.write("\t:stub-columns: 1\n")
@@ -124,6 +125,7 @@ for section in data["sections"]:
 			rst.write("\n")
 		else:
 			table_name = "%s__%s" % (section["name"], field["name"])
+			rst.write(".. _preso-%s-%s:\n\n" % (section["name"], field["name"]))
 			rst.write(print_rst_header("Table: %s__%s" % (section["name"], field["name"]), '^'))
 			rst.write("%s\n\n" % field["help"])
 			rst.write(".. csv-table::\n")
@@ -135,12 +137,6 @@ for section in data["sections"]:
 				column_filename = "%s_%s.rst" % (table_name, table_field["name"]) 
 				column = open("%s%s%s" % (sys.argv[2], os.sep, column_filename), 'w')
 				rst.write('\t"%s",.. include:: %s' % (table_field["name"], column_filename))
-				#column.write(".. toctree::\n\t:hidden:\n\n")
-				#column.write(".. csv-table::\n")
-				#column.write("\t:widths: 20 80\n\n")
-				#column.write(".. toctree::\n\t:hidden:\n\n")
-				#column.write(".. csv-table::\n")
-				#column.write("\t:widths: 20 80\n\n")
 				process_field(table_field, "", column, 1)
 				rst.write('\n')
 

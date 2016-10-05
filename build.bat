@@ -23,7 +23,7 @@ del tmp\bundler.build
 echo Generating docs...
 python util/build_doc_rst.py src\presentation_layer.json docs\presoref\
 cd docs
-make html
+make clean html
 cd ..
 
 rmdir tmp
