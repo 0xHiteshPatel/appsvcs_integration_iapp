@@ -22,17 +22,18 @@ echo BUNDLEDIR=$BUNDLEDIR
 echo "Generating APL..."
 python util/build_apl.py $BUNDLEDIR src/presentation_layer.json > tmp/apl.build
 
-echo "Generating docs..."
-python util/build_doc.py src/presentation_layer.json > ./OPTIONS.html
-python util/build_doc_md.py src/presentation_layer.json > docs/docs/presoref.md
-cd docs
-mkdocs build --clean
-cd ..
-
 echo "Assembling template..."
 python util/build_tmpl.py $BUILDOPT $BUNDLEDIR "`pwd`"
 python util/build_tmpl.py $BUILDOPT $BUNDLEDIR -o parts/iapp.tcl -r src/implementation_only.template "`pwd`"  > /dev/null
 python util/build_tmpl.py $BUILDOPT $BUNDLEDIR -o parts/iapp.apl -r tmp/apl.build "`pwd`"  > /dev/null
+
+echo "Generating docs..."
+#python util/build_doc.py src/presentation_layer.json > ./OPTIONS.html
+rm docs/presoref/*.rst
+python util/build_doc_rst.py src/presentation_layer.json docs/presoref/
+cd docs
+make html
+cd ..
 
 rm tmp/apl.build
 rm tmp/bundler.build

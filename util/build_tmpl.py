@@ -149,6 +149,12 @@ else:
 version = get_info(basedir)
 print "Got info: %s" % version
 
+with open('docs/VERSION','wt') as docversion:
+	doc_ver = version.copy()
+	del doc_ver['allvars']
+	docversion.write(json.dumps(doc_ver))
+	docversion.close()
+
 if not args.outfile:
 	outfile = "%s/appsvcs_integration_v%s-%s_%s%s.tmpl" % (basedir, version["impl_major"], version["impl_minor"], version["pres_rev"], name_append)
 else:

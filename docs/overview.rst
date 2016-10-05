@@ -1,24 +1,26 @@
-## Overview
+Overview
+========
 
-The purpose of this project is to provide an [iApp](https://devcentral.f5.com/wiki/iApp.HomePage.ashx) template that can be used to automate and orchestrate Layer 4-7 applications service deployments using [F5 Networks BIG-IP/iWorkflow Products](https://www.f5.com).  Additionally, this iApp serves as a common integration point for third party SDN/NFV/Automation/Orchestration products.
+Modes
+-----
 
 The iApp supports multiple modes of operation:
 
-Mode | Description
----|---
-Standalone | Deployment driven by BIG-IP via GUI or API (SOAP/REST)
-F5 iWorkflow | Deployment driven by the F5's iWorkflow product (Service Catalog/REST Proxy)
-Cisco APIC | Deployment driven by L4-7 Service Graphs via the iWorkflow Dynamic Device Package and [Cisco Systems APIC Controller](http://www.cisco.com/c/en/us/products/cloud-systems-management/application-policy-infrastructure-controller-apic/index.html)
-VMware NSX | Deployment driven by L4-7 Service Insertion via iWorkflow from [VMware NSX](http://www.vmware.com/products/nsx)
+.. csv-table::
+  :header: "Mode","Description"
+  :widths: 20 80
+  :stub-columns: 1
 
-Please use [GitHub Issues](https://github.com/0xHiteshPatel/appsvcs_integration_iapp/issues) to report any bugs or feature requests  
+  "Standalone","Deployment driven by BIG-IP via GUI or API (SOAP/REST"
+  "F5 iWorkflow","Deployment driven by the F5's iWorkflow product (Service Catalog/REST Proxy)"
+  "Cisco APIC","Deployment driven by L4-7 Service Graphs via the iWorkflow Dynamic Device Package and `Cisco Systems APIC Controller <http://www.cisco.com/c/en/us/products/cloud-systems-management/application-policy-infrastructure-controller-apic/index.html>`_"
+  "VMware NSX","Deployment driven by L4-7 Service Insertion via iWorkflow from `VMware NSX <http://www.vmware.com/products/nsx>`_"
 
-**While the principle contributors at this time are employed by F5 Networks, this does not imply any official support by F5 Networks.** 
+Features
+--------
 
-## Features
-
-### Deployment Control
-
+Deployment Control
+^^^^^^^^^^^^^^^^^^
 - Strict Updates setting Control
 - Automated Statistics Handler Creation
 - Deployment mode override
@@ -28,7 +30,8 @@ Please use [GitHub Issues](https://github.com/0xHiteshPatel/appsvcs_integration_
 	- Enforce template policy (overwrite local changes)
 - Deployment Log Level Control
 
-### L4-7 Functionality
+L4-7 Functionality
+^^^^^^^^^^^^^^^^^^
 
 - Statistics:
 	- TLS/SSL
@@ -49,18 +52,21 @@ Please use [GitHub Issues](https://github.com/0xHiteshPatel/appsvcs_integration_
   	- Web Application Firewall (ASM) policy bundling and deployment from URL
   	- Identity and Access Management (APM) policy bundling deployment from URL
 
-### Custom Extensions
+Custom Extensions
+^^^^^^^^^^^^^^^^^
 
 - Extensibility through custom TCL scripting
-	- See [include/custom_extensions.tcl](https://github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/include/custom_extensions.tcl) for more info
+	- See `include/custom_extensions.tcl <https://github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/include/custom_extensions.tcl>`_ for more info
 
-### Virtual Address Options
+Virtual Address Options
+^^^^^^^^^^^^^^^^^^^^^^^
 
 - Route Advertisement Control
 - Advanced Option Support
 	- Access to any TMSH configurable attribute
 
-### Virtual Server Options
+Virtual Server Options
+^^^^^^^^^^^^^^^^^^^^^^
 
 - Multiple listeners:
 	- IPv4 & IPv6 Address and L4 Port
@@ -132,7 +138,8 @@ Please use [GitHub Issues](https://github.com/0xHiteshPatel/appsvcs_integration_
        	- Connectivity Profile
        	- Per-Request Profile
        
-### Pool Options
+Pool Options
+^^^^^^^^^^^^
 
 - Create multiple pools
 - Advanced Option Support
@@ -157,7 +164,8 @@ Please use [GitHub Issues](https://github.com/0xHiteshPatel/appsvcs_integration_
    	- Advanced Option Support
     	- Access to any TMSH configurable attribute
 
-### Health Monitors
+Health Monitors
+^^^^^^^^^^^^^^^
 
 - Multiple monitor support
 - Create custom health monitors
@@ -165,7 +173,8 @@ Please use [GitHub Issues](https://github.com/0xHiteshPatel/appsvcs_integration_
 		- Access to any TMSH configurable attribute
 - Reference existing health monitors
 
-### Utility Scripts
+Utility Scripts
+^^^^^^^^^^^^^^^
 
 - import_template_bigip.py: Create/update iApp template
 - import_cery_key.py: Create/update SSL/TLS Cert/Key on BIG-IP

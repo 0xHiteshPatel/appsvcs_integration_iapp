@@ -27,7 +27,7 @@
 				{
 					"name":"strictUpdates",
 					"description":"iApp: Strict Updates",
-					"help":"Control [Strict Updates](https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211) mode",
+					"help":"Control `Strict Updates <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211>`_ mode",
 					"type":"boolean",
 					"default":true,
 					"required":false,
@@ -209,7 +209,7 @@
 						{
 							"name":"LbMethod",
 							"description":"LB Method:",
-							"help":"The pool [Load Balancing Method](https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305) ",
+							"help":"The pool `Load Balancing Method <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305>`_",
 							"type":"choice",
 							"default":"round-robin",
 							"choices":[
@@ -724,7 +724,7 @@
 				{
 					"name":"ProfileClientSSLCipherString",
 					"description":"Virtual Server: Client SSL Cipher String",
-					"help":"The SSL [Cipher String](https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html)",
+					"help":"The SSL `Cipher String <https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html>`_",
 					"type":"string",
 					"default":"DEFAULT:!SSLV3",
 					"required":false,
@@ -922,7 +922,7 @@
 				{
 					"name":"strategy",
 					"description":"L7 Policy: Match Strategy",
-					"help":"The Matching Strategy to use for the [L7 Policy](https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html).",
+					"help":"The Matching Strategy to use for the `L7 Policy <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html>`_",
 					"type":"editchoice",
 					"default":"/Common/first-match",
 					"choices":[
@@ -960,7 +960,7 @@
 				{
 					"name":"rulesMatch",
 					"description":"L7 Policy: Rules: Matching",
-					"help":"The L7 policy ruleset matches to configure.  https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html",
+					"help":"The L7 policy `Matching <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html>`_ ruleset to configure.",
 					"type":"table",
 					"modes":[1,2,3,4],
 					"minver":"2.0_001",
@@ -1133,7 +1133,7 @@
 				{
 					"name":"rulesAction",
 					"description":"L7 Policy: Rules: Action",
-					"help":"The L7 policy ruleset actions to configure.  https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html",
+					"help":"The L7 policy `Action <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html>`_ ruleset actions to configure",
 					"type":"table",
 					"modes":[1,2,3,4],
 					"minver":"2.0_001",
