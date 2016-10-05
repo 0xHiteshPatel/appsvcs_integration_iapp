@@ -12,4 +12,4 @@ To download the latest release click `here <https://github.com/0xHiteshPatel/app
 .. |docs| image:: https://readthedocs.org/projects/appsvcs-integration-iapp/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
-    :target: https://docs.readthedocs.io/en/latest/?badge=latest
+    :target: http://appsvcs-integration-iapp.readthedocs.io/en/latest/?badge=latest
