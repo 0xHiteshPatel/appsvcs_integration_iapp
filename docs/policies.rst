@@ -46,7 +46,7 @@ The following steps are required to use this functionality:
 #. Place resources in the appropriate location under the `bundled/`_ directory
 #. Build the template using the appropriate command
 	- Linux, Mac OS: ``./build.sh <optional name>``
-	- Windows: ``./build.sh <optional name>``
+	- Windows: ``.\build.bat <optional name>``
 #. Upload the resulting template to the BIG-IP system
 
 Bundled items will now be available to select for deployment via the 

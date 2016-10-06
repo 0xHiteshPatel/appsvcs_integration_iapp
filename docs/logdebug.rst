@@ -16,6 +16,7 @@ controlled by:
 - An integer specified in the :ref:`iapp__logLevel <preso-iapp-loglevel>` field.  
 - Setting the scriptd log-level in TMOS to 'debug' (useful if inputs can't be 
   modified)
+	
 	- Silently sets ``iapp__logLevel`` to '10'
 	- TMSH Command: ``tmsh modify sys scriptd log-level debug``
 
@@ -28,7 +29,7 @@ log levels including all messages from lower levels:
 
 	"0","start/stop messages only"
 	"1","all TMSH commands"
-	"2","inputs &amp; global state information"
+	"2","inputs & global state information"
 	"3","unused"
 	"4","unused"
 	"5","object creation details"
