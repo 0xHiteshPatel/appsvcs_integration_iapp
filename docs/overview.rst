@@ -1,3 +1,6 @@
+.. _APIC: http://www.cisco.com/c/en/us/products/cloud-systems-management/application-policy-infrastructure-controller-apic/index.html
+.. _NSX: http://www.vmware.com/products/nsx
+
 Overview
 ========
 
@@ -12,9 +15,12 @@ The iApp supports multiple modes of operation:
   :stub-columns: 1
 
   "Standalone","Deployment driven by BIG-IP via GUI or API (SOAP/REST"
-  "F5 iWorkflow","Deployment driven by the F5's iWorkflow product (Service Catalog/REST Proxy)"
-  "Cisco APIC","Deployment driven by L4-7 Service Graphs via the iWorkflow Dynamic Device Package and `Cisco Systems APIC Controller <http://www.cisco.com/c/en/us/products/cloud-systems-management/application-policy-infrastructure-controller-apic/index.html>`_"
-  "VMware NSX","Deployment driven by L4-7 Service Insertion via iWorkflow from `VMware NSX <http://www.vmware.com/products/nsx>`_"
+  "F5 iWorkflow","Deployment driven by the F5's iWorkflow product 
+  (Service Catalog/REST Proxy)"
+  "Cisco APIC","Deployment driven by L4-7 Service Graphs via the iWorkflow 
+  Dynamic Device Package and Cisco Systems APIC_ Controller"
+  "VMware NSX","Deployment driven by L4-7 Service Insertion via iWorkflow 
+  from VMware NSX_"
 
 Features
 --------

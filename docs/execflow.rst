@@ -32,7 +32,7 @@ The Implementation Layer consists of TCL code that executes sequentially
 and adheres to the underlying ordering required by the BIG-IP platform. The 
 overall flow is as follows:
 
-#. Template startup (determine mode, debug level, input fixup, etc)
+#. Template startup (determine mode, debug level, input fix-up, etc)
 #. SSL/TLS Profile Creation
 #. Monitors
 #. Pools
@@ -59,8 +59,8 @@ postdeploy_bundler
 The `postdeploy_bundler`_ iCall_ script is scheduled for execution by the 
 Implementation Layer as required.  The primary purpose of this script is
 to create L4-7 policy elements (:doc:`policies`) and associate those policies
-with any required Virtual Servers.  Execution can be tracked via the mecahnisms
-detailed in :doc:`logdebug` or via specifc iStat_ keys that are populated at
+with any required Virtual Servers.  Execution can be tracked via the mechanisms
+detailed in :doc:`logdebug` or via specific iStat_ keys that are populated at
 each step of execution of the script.  The iStat_ keys are tied to the 
 Application Service Object (ASO) that is created by the iApp framework for each
 deployment.  The iStat keys created are:
@@ -130,7 +130,7 @@ helper script.  The mechanism implemented performs the following:
 #. Capture current start epoch time from deployment system 
 #. Determine polling interval and max number of polls
 #. Loop until max number of polls
-	#. Send REST POST to retrive deploy.postdeploy_final iStat key
+	#. Send REST POST to retrieve deploy.postdeploy_final iStat key
 	#. Check if returned state starts with ``FINISHED_``
 		#. Check if timestamp returned in state is greater than start time
 			#. Return success

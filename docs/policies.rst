@@ -35,7 +35,7 @@ this mechanism is appropriate for environments that properly version control
 the template itself and do not need the ability to load resources dynamically
 at runtime.
 
-For a step-by-step walkthrough on this process please refer to TODO: bundling lab
+For a step-by-step walk through on this process please refer to TODO: <bundling lab>
 The following steps are required to use this functionality:
 
 #. Download the source tree for the iApp
@@ -43,7 +43,7 @@ The following steps are required to use this functionality:
 	- Python >= 2.7
 		- sphinx package (pip install sphinx)
 		- sphinx_rtd_theme package (pip install sphinx_rtd_theme)
-#. Place resources in the approprite location under the `bundled/`_ directory
+#. Place resources in the appropriate location under the `bundled/`_ directory
 #. Build the template using the appropriate command
 	- Linux, Mac OS: ``./build.sh <optional name>``
 	- Windows: ``./build.sh <optional name>``
@@ -80,7 +80,7 @@ syntax that specifies the URL of the resource to load:
 
 ``<type>:url=<url>``
 
-Variable substition is available within the URL string to allow runtime 
+Variable substitution is available within the URL string to allow runtime 
 specification of URL components.  The variables currently supported are:
 
 
@@ -102,11 +102,14 @@ specification of URL components.  The variables currently supported are:
 	* - %VS_DESCR%
 	  - The value of the :ref:`vs__Description <preso-vs-Description>` field
 	* - %EXT1%
-	  - The value of the :ref:`extensions__Field1 <preso-extensions-Field1>` field
+	  - The value of the :ref:`extensions__Field1 <preso-extensions-Field1>` 
+	    field
 	* - %EXT2%
-	  - The value of the :ref:`extensions__Field2 <preso-extensions-Field2>` field
+	  - The value of the :ref:`extensions__Field2 <preso-extensions-Field2>` 
+	    field
 	* - %EXT3%
-	  - The value of the :ref:`extensions__Field3 <preso-extensions-Field3>` field
+	  - The value of the :ref:`extensions__Field3 <preso-extensions-Field3>` 
+	    field
 
 For example, if the name of our iApp deployment was ``my_http_app`` providing:
 
