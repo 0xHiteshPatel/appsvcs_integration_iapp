@@ -100,6 +100,12 @@ set allVars {
 %PRESENTATION_TCL_ALLVARS%
  app_stats }
 
+set requiredVars {
+ pool__addr \
+ pool__mask \
+ pool__port \
+ vs__ProfileClientProtocol }
+
 array set table_defaults {
     Members {
         Index 0
@@ -160,6 +166,14 @@ foreach var $allVars {
   } else {
     set [subst $var] ""
     debug "input" [format "%s NOT sent, setting to blank" $var] 2
+  }
+}
+
+# Double check we got all the required variables.  
+foreach var $requiredVars {
+  debug [list required_check] [format "var=%s val=%s len=%s" $var [set [subst $var]] [string length [set [subst $var]]]] 10
+  if {! [info exists [subst $var]] || [string length [set [subst $var]]] == 0 } {
+    error "The variable $var is required"
   }
 }
 
@@ -1487,7 +1501,7 @@ if { [string length $vs__ProfileClientProtocol] > 0 } {
 # Server-side protocol
 if { [string length $vs__ProfileServerProtocol] > 0 && $vs__ProfileClientProtocol ne $vs__ProfileServerProtocol } {
   append vsprofiles [format " %s \{ context %s \}" $vs__ProfileServerProtocol $serverContext]
-  debug [list virtual_server profiles protocol] [format "serverside protocol name=%s context=%s" $vs__ProfileServerProtocol context=$serverContext] 7
+  debug [list virtual_server profiles protocol] [format "serverside protocol name=%s context=%s" $vs__ProfileServerProtocol $serverContext] 7
 }
 
 
@@ -1577,13 +1591,12 @@ if { $pool__addr ne "255.255.255.254" } {
 
   # Process the additional listeners table
   set redirect_listeners []
-  lappend redirect_listeners [list [format "%s:80" $vs_dest_addr] [format "%s_default_vs_redirect_80" $app]]
-
   set vs_origcmd $cmd
 
   debug [list virtual_server add_listeners] [format "listenerCount=%s" [llength $vs__Listeners]] 7
 
   set listenerIdx 0
+  set listenerRedirOverlap 0
   foreach listenerRow $vs__Listeners {
     debug [list virtual_server add_listeners $listenerIdx] [format "listenerRow=%s" $listenerRow] 9
     
@@ -1608,6 +1621,10 @@ if { $pool__addr ne "255.255.255.254" } {
     
     # If this row had the 'redirect' destination specified save it for later and skip this row
     if { [info exists listenerDestOptions(redirect)] } {
+        if { $feature__redirectToHTTPS != "enabled" } {
+          error "To use the 'redirect' Destination for Listener $listenerColumn(Listener) feature__redirectToHTTPS but be enabled"
+        }
+
         debug [list virtual_server add_listeners $listenerIdx redirect] $listenerColumn(Listener) 7
         lappend redirect_listeners [list $listenerColumn(Listener) [format "%s_%s_redirect_%s" $addl_vs_basename $listenerIdx $listenerColumn(Port)]]
         incr listenerIdx      
@@ -1647,6 +1664,11 @@ if { $pool__addr ne "255.255.255.254" } {
     set listenerColumn(Name) [format "%s_%s_%s" $addl_vs_basename $listenerIdx $listenerColumn(Port)]
     set listenerColumn(Dest) [get_dest_str $listenerColumn(Addr) $listenerColumn(Port)]
 
+    # Check to see if there is a potential overlap with the feature__redirectToHTTPS functionality
+    if { $listenerColumn(Dest) eq [format "%s:80" $vs_dest_addr] } {
+      set listenerRedirOverlap 1
+    }
+
     debug [list virtual_server add_listeners $listenerIdx] [format "name=%s addr=%s port=%s dest=%s" $listenerColumn(Name) $listenerColumn(Addr) $listenerColumn(Port) $listenerColumn(Dest)] 7    
     set vs_listener_cmd [string map [list $vs__Name $listenerColumn(Name) "$vs_dest_addr:$pool__port" $listenerColumn(Dest) $default_pool_name $listenerColumn(Pool)] $vs_origcmd]
     # If our listener address is IPv6 we need to fixup the VS source filter and destination mask 
@@ -1660,6 +1682,11 @@ if { $pool__addr ne "255.255.255.254" } {
     debug [list virtual_server add_listeners $listenerIdx tmsh_create] $vs_listener_cmd 1
     tmsh::create $vs_listener_cmd
     incr listenerIdx
+  }
+
+  if { !$listenerRedirOverlap } {
+    # Add a listener for the default virtual server redirect
+    lappend redirect_listeners [list [format "%s:80" $vs_dest_addr] [format "%s_default_vs_redirect_80" $app]]
   }
 } else {
   debug [list virtual_server skip_create] "found 255.255.255.254 as pool__addr, skipping creation" 2
