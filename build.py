@@ -63,7 +63,6 @@ if not args.nodocs:
 
 os.remove(os.path.join('tmp','apl.build'))
 os.remove(os.path.join('tmp','bundler.build'))
-os.remove(os.path.join('docs','VERSION'))
 os.rmdir('tmp')
 
 print "Finished building"

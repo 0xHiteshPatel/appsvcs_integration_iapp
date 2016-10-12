@@ -3,5 +3,4 @@ asm_policies/*.xml
 irules/*.irule
 parts/*
 docs/_build/*
-docs/VERSION
 test/run/*
