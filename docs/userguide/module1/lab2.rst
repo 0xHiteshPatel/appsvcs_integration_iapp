@@ -12,6 +12,8 @@ Obtain the Pre-built Template
 #. Under the 'Downloads' section find the file ending in ``.tmpl`` and save
    this file to your system
 
+.. _ug_module1_lab2:
+
 Import the Template
 ^^^^^^^^^^^^^^^^^^^
 

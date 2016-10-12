@@ -38,16 +38,14 @@
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
          ]
-		}      
-	],
-   "lists": [
+		},
       {
-         "name": "vs__BundledItems",
-         "encrypted": "no",
-         "value": [
-            "irule:bundle2",
-            "irule:bundle1"
+         "name":"vs__BundledItems",
+         "columnNames": ["Resource"],
+         "rows" : [
+            { "row": [ "irule:bundle2" ] },
+            { "row": [ "irule:bundle1" ] }
          ]
-      }
-   ]
+      }            
+	]
 }

@@ -173,9 +173,15 @@ foreach var $allVars {
 foreach var $requiredVars {
   debug [list required_check] [format "var=%s val=%s len=%s" $var [set [subst $var]] [string length [set [subst $var]]]] 10
   if {! [info exists [subst $var]] || [string length [set [subst $var]]] == 0 } {
-    error "The variable $var is required"
+    if { ! [string match "vs__" $var] && $pool__addr != "255.255.255.254" } {
+      error "The variable $var is required"
+    }
   }
 }
+
+# Convert the $vs__BundledItems table to a list for easier manipulation
+set vs__BundledItems [single_column_table_to_list $vs__BundledItems "Resource"]
+debug [list convert_bundled] $vs__BundledItems 7
 
 # Call the custom_extensions_start proc to allow site-specific customizations
 custom_extensions_start
@@ -1020,7 +1026,7 @@ switch -glob [string tolower $vs__ProfileSecurityIPBlacklist] {
 
 # Process feature__easyL4Firewall options
 set afm_auto_ipistring ""
-if { [is_provisioned afm] } {
+if { [is_provisioned afm] && $pool__addr != "255.255.255.254" } {
   switch [string tolower $feature__easyL4Firewall] {
     auto {
       debug [list virtual_server feature__easyL4Firewall] "found auto option, setting feature to enabled" 5

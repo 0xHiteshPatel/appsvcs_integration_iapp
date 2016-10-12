@@ -14,12 +14,15 @@ We will deploy a virtual server with the following customizations:
    - Disable port translation
    - Enable rate limiting with 100 connections/sec allowed
    - Add a stats profile
+
 - Pool: 
    - Configure a slow ramp time
    - Set the minimum members to ‘1’
    - Associate two monitors with a minimum of 1 monitor passing
+
 - Auto create Client-SSL Profile:
    - Set the Secure Renegotiation option to ‘request’
+
 - Customized Profiles:
    - Client-side TCP: Nagle disabled
    - HTTP: Response Header “Server” set to “Lab2_6”

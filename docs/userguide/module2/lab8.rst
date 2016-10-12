@@ -24,6 +24,7 @@ HTTP URI or Host Header to one of four pools:
 - HTTP Host equals www.example1.com
    - HTTP URI starts with /pool0/ -> Pool 0
    - HTTP URI starts with /pool1/ -> Pool 1
+   
 - HTTP Host equals www.example2.com
    - HTTP URI starts with /pool2/ -> Pool 2
    - HTTP URI starts with /pool3/ -> Pool 3

@@ -1,4 +1,4 @@
-iRule & FW/WAF/IAM Policies
+iRule & WAF/IAM Policies
 ===========================
 
 .. toctree::

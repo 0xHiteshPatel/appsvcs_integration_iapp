@@ -47,15 +47,13 @@
             { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
             { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
          ]
-      }           
-   ],
-   "lists": [
+      },
       {
-         "name": "vs__BundledItems",
-         "encrypted": "no",
-         "value": [
-            "apm:test_%TEST_DEV_VERSION_MAJOR%"
+         "name":"vs__BundledItems",
+         "columnNames": ["Resource"],
+         "rows" : [
+            { "row": [ "apm:test_%TEST_DEV_VERSION_MAJOR%" ] }
          ]
-      }
+      }            
    ]
 }

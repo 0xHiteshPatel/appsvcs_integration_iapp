@@ -48,6 +48,14 @@
          ]
       },
       {
+         "name":"vs__BundledItems",
+         "columnNames": ["Resource"],
+         "rows" : [
+            { "row": [ "asm:asm_example1" ] },
+            { "row": [ "asm:asm_example2" ] }
+         ]
+      }, 
+      {
          "name":"l7policy__rulesMatch",
          "columnNames": ["Group","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
          "rows" : [ 
@@ -65,15 +73,5 @@
             { "row": ["default","asm/request/enable/policy","bundled:asm_example2"]}
          ]
        }                
-   ],
-   "lists": [
-      {
-         "name": "vs__BundledItems",
-         "encrypted": "no",
-         "value": [
-            "asm:asm_example1",
-            "asm:asm_example2"
-         ]
-      }
    ]
 }

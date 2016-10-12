@@ -9,7 +9,7 @@
 		{ "iapp__strictUpdates":"enabled" },
 		{ "iapp__appStats":"enabled" },
 		{ "iapp__mode":"auto" },
-		{ "iapp__logLevel":"10" },
+		{ "iapp__logLevel":"9" },
 		{ "iapp__routeDomain":"auto" },
     	{ "iapp__asmDeployMode":"preserve-bypass" },
     	{ "iapp__apmDeployMode":"preserve-bypass" },
@@ -94,6 +94,11 @@
 			"rows" : [ ]
 		},
 		{
+			"name":"vs__BundledItems",
+			"columnNames": ["Resource"],
+			"rows" : [ ]
+		},
+		{
 			"name":"l7policy__rulesMatch",
 			"columnNames": ["Group","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
 			"rows" : [ ]
@@ -114,11 +119,5 @@
 			"rows" : [ { "row": ["0.0.0.0/0"] } ]		
 		}		
 	],
-	"lists": [
-		{
-			"name": "vs__BundledItems",
-  			"encrypted": "no",
-			"value": []
-		}
-	]
+	"lists": [ ]
 }

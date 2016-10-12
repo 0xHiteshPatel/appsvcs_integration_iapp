@@ -94,10 +94,6 @@ will then route traffic destined to TCP/8080 to the newly created pool.
 
         * - Field Name
           - Value
-        * - Name
-          - |labname|
-        * - Template
-          - appsvcs_integration_v\ |version|
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
                 - Index: 0 
@@ -148,8 +144,8 @@ In this lab we will deploy a complex service that consists of the following:
     - 10.1.20.1\ |labnum|\ 1:80 -> Pool 0
     - 10.1.20.1\ |labnum|\ 2:80 -> HTTP Redirect
     - 10.1.20.1\ |labnum|\ 2:443 -> Pool 0
-    - 2001:f5f5:1::\ |labnum|\ .443 -> Pool 1
-    - 2001:f5f5:1::\ |labnum|\ .80 -> HTTP Redirect
+    - 2001:f5f5:1::1\ |labnum|\ .443 -> Pool 1
+    - 2001:f5f5:1::1\ |labnum|\ .80 -> HTTP Redirect
 
 All HTTPS traffic will be decrypted and then re-encrypted towards Pool 1.
 
@@ -163,10 +159,6 @@ All HTTPS traffic will be decrypted and then re-encrypted towards Pool 1.
 
         * - Field Name
           - Value
-        * - Name
-          - |labname|
-        * - Template
-          - appsvcs_integration_v\ |version|
         * - :ref:`Virtual Server: Address <preso-pool-addr>`
           - 10.1.20.1\ |labnum|\ 2       
         * - :ref:`Virtual Server: Port <preso-pool-port>`
@@ -215,10 +207,10 @@ All HTTPS traffic will be decrypted and then re-encrypted towards Pool 1.
                 - Listener: 10.1.20.1\ |labnum|\ 3:443              
                 - :ref:`Destination <preso-vs-Listeners-Destination>`: 0;noserverssl
             - Row 4:
-                - Listener: 2001:f5f5:1::\ |labnum|\ .443              
+                - Listener: 2001:f5f5:1::1\ |labnum|\ .443              
                 - :ref:`Destination <preso-vs-Listeners-Destination>`: default
             - Row 5:
-                - Listener: 2001:f5f5:1::\ |labnum|\ .80            
+                - Listener: 2001:f5f5:1::1\ |labnum|\ .80            
                 - :ref:`Destination <preso-vs-Listeners-Destination>`: 1;noclientssl     
         * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
           - /Common/tcp-wan-optimized

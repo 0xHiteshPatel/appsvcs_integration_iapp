@@ -308,7 +308,7 @@ The configuration for Pool Members within the Pool.
 	:Display Name: IP/Node Name:
 	:Description: IP Address OR Node Name of the Pool Member
 	:Modes: Standalone, iWorkflow, Cisco APIC, VMware NSX
-	:Type: string
+	:Type: editchoice
 	:Default: 
 	:Min. Version: 0.3_001
 	"
@@ -1006,19 +1006,25 @@ Field: vs__Irules
 
 .. _preso-vs-BundledItems:
 
-Field: vs__BundledItems
+Table: vs__BundledItems
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+The bundled resources to deploy.  See bundled/README for more info.
+
 .. csv-table::
+	:header: "Column","Details"
 	:stub-columns: 1
 	:widths: 10 80
 
-	"Display Name","Virtual Server: Bundled Items"
-	"Description","The bundled items to deploy.  See bundled/README for more info."
-	"Modes","Standalone, iWorkflow, Cisco APIC, VMware NSX"
-	"Type","dynamic_filelist_multi"
-	"Default",""
-	"Min. Version","0.3_014"
+	"Resource",".. _preso-vs-BundledItems-Resource:
+
+	:Display Name: Resource:
+	:Description: The bundled items to deploy.  See bundled/README for more info.
+	:Modes: Standalone, iWorkflow, Cisco APIC, VMware NSX
+	:Type: editchoice
+	:Default: 
+	:Min. Version: 2.0_001
+	"
 	"Examples","`include_defaults.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/include_defaults.json>`__ | `test_vs_standard_http_bundle_irule.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_http_bundle_irule.json>`__ | `test_vs_standard_https_bundle_all_preserve.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_all_preserve.json>`__ | `test_vs_standard_https_bundle_all_preserve_2.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_all_preserve_2.json>`__ | `test_vs_standard_https_bundle_all_redeploy.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_all_redeploy.json>`__ | `test_vs_standard_https_bundle_all_redeploy_2.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_all_redeploy_2.json>`__ | `test_vs_standard_https_bundle_all_url.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_all_url.json>`__ | `test_vs_standard_https_bundle_apm_preserve.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_apm_preserve.json>`__ | `test_vs_standard_https_bundle_apm_preserve_2.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_apm_preserve_2.json>`__ | `test_vs_standard_https_bundle_apm_redeploy.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_apm_redeploy.json>`__ | `test_vs_standard_https_bundle_apm_redeploy_2.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_apm_redeploy_2.json>`__ | `test_vs_standard_https_bundle_asm_preserve.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_asm_preserve.json>`__ | `test_vs_standard_https_bundle_asm_preserve_2.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_asm_preserve_2.json>`__ | `test_vs_standard_https_bundle_asm_redeploy.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_asm_redeploy.json>`__ | `test_vs_standard_https_bundle_asm_redeploy_2.json <https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/test/test_vs_standard_https_bundle_asm_redeploy_2.json>`__"
 
 .. _preso-vs-AdvOptions:

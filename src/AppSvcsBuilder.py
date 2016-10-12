@@ -8,7 +8,6 @@ import base64
 import gzip
 
 class AppSvcsBuilder:
-	giturl = "https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/tree/develop/"
 	_apl_validators = {
 		'ipaddr':'IpAddress',
 		'port':'PortNumber',
@@ -19,22 +18,25 @@ class AppSvcsBuilder:
 	}
 
 	options = {
-		'preso': 'src' + os.sep + 'presentation_layer.json',
-		'impl': 'src' + os.sep + 'implementation_layer.tcl', 
+		'preso': os.path.join('src','presentation_layer.json'),
+		'impl': os.path.join('src','implementation_layer.tcl'), 
 		'workingdir': os.getcwd(), 
 		'bundledir': 'bundled', 
 		'outfile': None, 
 		'docsdir': 'docs', 
 		'append': "", 
-		'roottmpl': 'src' + os.sep + 'master.template',
+		'roottmpl': os.path.join('src','master.template'),
 		'debug':False,
-		'silent':False
+		'github_root':'https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/',
+		'github_tag':'',
+		'github_url':''
 	}
+
 	def __init__(self, **kwargs):
 		self._debug("in __init__")
 		self.options.update(**kwargs)
-		self.options["preso_fn"] = self.options["workingdir"] + os.sep + self.options["preso"]
-		self.options["impl_fn"] = self.options["workingdir"] + os.sep + self.options["impl"]
+		self.options["preso_fn"] = os.path.join(self.options["workingdir"],self.options["preso"])
+		self.options["impl_fn"] = os.path.join(self.options["workingdir"],self.options["impl"])
 		if len(self.options["append"]) > 0:
 			self.options["append"] = '_' + self.options["append"]
 
@@ -45,7 +47,9 @@ class AppSvcsBuilder:
 			"impl_major": "", 
 			"impl_minor": "",
 			"allvars": [],
-			"allvarsTCL": ""
+			"allvarsTCL": "",
+			"github_tag":"",
+			"github_url":""
 		}
 		self._load_info()
 		if not self.options["outfile"]:
@@ -56,12 +60,17 @@ class AppSvcsBuilder:
 				   self.buildinfo["pres_rev"], 
 				   self.options["append"])
 		else:
-			self.options["outfile_fn"] = self.options["workingdir"] + os.sep + self.options["outfile"]
+			self.options["outfile_fn"] = os.path.join(self.options["workingdir"], self.options["outfile"])
 		
 		# if self.options["append"]:
 		# 	print "Appending \"%s\" to template name" % self.options["append"]
 
-		#self._debug("buildinfo=%s" % self.buildinfo)
+		self.options['github_url'] = self.options['github_root'] + 'tree/' + self.options['github_tag'] + '/'
+		self.buildinfo['github_root'] = self.options['github_root']
+		self.buildinfo['github_url'] = self.options['github_url']
+		self.buildinfo['github_tag'] = self.options['github_tag']
+		
+		self._debug("buildinfo=%s" % self.buildinfo)
 		#self._debug(self._stringify_modes([1,2,3,4]))
 		#self._debug(self._search_test_cases("pool__port"))
 		# self._debug(self._doc_RST_section("Test Test XXX","="))
@@ -111,6 +120,10 @@ class AppSvcsBuilder:
 
 		self.buildinfo["allvarsTCL"] = "\n".join(map(' {0} \\\\'.format, self.buildinfo["allvars"]))
 
+		ver = self._safe_open(os.path.join(self.options["workingdir"], 'VERSION'))
+		self.options['github_tag'] = str(ver.readline()).rstrip()
+		ver.close
+
 	def _safe_open(self, filename, mode="r", exit=True):
 		self._debug("_safe_open: %s %s" % (mode, filename))
 		try:
@@ -141,7 +154,9 @@ class AppSvcsBuilder:
 			for line in f:
 	 			if string in line:
 	   				ret.append(template.split(os.path.sep)[-1])
+	   				f.close()
 	   				break
+	   		f.close()
    		return ret
 
    	def _doc_RST_section(self, string, char):
@@ -151,7 +166,7 @@ class AppSvcsBuilder:
 		return '%s.. _%s:\n\n' % (prepend, ref)
 
 	def _doc_RST_anon_ref(self, list, path):
-		return ['`{0} <{1}{2}{0}>`__'.format(x, self.giturl, path) for x in list]
+		return ['`{0} <{1}{2}{0}>`__'.format(x, self.options['github_url'], path) for x in list]
 
 	def _doc_RST_generate(self, fh):
 		for section in self.pres_data["sections"]:
@@ -302,16 +317,36 @@ class AppSvcsBuilder:
 	}
 		""" % ' '.join(field["create_list"])
 
+		if 'glob' in field.keys():
+			types = {}		
+			filenames = []
+			field['choices'] = []
+			files = []
+
+			for	globitem in field["glob"]:
+				if os.sep != "/":
+					globitem["path"] = globitem["path"].replace("/","\\")
+
+				files = glob.glob("%s%s%s" % (self.options["bundledir"], os.sep, globitem["path"]))
+				for filename in files:
+					name_parts = filename.split(os.sep)
+					file_parts = name_parts[-1].split('.')
+					filenames.append(file_parts[0])
+					types[file_parts[0]] = globitem["prefix"]
+
+			if len(filenames) > 0:
+				for choice in filenames:
+					field['choices'].append('%s%s' % (types.get(choice), choice))
+
 		if len(tclstr) > 0:
 			return "\t%s%s %s%s%s%s%s" % (tab, field["type"], field["name"], field["_apl_reqstr"], field["_apl_dispstr"], field["_apl_defstr"], tclstr)
 		else:
+			if len(field['choices']) == 0:
+				field['choices'].append('** no bundled items **')
+
 			retstr += "\t%s%s %s%s%s%s {\n" % (tab, field["type"], field["name"], field["_apl_reqstr"], field["_apl_dispstr"], field["_apl_defstr"])
-			templist = field["choices"]
-			for choice in templist[:-1]:
-	  			retstr += "\t\t%s\"%s\",\n" % (tab, choice)
-			else:
-	  			retstr += "\t\t%s\"%s\"\n" % (tab, templist[-1])
-			retstr += "\t%s}" % tab
+			retstr += ",\n".join(['\t\t{0}"{1}"'.format(tab, x) for x in field["choices"]])
+			retstr += "\n\t%s}" % tab
 			return retstr		
 
 	def _apl_generate_field_editchoice(self, field, tab=""): 
@@ -392,13 +427,13 @@ class AppSvcsBuilder:
 
 		print "Building bundled resources:"
 		fh = self._safe_open(os.path.join(self.options["workingdir"],'tmp','bundler.build'), "wt")
-		print " Adding iRules (%s/irules/*.irule)..." % (self.options["bundledir"])
+		print " Adding iRules (%sirules/*.irule)..." % (self.options["bundledir"])
 		files = glob.glob(os.path.join(self.options["bundledir"],'irules','*.irule'))
 
-		print " Adding ASM policies (%s/asm_policies/*.xml)..." % (self.options["bundledir"])
+		print " Adding ASM policies (%sasm_policies/*.xml)..." % (self.options["bundledir"])
 		files += glob.glob(os.path.join(self.options["bundledir"], 'asm_policies','*.xml'))
 
-		print " Adding APM policies (%s/apm_policies/*.tar.gz)..." % (self.options["bundledir"])
+		print " Adding APM policies (%sapm_policies/*.tar.gz)..." % (self.options["bundledir"])
 		files += glob.glob(os.path.join(self.options["bundledir"],'apm_policies','*.tar.gz'))
 
 		if len(files) == 0:
@@ -460,7 +495,11 @@ class AppSvcsBuilder:
 
 		self._debug("buildDoc options=%s" % self.options)
 
-		fh = self._safe_open(self.options["workingdir"] + os.sep + self.options["docsdir"] + 'presoref.rst', "wt")
+		ver = self._safe_open(os.path.join(self.options["workingdir"],self.options["docsdir"],'VERSION'), "wt")
+		ver.write(json.dumps(self.buildinfo))
+		ver.close()
+
+		fh = self._safe_open(os.path.join(self.options["workingdir"],self.options["docsdir"],'presoref.rst'), "wt")
 		fh.write("Presentation Layer Reference\n")
 		fh.write("============================\n\n")
 
@@ -528,7 +567,7 @@ class AppSvcsBuilder:
 		print "Writing to file: %s" % self.options["outfile_fn"]
 
 		out = self._safe_open(self.options["outfile_fn"], "wt")
-		main = self._safe_open(self.options["workingdir"] + os.sep + self.options["roottmpl"])
+		main = self._safe_open(os.path.join(self.options["workingdir"],self.options["roottmpl"]))
 
 		final = self._tmpl_process_file(main, out)
 		out.write(''.join(final))

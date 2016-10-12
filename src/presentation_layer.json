@@ -295,10 +295,11 @@
 							"name":"IPAddress",
 							"description":"IP/Node Name:",
 							"help":"IP Address OR Node Name of the Pool Member",
-							"type":"string",
+							"type":"editchoice",
+							"create_list":["ltm node"],
 							"default":"",
 							"required":false,
-							"display":"medium",
+							"display":"large",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
 						},
@@ -858,17 +859,28 @@
 				{
 					"name":"BundledItems",
 					"description":"Virtual Server: Bundled Items",
-					"help":"The bundled items to deploy.  See bundled/README for more info.",
-					"type":"dynamic_filelist_multi",
-					"glob":[
-								{ "path":"irules/*.irule", "prefix":"irule:" },
-								{ "path":"asm_policies/*.xml", "prefix":"asm:" },
-								{ "path":"apm_policies/*.tar.gz", "prefix":"apm:" }
-							],
+					"help":"The bundled resources to deploy.  See bundled/README for more info.",
+					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"0.3_014",
-					"required":false
-				},
+					"minver":"2.0_001",
+					"required":false,
+					"fields": [
+						{
+							"name":"Resource",
+							"description":"Resource:",
+							"help":"The bundled items to deploy.  See bundled/README for more info.",
+							"type":"editchoice",
+							"glob":[
+										{ "path":"irules/*.irule", "prefix":"irule:" },
+										{ "path":"asm_policies/*.xml", "prefix":"asm:" },
+										{ "path":"apm_policies/*.tar.gz", "prefix":"apm:" }
+									],
+							"modes":[1,2,3,4],
+							"minver":"2.0_001",
+							"required":false
+						}					
+					]
+				},				
 				{
 					"name":"AdvOptions",
 					"description":"Virtual Server: Advanced Options",

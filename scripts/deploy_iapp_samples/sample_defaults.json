@@ -89,6 +89,16 @@
 			]
 		},
 		{
+			"name":"vs__Listeners",
+			"columnNames": ["Listener"],
+			"rows" : [ ]
+		},
+		{
+			"name":"vs__BundledItems",
+			"columnNames": ["Resource"],
+			"rows" : [ ]
+		},		
+		{
 			"name":"l7policy__rulesMatch",
 			"columnNames": ["Index","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
 			"rows" : [ ]
@@ -109,11 +119,5 @@
 			"rows" : [ { "row": ["0.0.0.0/0"] } ]		
 		}		
 	],
-	"lists": [
-		{
-			"name": "vs__BundledItems",
-  			"encrypted": "no",
-			"value": []
-		}
-	]
+	"lists": [ ]
 }
