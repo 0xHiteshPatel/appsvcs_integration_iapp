@@ -27,6 +27,9 @@ b = AppSvcsBuilder(**vars(args))
 if not os.path.isdir(args.workingdir + os.sep + 'tmp'):
 	os.mkdir('tmp')
 
+if not os.path.isdir(args.workingdir + os.sep + 'parts'):
+	os.mkdir('parts')
+
 if len(args.append) > 0:
 	print "Appending \"%s\" to template name" % args.append
 
