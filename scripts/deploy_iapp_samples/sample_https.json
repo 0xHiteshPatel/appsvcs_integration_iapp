@@ -40,15 +40,7 @@
 			"columnNames": ["Index","Target","Parameter"],
 			"rows" : [ ]
 		}	
-	],
-	"lists": [
-		{
-			"name": "vs__BundledItems",
-  			"encrypted": "no",
-			"value": []
-		}
 	]
-
 }
 
 
