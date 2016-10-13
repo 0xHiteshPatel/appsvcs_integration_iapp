@@ -38,16 +38,20 @@ overall flow is as follows:
 #. Pools
 #. L7 Policy Creation (may be deferred to postdeploy_final)
 #. Virtual Servers
-	#. Bundled iRules (see: :doc:`policies`)
-	#. Profile Processing
-	#. SNAT
-	#. SSL/TLS Profiles
-	#. Policies
-	#. Additional Listeners
+
+   #. Bundled iRules (see: :doc:`policies`)
+   #. Profile Processing
+   #. SNAT
+   #. SSL/TLS Profiles
+   #. Policies
+   #. Additional Listeners
+
 #. Statistics Handlers
 #. Virtual Address Options
-	#. Route Advertisement
-	#. Advanced Options
+
+   #. Route Advertisement
+   #. Advanced Options
+
 #. `postdeploy_bundler`_ handler creation (only required for WAF/IAM policies)
 #. `postdeploy_final`_ handler creation
 
@@ -67,26 +71,27 @@ deployment.  The iStat keys created are:
 
 
 .. list-table::
-	:header-rows: 1
-	:stub-columns: 1
+    :header-rows: 1
+    :stub-columns: 1
 
-	* - Key Name
-	  - Possible States
-	* - deploy.postdeploy_bundler
-	  - 
-	  	- ASM_IN_PROGRESS
-		- ASM_COMPLETE
-		- APM_IN_PROGRESS
-		- APM_COMPLETE
-		- DEFERRED_CMDS_IN_PROGRESS
-		- DEFERRED_CMDS_COMPLETE
-		- FINISHED
-	* - deploy.postdeploy_bundler.asm.<policy name>
-	  - - DEPLOY_IN_PROGRESS
-	    - DEPLOY_COMPLETE
-	* - deploy.postdeploy_bundler.apm.<policy name>
-	  - - DEPLOY_IN_PROGRESS
-	    - DEPLOY_COMPLETE
+    * - Key Name
+      - Possible States
+    * - deploy.postdeploy_bundler
+      - - ASM_IN_PROGRESS
+        - ASM_COMPLETE
+        - APM_IN_PROGRESS
+        - APM_COMPLETE
+        - DEFERRED_CMDS_IN_PROGRESS
+        - DEFERRED_CMDS_COMPLETE
+        - FINISHED
+
+    * - deploy.postdeploy_bundler.asm.<policy name>
+      - - DEPLOY_IN_PROGRESS
+        - DEPLOY_COMPLETE
+
+    * - deploy.postdeploy_bundler.apm.<policy name>
+      - - DEPLOY_IN_PROGRESS
+        - DEPLOY_COMPLETE
 
 The final action of the postdeploy_bundler_ script is to create an iCall_ 
 handler that executes the postdeploy_final_ script.
@@ -101,17 +106,16 @@ Additionally this script populates iStat_ keys that should be used to determine
 success or failure of the deployment.  The iStat keys created are:
 
 .. list-table::
-	:header-rows: 1
-	:stub-columns: 1
+    :header-rows: 1
+    :stub-columns: 1
 
-	* - Key Name
-	  - Possible States
-	* - deploy.postdeploy_final
-	  - 
-	  	- STARTED
-		- DEFERRED_CMDS_IN_PROGRESS
-		- DEFERRED_CMDS_COMPLETE
-		- FINISHED_<epoch timestamp>
+    * - Key Name
+      - Possible States
+    * - deploy.postdeploy_final
+      - - STARTED
+        - DEFERRED_CMDS_IN_PROGRESS
+        - DEFERRED_CMDS_COMPLETE
+        - FINISHED_<epoch timestamp>
 
 Determining Success/Failure of Deployment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -124,16 +128,21 @@ implementation of this mechanism can be found in the `deploy_iapp_bigip.py`_
 helper script.  The mechanism implemented performs the following:
 
 .. NOTICE:
-	When using this mechanism it is required that time is synchronized
-	between all systems
+    When using this mechanism it is required that time is synchronized
+    between all systems
 
 #. Capture current start epoch time from deployment system 
 #. Determine polling interval and max number of polls
 #. Loop until max number of polls
-	#. Send REST POST to retrieve deploy.postdeploy_final iStat key
-	#. Check if returned state starts with ``FINISHED_``
-		#. Check if timestamp returned in state is greater than start time
-			#. Return success
-	#. Sleep until next polling interval
+
+   #. Send REST POST to retrieve deploy.postdeploy_final iStat key
+   #. Check if returned state starts with ``FINISHED_``
+
+       #. Check if timestamp returned in state is greater than start time
+
+          #. Return success
+
+    #. Sleep until next polling interval
+
 #. Return failure
 

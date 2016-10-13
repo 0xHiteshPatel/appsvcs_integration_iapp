@@ -5,7 +5,7 @@
 .. |labname| replace:: Lab\ |labdot|
 .. |labnameund| replace:: Lab\ |labund|
 
-Multi-tier Deployments
+Multi-Tier Deployments
 ----------------------
 
 By default the |appsvcs| template deploys a configuration that automatically 
@@ -63,21 +63,28 @@ Create Tenant 1 Pool
           - 80
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+              - Index: 0 
+              - Monitor(s): 0
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.100
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.101
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
 
 #. Review the deployment.  Notice that only a pool object was created.
 
@@ -107,21 +114,28 @@ Create Tenant 2 Pool
           - 80
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+              - Index: 0 
+              - Monitor(s): 0
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.103
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.103
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.104
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.104
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
 
 #. Review the deployment.  Notice that only a pool object was created.
 
@@ -159,24 +173,31 @@ Create Virtual Server
           - /Common/http
         * - :ref:`L7 Policy: Rules: Matching <preso-l7policy-rulesMatch>`
           - - Row 1: 
-                - Group: 0
-                - Operand: http-uri/request/path
-                - Condition: starts-with
-                - Value: /tenant1/
+
+              - Group: 0
+              - Operand: http-uri/request/path
+              - Condition: starts-with
+              - Value: /tenant1/
+
             - Row 2: 
-                - Group: 1
-                - Operand: http-uri/request/path
-                - Condition: starts-with
-                - Value: /tenant2/
+
+              - Group: 1
+              - Operand: http-uri/request/path
+              - Condition: starts-with
+              - Value: /tenant2/
+
         * - :ref:`L7 Policy: Rules: Action <preso-l7policy-rulesAction>`
           - - Row 1: 
-                - Group: 0
-                - Operand: forward/request/select/pool
-                - Parameter: /Common/Lab4.1_tenant1.app/Lab4.1_tenant1_pool_0
+
+              - Group: 0
+              - Operand: forward/request/select/pool
+              - Parameter: /Common/Lab4.1_tenant1.app/Lab4.1_tenant1_pool_0
+
             - Row 2: 
-                - Group: 1
-                - Operand: forward/request/select/pool
-                - Parameter: /Common/Lab4.1_tenant1.app/Lab4.1_tenant2_pool_0
+
+              - Group: 1
+              - Operand: forward/request/select/pool
+              - Parameter: /Common/Lab4.1_tenant1.app/Lab4.1_tenant2_pool_0
 
 #. Click the 'Finished' button to deploy the template
 #. Review the deployed configuration using the iApp Components view

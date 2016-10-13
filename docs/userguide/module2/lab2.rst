@@ -35,21 +35,29 @@ Deploy HTTPS Service (auto-created Client-SSL profile and SNAT pool)
           - 443           
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+              - Index: 0 
+              - Monitor(s): 0
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.100
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.101
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
+
         * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
           - /Common/tcp-wan-optimized
         * - :ref:`Virtual Server: Server-side L4 Protocol Profile <preso-vs-ProfileServerProtocol>`
@@ -57,7 +65,7 @@ Deploy HTTPS Service (auto-created Client-SSL profile and SNAT pool)
         * - :ref:`Virtual Server: HTTP Profile <preso-vs-ProfileHTTP>`
           - /Common/http                
         * - :ref:`Virtual Server: SNAT Configuration <preso-vs-SNATConfig>`
-          - create:10.1.10.250,10.1.10.251
+          - ``create:10.1.10.250,10.1.10.251``
 
             .. NOTE::
                 This is the first example of the create syntax.  This value 

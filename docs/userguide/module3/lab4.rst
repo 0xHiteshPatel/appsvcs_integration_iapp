@@ -36,21 +36,29 @@ IAM Policy Deployment via Bundled Resource
           - 80
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+              - Index: 0 
+              - Monitor(s): 0
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.100
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.101
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
+
         * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
           - /Common/tcp-wan-optimized
         * - :ref:`Virtual Server: Server-side L4 Protocol Profile <preso-vs-ProfileServerProtocol>`
@@ -61,8 +69,9 @@ IAM Policy Deployment via Bundled Resource
           - ``use-bundled``          
         * - :ref:`Virtual Server: Bundled Items <preso-vs-BundledItems>`
           - - Row 1: 
-                - Resource: <select the resource from the dropdown that begins 
-                  with 'apm:' that matches the BIG-IP version you are using>
+
+              - Resource: <select the resource from the dropdown that begins 
+                with 'apm:' that matches the BIG-IP version you are using>
 
 
 #. Click the 'Finished' button to deploy the template and monitor the deployment
@@ -94,6 +103,7 @@ IAM Policy Deployment via URL
           - Value
         * - :ref:`Virtual Server: Bundled Items <preso-vs-BundledItems>`
           - - Row 1: 
+
                 - Resource: <select the appropriate item from below>
 
                   11.5: ``apm:url=http://<web server IP>/appsvcs/remote_apm_11_5.conf.tar.gz``

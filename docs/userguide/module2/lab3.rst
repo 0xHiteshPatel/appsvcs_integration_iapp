@@ -27,21 +27,29 @@ Deploy Generic TCP SLB Service
            - 245
          * - :ref:`Pool: Pool Table <preso-pool-Pools>`
            - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+               - Index: 0 
+               - Monitor(s): 0
+
          * - :ref:`Pool: Members <preso-pool-Members>`
            - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 245
+
+               - Pool Idx: 0
+               - IP/Node Name: 10.1.10.100
+               - Port: 245
+
              - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 245
+
+               - Pool Idx: 0
+               - IP/Node Name: 10.1.10.101
+               - Port: 245
+
          * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
            - - Row 1: 
-                - Index: 0
-                - Name: /Common/tcp
+
+               - Index: 0
+               - Name: /Common/tcp
+
          * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
            - /Common/tcp-wan-optimized
          * - :ref:`Virtual Server: Server-side L4 Protocol Profile <preso-vs-ProfileServerProtocol>`

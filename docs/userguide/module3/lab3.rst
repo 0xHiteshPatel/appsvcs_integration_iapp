@@ -36,21 +36,29 @@ WAF Policy Deployment via Bundled Resource
           - 80
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+              - Index: 0 
+              - Monitor(s): 0
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.100
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.101
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
+
         * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
           - /Common/tcp-wan-optimized
         * - :ref:`Virtual Server: Server-side L4 Protocol Profile <preso-vs-ProfileServerProtocol>`
@@ -59,34 +67,49 @@ WAF Policy Deployment via Bundled Resource
           - /Common/http
         * - :ref:`Virtual Server: Bundled Items <preso-vs-BundledItems>`
           - - Row 1: 
-                - Resource: asm:asm_example1
+
+              - Resource: asm:asm_example1
+
             - Row 2: 
-                - Resource: asm:asm_example2
+
+              - Resource: asm:asm_example2
+
         * - :ref:`L7 Policy: Rules: Matching <preso-l7policy-rulesMatch>`
           - - Row 1: 
-                - Group: 0
-                - Operand: http-host/request/host
-                - Condition: equals
-                - Value: www.example1.com
+
+              - Group: 0
+              - Operand: http-host/request/host
+              - Condition: equals
+              - Value: www.example1.com
+
             - Row 2: 
-                - Group: 1
-                - Operand: http-host/request/host
-                - Condition: equals
-                - Value: www.example2.com
+
+              - Group: 1
+              - Operand: http-host/request/host
+              - Condition: equals
+              - Value: www.example2.com
+
             - Row 3: 
-                - Group: default             
+
+              - Group: default             
+
         * - :ref:`L7 Policy: Rules: Action <preso-l7policy-rulesAction>`
           - - Row 1: 
-                - Group: 0
-                - Operand: asm/request/enable/policy
-                - Parameter: bundled:asm_example1
+
+              - Group: 0
+              - Operand: asm/request/enable/policy
+              - Parameter: bundled:asm_example1
+
             - Row 2: 
-                - Group: 1
-                - Operand: asm/request/enable/policy
-                - Parameter: bundled:asm_example2
+
+              - Group: 1
+              - Operand: asm/request/enable/policy
+              - Parameter: bundled:asm_example2
+
             - Row 3: 
-                - Group: default
-                - Operand: forward/request/reset
+
+              - Group: default
+              - Operand: forward/request/reset
 
 #. Click the 'Finished' button to deploy the template and monitor the deployment
    log
@@ -112,23 +135,32 @@ WAF Policy Deployment via URL
           - Value
         * - :ref:`Virtual Server: Bundled Items <preso-vs-BundledItems>`
           - - Row 3: 
-                - Resource: ``asm:url=http://<web server IP>/appsvcs/remote_asm1.xml``
+
+              - Resource: ``asm:url=http://<web server IP>/appsvcs/remote_asm1.xml``
+
         * - :ref:`L7 Policy: Rules: Matching <preso-l7policy-rulesMatch>`
           - - Row 3: 
-                - Group: 2
-                - Operand: http-host/request/host
-                - Condition: equals
-                - Value: www.example3.com
+
+              - Group: 2
+              - Operand: http-host/request/host
+              - Condition: equals
+              - Value: www.example3.com
+
             - Row 4: 
-                - Group: default             
+
+              - Group: default             
+
         * - :ref:`L7 Policy: Rules: Action <preso-l7policy-rulesAction>`
           - - Row 3: 
-                - Group: 0
-                - Operand: asm/request/enable/policy
-                - Parameter: bundled:remote_asm1
+
+              - Group: 0
+              - Operand: asm/request/enable/policy
+              - Parameter: bundled:remote_asm1
+
             - Row 4: 
-                - Group: default
-                - Operand: forward/request/reset
+
+              - Group: default
+              - Operand: forward/request/reset
 
 #. Click the 'Finished' button to deploy the template and monitor the deployment
    log

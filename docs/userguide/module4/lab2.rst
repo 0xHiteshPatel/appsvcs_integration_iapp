@@ -111,11 +111,15 @@ implement a three-level hierarchy and deploy a HTTPS or HTTP virtual server
 using the |appsvcs| template.  The following table describes the contents of the
 sample files:
 
-:sample_defaults.json: Default values for all the fields contained in the iApp
-:sample_https.json: Default values for a HTTPS service (parent: sample_defaults.json)
-:sample_myhttps.json: Top level definition of the service (parent: sample_https.json)
-:sample_http.json: Default values for a HTTP service (parent: sample_defaults.json)
-:sample_myhttp.json: Top level definition of the service (parent: sample_http.json)
+- sample_defaults.json: Default values for all the fields contained in the iApp
+
+  - sample_https.json: Default values for a HTTPS service (parent: sample_defaults.json)
+
+    - sample_myhttps.json: Top level definition of the service (parent: sample_https.json)
+
+  - sample_http.json: Default values for a HTTP service (parent: sample_defaults.json)
+  
+    - sample_myhttp.json: Top level definition of the service (parent: sample_http.json)
 
 To deploy the sample_myhttps.json template a command like this can be used:
  

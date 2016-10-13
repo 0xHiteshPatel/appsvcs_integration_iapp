@@ -16,7 +16,7 @@ The use cases are contained within the :github_file:`test <test>` directory of
 the source tree.  The ``.json`` files within this directory represent the input
 variables used to test the specific use case.
 
-Users of the |appsvcs| template can refer the the test case JSON files as the 
+Users of the |appsvcs| template can refer to the test case JSON files as the 
 authoritative source for implemented functionality.  The :doc:`/presoref` also
 includes links to each test case that references a particular input variable.  
 By examining the test case templates a user can determine additional 

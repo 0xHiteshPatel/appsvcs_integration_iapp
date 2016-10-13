@@ -34,21 +34,29 @@ Deploy Basic HTTP ADC Service
           - 80
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+              - Index: 0 
+              - Monitor(s): 0
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.100
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.101
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
+
         * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
           - /Common/tcp-wan-optimized
         * - :ref:`Virtual Server: Server-side L4 Protocol Profile <preso-vs-ProfileServerProtocol>`
@@ -61,10 +69,21 @@ Deploy Basic HTTP ADC Service
 #. Review the deployment log in your SSH window
 #. Click the 'Reconfigure' button
 #. Add a new Pool Member to the Pool: Members table
-    - Row 3: 
-        - Pool Idx: 0
-        - IP/Node Name: 10.1.10.102
-        - Port: 80
+
+   .. list-table::
+        :widths: 30 80
+        :header-rows: 1
+        :stub-columns: 1
+
+        * - Field Name
+          - Value
+        * - :ref:`Pool: Members <preso-pool-Members>`
+          - - Row 3: 
+
+                - Pool Idx: 0
+                - IP/Node Name: 10.1.10.102
+                - Port: 80
+
 #. Click the 'Finished' button and review the config changes
 
 .. NOTE::

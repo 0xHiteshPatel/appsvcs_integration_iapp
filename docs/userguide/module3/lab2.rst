@@ -34,21 +34,29 @@ iRule Deployment via Bundled Resource
           - 80
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0
+
+              - Index: 0 
+              - Monitor(s): 0
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.100
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.101
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
+
         * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
           - /Common/tcp-wan-optimized
         * - :ref:`Virtual Server: Server-side L4 Protocol Profile <preso-vs-ProfileServerProtocol>`
@@ -57,9 +65,12 @@ iRule Deployment via Bundled Resource
           - /Common/http
         * - :ref:`Virtual Server: Bundled Items <preso-vs-BundledItems>`
           - - Row 1: 
-                - Resource: irule:bundle2 
+
+              - Resource: irule:bundle2 
+
             - Row 2: 
-                - Resource: irule:bundle1 
+
+              - Resource: irule:bundle1 
 
 			.. NOTE::
 				Be sure to preserve the order shown above.  iRules are ordered
@@ -68,8 +79,10 @@ iRule Deployment via Bundled Resource
 
 #. Click the 'Finished' button to deploy the template
 #. Review the deployed configuration using the iApp Components view
+
     - Notice that iRule resources were automatically created and attached to 
       the virtual server.
+
 #. Click Local Traffic -> Virtual Server List.  Click the 'Edit...' link next
    to the '\ |labname|\ _default_vs_80' object.
 #. Notice the order of the deployed iRules was preserved during the deployment.
@@ -97,11 +110,16 @@ resource at runtime.  This functionality is fully documented in the
           - Value
         * - :ref:`Virtual Server: Bundled Items <preso-vs-BundledItems>`
           - - Row 3: 
-                - Resource: ``irule:urloptional=http://<web server IP>/appsvcs/remote_1_optional.irule``
+
+              - Resource: ``irule:urloptional=http://<web server IP>/appsvcs/remote_1_optional.irule``
+
             - Row 4: 
-                - Resource: ``irule:url=http://<web server IP>/appsvcs/remote_1.irule``
+
+              - Resource: ``irule:url=http://<web server IP>/appsvcs/remote_1.irule``
 
 #. Review the deployed config and deployment log
+
     - Notice that there are now three iRules tied to the Virtual Server
     - The 'urloptional' resource does not exist on the remote server therefore
       the template skipped deployment of that iRule resource.
+

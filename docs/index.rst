@@ -22,8 +22,8 @@ Introduction
 
 The purpose of this project is to provide an iApp_ template that can be used to 
 automate and orchestrate Layer 4-7 applications service deployments using 
-`F5 Networks`_ BIG-IP/iWorkflow Products.  Additionally, this iApp serves as a 
-common integration point for third party SDN/NFV/Automation/Orchestration 
+`F5 Networks`_ BIG-IP/iWorkflow Products.  Additionally, this template serves as
+a common integration point for third party SDN/NFV/Automation/Orchestration 
 products.
 
 Support

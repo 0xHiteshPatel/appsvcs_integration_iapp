@@ -10,23 +10,27 @@ Deploy HTTPS ADC Service with Customizations
 
 We will deploy a virtual server with the following customizations:
 
-- Virtual Server: 
-   - Disable port translation
-   - Enable rate limiting with 100 connections/sec allowed
-   - Add a stats profile
+- Virtual Server:
+
+  - Disable port translation
+  - Enable rate limiting with 100 connections/sec allowed
+  - Add a stats profile
 
 - Pool: 
-   - Configure a slow ramp time
-   - Set the minimum members to ‘1’
-   - Associate two monitors with a minimum of 1 monitor passing
+
+  - Configure a slow ramp time
+  - Set the minimum members to ‘1’
+  - Associate two monitors with a minimum of 1 monitor passing
 
 - Auto create Client-SSL Profile:
-   - Set the Secure Renegotiation option to ‘request’
+
+  - Set the Secure Renegotiation option to ‘request’
 
 - Customized Profiles:
-   - Client-side TCP: Nagle disabled
-   - HTTP: Response Header “Server” set to “Lab2_6”
-   - HTTP: X-Forwarded-For Header inserted
+
+  - Client-side TCP: Nagle disabled
+  - HTTP: Response Header “Server” set to “Lab2_6”
+  - HTTP: X-Forwarded-For Header inserted
 
 #. Create a new deployment with the following values:
 
@@ -46,30 +50,40 @@ We will deploy a virtual server with the following customizations:
         * - :ref:`Virtual Server: Port <preso-pool-port>`
           - 443           
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
-          - - Row 1: 
-                - Index: 0 
-                - Monitor(s): 0,1;2
+          - - Row 1:
 
-                   .. NOTE::
-                      Documentation of this syntax is available :ref:`here <preso-pool-Pools-Monitor>`
+              - Index: 0 
+              - Monitor(s): ``0,1;2``
 
-                - Adv Options: ``slow-ramp-time=345;min-up-members=1``
+                .. NOTE::
+                   Documentation of this syntax is available :ref:`here <preso-pool-Pools-Monitor>`
+
+              - Adv Options: ``slow-ramp-time=345;min-up-members=1``
+
         * - :ref:`Pool: Members <preso-pool-Members>`
           - - Row 1: 
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.100
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.100
+              - Port: 80
+
             - Row 2:
-                - Pool Idx: 0
-                - IP/Node Name: 10.1.10.101
-                - Port: 80
+
+              - Pool Idx: 0
+              - IP/Node Name: 10.1.10.101
+              - Port: 80
+
         * - :ref:`Monitor: Monitor Table <preso-monitor-Monitors>`
           - - Row 1: 
-                - Index: 0 
-                - Name: /Common/http
+
+              - Index: 0 
+              - Name: /Common/http
+
             - Row 2: 
-                - Index: 1 
-                - Name: /Common/tcp                
+
+              - Index: 1 
+              - Name: /Common/tcp                
+
         * - :ref:`Virtual Server: Client-side L4 Protocol Profile <preso-vs-ProfileClientProtocol>`
           - create:nagle=disabled;defaults-from=/Common/tcp-wan-optimized
         * - :ref:`Virtual Server: Server-side L4 Protocol Profile <preso-vs-ProfileServerProtocol>`
