@@ -17,7 +17,9 @@
       { "vs__ProfileDefaultPersist":"/Common/cookie" },
       { "vs__ProfileFallbackPersist":"/Common/source_addr" },
       { "vs__ProfileClientSSLCert":"/Common/default.crt" },
-      { "vs__ProfileClientSSLKey":"/Common/default.key" }
+      { "vs__ProfileClientSSLKey":"/Common/default.key" },
+      { "l7policy__defaultASM":"bundled:asm_example2" },
+      { "l7policy__defaultL7DOS":"/Common/appsvcs_dos_1" }      
    ],
    "tables":[
       {
@@ -70,7 +72,8 @@
          "rows" : [ 
             { "row": ["0","forward/request/select/pool","pool:1"] },
             { "row": ["1","asm/request/enable/policy","bundled:asm_example1"] },
-            { "row": ["default","asm/request/enable/policy","bundled:asm_example2"]}
+            { "row": ["1","l7dos/request/enable/from-profile ","/Common/appsvcs_dos_2"] },           
+            { "row": ["default","forward/request/select/pool","pool:0"]}
          ]
        }                
    ]

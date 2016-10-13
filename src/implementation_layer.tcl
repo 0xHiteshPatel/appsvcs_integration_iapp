@@ -901,7 +901,15 @@ foreach l7p_matchGroup $l7p_matchGroups {
   set l7p_rule_asmdefault ""
   if { ![info exists l7p_asmrule($l7p_matchGroup)] && [info exists l7p_controls("asm")] } {
     if { [string tolower $l7policy__defaultASM] != "bypass" } {
-      set l7p_rule_asmdefault [format " 1 { asm request enable policy %s } " $l7policy__defaultASM]
+      if { [regexp {^bundled:(.*$)} $l7policy__defaultASM -> l7p_action_default_asmpolicy] } {
+        debug [list l7policy l7policy rules $l7p_matchGroup action default_asmpolicy] [format "%s" $l7p_action_default_asmpolicy] 7
+        if { ! [string match *$l7p_action_default_asmpolicy* $vs__BundledItems] } {
+          error "L7 Policy Default ASM Policy specified a bundled policy that wasn't selected for deployment"
+        }
+        set l7policy__defaultASM [format "%s/%s" $app_path $l7p_action_default_asmpolicy]
+        set l7p_defer_create 1
+      }
+      set l7p_rule_asmdefault [format " 98 { asm request enable policy %s } " $l7policy__defaultASM]
       set l7p_controls("asm") 1
     } else {
       set l7p_rule_asmdefault " 98 { asm request disable } "
@@ -911,7 +919,7 @@ foreach l7p_matchGroup $l7p_matchGroups {
   set l7p_rule_l7dosdefault ""
   if { ![info exists l7p_l7dosrule($l7p_matchGroup)] && [info exists l7p_controls("l7dos")] } {
     if { [string tolower $l7policy__defaultL7DOS] != "bypass" } {
-      set l7p_rule_l7dosdefault [format " 2 { l7dos request enable from-profile %s } " $l7policy__defaultL7DOS]
+      set l7p_rule_l7dosdefault [format " 99 { l7dos request enable from-profile %s } " $l7policy__defaultL7DOS]
       set l7p_controls("asm") 1
       set l7p_controls("l7dos") 1
     } else {    
