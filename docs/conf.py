@@ -23,6 +23,8 @@ sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../%ssrc' % os.sep))
 from AppSvcsBuilder import AppSvcsBuilder
 
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -93,9 +95,12 @@ options = {
     'github_root':'https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/',
     'github_tag':'',
     'github_url':'',
-    'debug':True
+    'debug':False
 }
 
+if on_rtd:
+    options["debug"] = True
+    
 b = AppSvcsBuilder(**options)
 
 b.buildDoc()
@@ -191,7 +196,6 @@ rst_prolog = """
 html_theme = 'sphinx_rtd_theme'
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 if not on_rtd:  # only import and set the theme if we're building docs locally
     import sphinx_rtd_theme

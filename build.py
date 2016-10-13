@@ -58,7 +58,6 @@ if not args.extended:
 
 if not args.nodocs:
 	print "Generating docs..."
-	b.buildDoc()
 	os.system("cd docs && make clean && make html && cd ..")
 
 os.remove(os.path.join('tmp','apl.build'))
