@@ -29,7 +29,8 @@ class AppSvcsBuilder:
 		'debug':False,
 		'github_root':'https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/',
 		'github_tag':'',
-		'github_url':''
+		'github_url':'',
+		'debug':False
 	}
 
 	def __init__(self, **kwargs):
