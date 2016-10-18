@@ -3,7 +3,7 @@ import sys
 import glob
 import os
 import argparse
-import re 
+import re
 import base64
 import gzip
 
@@ -19,12 +19,12 @@ class AppSvcsBuilder:
 
 	options = {
 		'preso': os.path.join('src','presentation_layer.json'),
-		'impl': os.path.join('src','implementation_layer.tcl'), 
-		'workingdir': os.getcwd(), 
-		'bundledir': 'bundled', 
-		'outfile': None, 
+		'impl': os.path.join('src','implementation_layer.tcl'),
+		'workingdir': os.getcwd(),
+		'bundledir': 'bundled',
+		'outfile': None,
 		'docsdir': 'docs', 
-		'append': "", 
+		'append': "",
 		'roottmpl': os.path.join('src','master.template'),
 		'debug':False,
 		'github_root':'https://www.github.com/0xHiteshPatel/appsvcs_integration_iapp/',
@@ -44,8 +44,8 @@ class AppSvcsBuilder:
 		self._debug("options=%s" % self.options)
 
 		self.buildinfo = {
-			"pres_rev":"", 
-			"impl_major": "", 
+			"pres_rev":"",
+			"impl_major": "",
 			"impl_minor": "",
 			"allvars": [],
 			"allvarsTCL": "",
@@ -57,12 +57,12 @@ class AppSvcsBuilder:
 			self.options["outfile_fn"] = "%s/appsvcs_integration_v%s-%s_%s%s.tmpl" \
 				% (self.options["workingdir"],
 				   self.buildinfo["impl_major"],
-				   self.buildinfo["impl_minor"], 
-				   self.buildinfo["pres_rev"], 
+				   self.buildinfo["impl_minor"],
+				   self.buildinfo["pres_rev"],
 				   self.options["append"])
 		else:
 			self.options["outfile_fn"] = os.path.join(self.options["workingdir"], self.options["outfile"])
-		
+
 		# if self.options["append"]:
 		# 	print "Appending \"%s\" to template name" % self.options["append"]
 
@@ -70,7 +70,7 @@ class AppSvcsBuilder:
 		self.buildinfo['github_root'] = self.options['github_root']
 		self.buildinfo['github_url'] = self.options['github_url']
 		self.buildinfo['github_tag'] = self.options['github_tag']
-		
+
 		self._debug("buildinfo=%s" % self.buildinfo)
 		#self._debug(self._stringify_modes([1,2,3,4]))
 		#self._debug(self._search_test_cases("pool__port"))
@@ -92,11 +92,11 @@ class AppSvcsBuilder:
 		pres = self._safe_open(self.options["preso_fn"])
 		self.pres_data = self._load_json(pres)
 		pres.close()
-		
+
 		for line in impl:
 			implmajormatch = re.match( r'^set IMPLMAJORVERSION \"(.*)\"', line)
 			implminormatch = re.match( r'^set IMPLMINORVERSION \"(.*)\"', line)
-			
+
 			if implmajormatch: self.buildinfo["impl_major"] = implmajormatch.group(1)
 			if implminormatch: self.buildinfo["impl_minor"] = implminormatch.group(1)
 
@@ -105,11 +105,11 @@ class AppSvcsBuilder:
 		impl.close()
 		if self.pres_data["tmpl_majorversion"] != self.buildinfo["impl_major"]:
 			print "[fatal] IMPLVERSION_MAJOR (%s) in %s does not match 'tmpl_majorversion' (%s) in %s" \
-			       % (self.buildinfo["impl_major"], 
-			       	  self.options["impl_fn"], 
-			       	  self.pres_data["tmpl_majorversion"], 
+			       % (self.buildinfo["impl_major"],
+			       	  self.options["impl_fn"],
+			       	  self.pres_data["tmpl_majorversion"],
 			       	  self.options["preso_fn"])
-			sys.exit(1)	
+			sys.exit(1)
 
 		self.buildinfo["pres_rev"] = str(self.pres_data["pres_revision"])
 
@@ -193,7 +193,7 @@ class AppSvcsBuilder:
 					fh.write('\t:header: "Column","Details"\n')
 					fh.write("\t:stub-columns: 1\n")
 					fh.write("\t:widths: 10 80\n\n")
-					
+
 					for table_field in field["fields"]:
 						fh.write(self._doc_RST_inline_ref("preso-%s-%s-%s" % (section["name"], field["name"], table_field["name"]), '\t"%s","' % table_field["name"]))
 						self._doc_RST_generate_field(table_field, "", fh, 1)
@@ -223,7 +223,7 @@ class AppSvcsBuilder:
 		strings.append({"Type": field["type"]})
 		strings.append({"Default": defstr})
 		strings.append({"Min. Version": field["minver"]})
-		
+
 		if "choice" in field["type"] and "choices" in field.keys():
 			choicestr = ", ".join(field["choices"])
 			choicestr = choicestr.replace("&lt;", "<")
@@ -242,7 +242,7 @@ class AppSvcsBuilder:
 		ret = ""
 		self._debug("strings=%s" % strings)
 
-		
+
 		for string in strings:
 			self._debug("string=%s" % string)
 			name = string.keys()[0]
@@ -261,14 +261,14 @@ class AppSvcsBuilder:
 			line = re.sub(r'%PRESENTATION_TCL_ALLVARS%', self.buildinfo["allvarsTCL"], line)
 			line = re.sub(r'%NAME_APPEND%', self.options["append"], line)
 			line = re.sub(r'%TMPL_NAME%', "appsvcs_integration_v%s_%s%s" % (self.buildinfo["impl_major"], self.buildinfo["pres_rev"], self.options["append"]), line)
-				
+
 			match = re.match( r'(.*)\%insertfile:(.*)\%(.*)', line)
 			if match:
 				insertfile = self._safe_open("%s/%s" % (self.options["workingdir"], match.group(2)))
 				insert = self._tmpl_process_file(insertfile, fout, '%s ' % prepend)
 				insertfile.close()
 				line = "%s%s%s" % (match.group(1), ''.join(insert), match.group(3))
-		
+
 			ret.append(line)
 		return ret
 
@@ -278,11 +278,11 @@ class AppSvcsBuilder:
 	def _apl_generate_field_boolean(self, field, tab=""):
 			if 'default' in field.keys():
 				if field["default"] == True:
-					field["default"] = "enabled" 
+					field["default"] = "enabled"
 				else:
 					field["default"] = "disabled"
 				field["_apl_defstr"] = " default \"%s\"" % field["default"]
-					
+
 			return "\t%schoice %s%s%s {\n\t\t%s\"enabled\",\n\t\t%s\"disabled\"\n\t%s}" % (tab, field["name"], field["_apl_defstr"], field["_apl_reqstr"], tab, tab, tab)
 
 	def _apl_generate_field_string(self, field, tab=""):
@@ -312,14 +312,14 @@ class AppSvcsBuilder:
 		        append results \"/$name\"
 		        append results \"\\n\"
 		    }
-	      }  
+	      }
 	    }
 	    return $results
 	}
 		""" % ' '.join(field["create_list"])
 
 		if 'glob' in field.keys():
-			types = {}		
+			types = {}
 			filenames = []
 			field['choices'] = []
 			files = []
@@ -348,13 +348,13 @@ class AppSvcsBuilder:
 			retstr += "\t%s%s %s%s%s%s {\n" % (tab, field["type"], field["name"], field["_apl_reqstr"], field["_apl_dispstr"], field["_apl_defstr"])
 			retstr += ",\n".join(['\t\t{0}"{1}"'.format(tab, x) for x in field["choices"]])
 			retstr += "\n\t%s}" % tab
-			return retstr		
+			return retstr
 
-	def _apl_generate_field_editchoice(self, field, tab=""): 
+	def _apl_generate_field_editchoice(self, field, tab=""):
 		return self._apl_generate_field_choice(field, tab)
 
 	def _apl_generate_field_dynamic_filelist_multi(self, field, tab=""):
-		types = {}		
+		types = {}
 		filenames = []
 		retstr = ""
 
@@ -377,7 +377,7 @@ class AppSvcsBuilder:
 	  			retstr += "\t\t%s\"%s%s\"" % (tab, types.get('%s' % filenames[-1]), filenames[-1])
 	  	else:
 	  		retstr += "\t\t%s\"** no bundled items **\"" % tab
-		retstr += "\t%s}" % tab	
+		retstr += "\t%s}" % tab
 		return retstr
 
 	def _apl_generate_field (self, field, section, tab):
@@ -385,7 +385,7 @@ class AppSvcsBuilder:
 		if ('uivisible' not in field.keys()):
 			field["uivisible"] = True
 
-		field["_apl_reqstr"] = ""	
+		field["_apl_reqstr"] = ""
 		if ('required' in field.keys() and field["required"] == True):
 			field["_apl_reqstr"] = " required"
 
@@ -403,9 +403,9 @@ class AppSvcsBuilder:
 			field["_apl_validator"] = self._apl_validators[field["type"]]
 			field["type"] = 'string'
 			self._debug("VALIDATOR pre field=%s v=%s" % (field["type"], field["_apl_validator"]))
-		
+
 		if field["type"] == "text":
-			field["_apl_text"] = ("\t%s.%s \"%s\" \"%s\"\n" % (section, field["name"], field["description"], field["text"])) 
+			field["_apl_text"] = ("\t%s.%s \"%s\" \"%s\"\n" % (section, field["name"], field["description"], field["text"]))
 		else:
 			field["_apl_text"] = ("\t%s.%s \"%s\"\n" % (section, field["name"], field["description"]))
 
@@ -416,7 +416,7 @@ class AppSvcsBuilder:
 			apl_field = getattr(AppSvcsBuilder, func_name)(self, field, tab)
 		else:
 			print "Invalid APL Field Type: %s field=%s section=%s" % (field["type"], field["name"], section)
-			sys.exit(1)			
+			sys.exit(1)
 
 		if field['uivisible'] == True:
 			 return apl_field + '\n'
@@ -441,7 +441,7 @@ class AppSvcsBuilder:
 			print "  no files found"
 			fh.write("\n")
 			return
-		
+
 		fh.write("array set bundler_objects {}\n")
 		fh.write("array set bundler_data {}\n")
 		for filename in files:
@@ -454,7 +454,7 @@ class AppSvcsBuilder:
 			if re.match( r'.*irules.*irule$', filename): filetype = 'irule'
 			if re.match( r'.*asm.*xml$', filename): filetype = 'asm'
 			if re.match( r'.*apm.*.tar.gz$', filename): filetype = 'apm'
-			
+
 			if filetype == "":
 				print "[fatal] Could not determine the type of object for bundled file '%s'" % filename
 				sys.exit(1)
@@ -475,7 +475,7 @@ class AppSvcsBuilder:
 				"ver":apm_bip_version[0],
 				"data":base64.b64encode(infile.read())
 				})
-			
+
 		#self._debug("resources=%s" % resources)
 
 		for r in resources:
@@ -515,7 +515,7 @@ class AppSvcsBuilder:
 		self._debug("buildAPL options=%s" % self.options)
 
 		fh = self._safe_open(os.path.join(self.options["workingdir"],'tmp','apl.build'), "wt")
-		
+
 		for section in self.pres_data["sections"]:
 			fh.write("section %s {\n" % section["name"])
 			section["_apl_text"] = "\t%s \"%s\"\n" % (section["name"], section["description"])
@@ -544,7 +544,7 @@ class AppSvcsBuilder:
 		fh.write("\ntext {\n")
 
 		#for descr in text:
-		#	print "%s" % descr	
+		#	print "%s" % descr
 
 		for section in self.pres_data["sections"]:
 			fh.write(section["_apl_text"])
@@ -554,7 +554,7 @@ class AppSvcsBuilder:
 					for table_field in field["fields"]:
 						fh.write(table_field["_apl_text"])
 			fh.write("\n")
-		fh.write("}\n")	
+		fh.write("}\n")
 
 	def buildTemplate(self, **kwargs):
 		self._debug("in buildTmpl")
@@ -572,6 +572,6 @@ class AppSvcsBuilder:
 
 		final = self._tmpl_process_file(main, out)
 		out.write(''.join(final))
-		
+
 		out.close()
 		main.close()

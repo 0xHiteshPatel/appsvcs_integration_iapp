@@ -1,8 +1,16 @@
 #!/usr/bin/python
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 # delete_iapp_bigip.py -- Delete an iApp deployment from a BIG-IP system using the iControl-REST API
 # Documentation: see README.delete_iapp_bigip
@@ -30,7 +38,7 @@ def yes_no_question(question):
 		elif answer in yes:
 		   return True
 		else:
-		   sys.stdout.write("Please respond with 'yes' or 'no'")	
+		   sys.stdout.write("Please respond with 'yes' or 'no'")
 
 def debug(msg):
 	if args.debug:
@@ -47,7 +55,7 @@ parser.add_argument("-D", "--debug",    help="Enable debug output", action="stor
 parser.add_argument("-P", "--partition",help="The BIG-IP partition to use", default="Common")
 parser.add_argument("-n", "--noprompt", help="Do not prompt to confirm deletion", action="store_true")
 args = parser.parse_args()
-	
+
 
 # Set our REST urls
 iapp_url       = "https://%s/mgmt/tm/sys/application/service" % (args.host)
@@ -60,7 +68,7 @@ debug("iapp_exist_url=%s" % (iapp_exist_url))
 s = requests.session()
 s.auth = (args.username, args.password)
 s.verify = False
- 
+
 resp = s.get(iapp_exist_url)
 
 if resp.status_code == 401:

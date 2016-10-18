@@ -1,8 +1,16 @@
 #!/usr/bin/python
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 # import_template_bigip.py -- Import an iApp template to a BIG-IP system using the iControl-REST API
 # Documentation: see README.import_template_bigip
@@ -46,12 +54,12 @@ template_exist_url = "%s/%s" % (template_url, args.name)
 definition_url     = "%s/actions/definition" % (template_exist_url)
 
 # Get data from the file containing implementation layer TCL code (-i argument)
-with open(args.impl) as impl:    
+with open(args.impl) as impl:
 	impl_data = impl.read()
 impl.close()
 
 # Get data from the file containing presentation layer APL code (-a argument)
-with open(args.apl) as apl:    
+with open(args.apl) as apl:
 	apl_data = apl.read()
 apl.close()
 
@@ -59,7 +67,7 @@ apl.close()
 try:
     with open(args.html) as help:
         help_data = help.read()
-except IOError as error: 
+except IOError as error:
     	print "[warning] HTML Help file \"%s\" not found, setting to blank" % (args.html)
     	help_data = ""
 
@@ -67,7 +75,7 @@ except IOError as error:
 try:
     with open(args.macro) as macro:
         macro_data = macro.read()
-except IOError as error: 
+except IOError as error:
     	print "[warning] Macro file \"%s\" not found, setting to blank" % (args.macro)
     	macro_data = ""
 

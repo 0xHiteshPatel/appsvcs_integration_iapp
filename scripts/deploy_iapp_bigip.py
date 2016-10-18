@@ -1,8 +1,16 @@
 #!/usr/bin/python
 #
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 # deploy_iapp_bigip.py -- Deploy an iApp to a BIG-IP system using the iControl-REST API
 # Documentation: see README.deploy_iapp_bigip
@@ -22,15 +30,15 @@ import time
 pp = pprint.PrettyPrinter(indent=2)
 
 '''
-Recursively process a JSON object.  
+Recursively process a JSON object.
 Parent files are specified by the 'parent' key in the JSON object
 Values in the 'child' file take precedence
 '''
 def process_file(parent, child, indent):
 	print "[info] %sprocessing parent file \"%s\"" % (indent, parent)
-	
+
 	try:
-		parent_file = open(parent)    
+		parent_file = open(parent)
 	except IOError as error:
 		print "[error] Open of parent JSON template \"%s\" failed: %s" % (parent, error)
 		sys.exit(1)
@@ -120,7 +128,7 @@ def check_final_deploy(istat_key):
 			sys.exit(1)
 
 		respdict = json.loads(resp.text)
-		
+
 		result = respdict.get('commandResult')
 		result = result.replace('\n','')
 		debug("[check_deploy] current_time=%s result=%s" % (current_time, result))
@@ -173,13 +181,13 @@ if args.username:
 	if 'username' in final:
 		print "[info] Username found in JSON but specified on CLI, using CLI value"
 	final["username"] = args.username
-	
+
 if args.password:
 	if 'password' in final:
 		print "[info] Password found in JSON but specified on CLI, using CLI value"
 	final["password"] = args.password
-	
-# Required fields 
+
+# Required fields
 required = ['name','template_name','partition','username','password','inheritedDevicegroup','inheritedTrafficGroup','deviceGroup','trafficGroup']
 
 for item in required:
@@ -199,7 +207,7 @@ iapp_exist_url = "%s/~%s~%s.app~%s" % (iapp_url, final["partition"], final["name
 s = requests.session()
 s.auth = (final["username"], final["password"])
 s.verify = False
- 
+
 resp = s.get(template_url)
 
 if resp.status_code == 401:

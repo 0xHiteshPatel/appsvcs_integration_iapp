@@ -34,7 +34,7 @@ if len(args.append) > 0:
 	print "Appending \"%s\" to template name" % args.append
 
 print "Generating APL..."
-b.buildAPL() 
+b.buildAPL()
 
 print "Assembling main template..."
 b.buildTemplate()

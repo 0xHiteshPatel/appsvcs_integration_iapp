@@ -18,7 +18,7 @@ puts "$logprefix Starting at [clock format $systemTime -format %D] [clock format
 
 tmsh::cd $app_path
 puts "$logprefix Setting iCall handler to inactive..."
-tmsh::modify sys application service $aso strict-updates disabled 
+tmsh::modify sys application service $aso strict-updates disabled
 tmsh::modify sys icall handler periodic postdeploy_final status inactive
 
 istats::set [format "%s string deploy.postdeploy_final" $iaso] "STARTED"

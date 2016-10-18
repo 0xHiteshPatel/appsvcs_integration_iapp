@@ -1,31 +1,31 @@
 # ####################################################################
 # Custom extensions example
 #
-# The purpose of custom extensions is to allow functionality to be implemented 
+# The purpose of custom extensions is to allow functionality to be implemented
 # without modifying the base deployment code.  Additionally control over these
 # extensions can be exposed via the extensions__fieldX fields to allow functionality
-# to be added WITHOUT changes to the presentation layer. By exposing the extension 
-# fields as tenant editable we can add code to this portion of the iApp to handle 
+# to be added WITHOUT changes to the presentation layer. By exposing the extension
+# fields as tenant editable we can add code to this portion of the iApp to handle
 # new functionality without changing the northbound data model
 #
 # The following procs are called at various points during the implementation:
 #   custom_extensions_start: Called at the start of the deployment after mode is determined
 #   custom_extensions_before_pools:  Called before processing all pool(s) starts
 #   custom_extensions_before_pool:  Called before processing to create the pool starts
-#   custom_extensions_after_pool: Called immediately after the pool is created 
-#   custom_extensions_after_pools: Called immediately after all pool(s) are created 
+#   custom_extensions_after_pool: Called immediately after the pool is created
+#   custom_extensions_after_pools: Called immediately after all pool(s) are created
 #   custom_extensions_before_vs:  Called before processing to create the virtual server starts
-#   custom_extensions_after_vs: Called immediately after the virtual server is created 
+#   custom_extensions_after_vs: Called immediately after the virtual server is created
 #   custom_extentions_end: Called at the end of the deployment
 #
-# Guidelines: 
+# Guidelines:
 #  - Avoid name collisions please prefix variables with 'custom_' unless used by the base deployment code
 #  - Restrict modifications to global presentation layer variables unless absolutely required
 #  - Try to modify the config once created by the base deployment code to maintain compatibility
 #
 # Two examples are implemented here:
 #  - custom_example_1: Called from all hooks to dump some info to the debug log
-#  - custom_example_2: (Disabled by default) Called at the end of the deployment to execute 
+#  - custom_example_2: (Disabled by default) Called at the end of the deployment to execute
 #                      a tmsh::create command
 
 proc custom_extensions_start {} {
@@ -105,7 +105,7 @@ proc custom_extensions_end {} {
   custom_example_1 [array get kvp_array]
 
   # Call our custom_example_2 proc to run a user provided tmsh create command
-  # 
+  #
   # Populate extensions__Field2 with a valid command like:
   #  ltm data-group internal customDG type string records replace-all-with { record1 { data data1 } record2 { data data2 } }
   #
@@ -123,7 +123,7 @@ proc custom_example_1 { kvp_array_in } {
   array set kvp_array $kvp_array_in
 
   debug [list $current_proc] "entering proc kvp_array_in=$kvp_array_in" 6
-  
+
   if { [info exists kvp_array(custom_example)] && $kvp_array(custom_example) == 1} {
    debug [list $current_proc] "This is an example of a custom extension called from $calling_proc" 6
   }
@@ -135,7 +135,7 @@ proc custom_example_2 { cmd } {
   set current_proc [lindex [info level 0] 0]
 
   debug [list $current_proc] "entering proc cmd=$cmd" 6
-  
+
   if { [string length $cmd] > 0 } {
     debug [list $current_proc] "Called from $calling_proc - About the execute tmsh::create $cmd" 6
     tmsh::create $cmd

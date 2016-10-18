@@ -27,29 +27,29 @@ set pool_path       "ltm pool /$partition/${app}.app/%POOL_NAME%"
 #puts "pool_path=$pool_path"
 
 # these lists represent strings taken from "show ... field-fmt"
-set http_stats { 
-  get-reqs number-reqs post-reqs resp-2xx-cnt resp-3xx-cnt resp-4xx-cnt 
-  resp-5xx-cnt resp-bucket-1k resp-bucket-2m resp-bucket-4k resp-bucket-16k 
+set http_stats {
+  get-reqs number-reqs post-reqs resp-2xx-cnt resp-3xx-cnt resp-4xx-cnt
+  resp-5xx-cnt resp-bucket-1k resp-bucket-2m resp-bucket-4k resp-bucket-16k
   resp-bucket-32k resp-bucket-64k resp-bucket-128k resp-bucket-512k
   resp-bucket-large
 }
-set ssl_stats { 
-  common.cipher-uses.adh-keyxchg common.cipher-uses.aes-bulk common.cipher-uses.aes-gcm-bulk 
-  common.cipher-uses.des-bulk common.cipher-uses.dh-rsa-keyxchg common.cipher-uses.dhe-dss-keyxchg 
-  common.cipher-uses.ecdh-ecdsa-keyxchg common.cipher-uses.ecdh-rsa-keyxchg 
-  common.cipher-uses.ecdhe-ecdsa-keyxchg common.cipher-uses.ecdhe-rsa-keyxchg 
-  common.cipher-uses.edh-rsa-keyxchg common.cipher-uses.idea-bulk common.cipher-uses.md5-digest 
-  common.cipher-uses.null-bulk common.cipher-uses.null-digest common.cipher-uses.rc2-bulk 
-  common.cipher-uses.rc4-bulk common.cipher-uses.rsa-keyxchg common.cipher-uses.sha-digest 
-  common.cur-compat-conns common.cur-conns common.cur-native-conns common.decrypted-bytes-in 
-  common.decrypted-bytes-out common.encrypted-bytes-in common.encrypted-bytes-out 
-  common.fatal-alerts common.fully-hw-accelerated-conns common.handshake-failures 
-  common.insecure-handshake-accepts common.insecure-handshake-rejects common.insecure-renegotiation-rejects 
-  common.max-compat-conns common.max-conns common.max-native-conns 
-  common.non-hw-accelerated-conns common.partially-hw-accelerated-conns 
-  common.protocol-uses.dtlsv1 common.protocol-uses.sslv2 common.protocol-uses.sslv3 
-  common.protocol-uses.tlsv1 common.protocol-uses.tlsv1-1 common.protocol-uses.tlsv1-2 
-  common.secure-handshakes common.tot-compat-conns common.tot-native-conns 
+set ssl_stats {
+  common.cipher-uses.adh-keyxchg common.cipher-uses.aes-bulk common.cipher-uses.aes-gcm-bulk
+  common.cipher-uses.des-bulk common.cipher-uses.dh-rsa-keyxchg common.cipher-uses.dhe-dss-keyxchg
+  common.cipher-uses.ecdh-ecdsa-keyxchg common.cipher-uses.ecdh-rsa-keyxchg
+  common.cipher-uses.ecdhe-ecdsa-keyxchg common.cipher-uses.ecdhe-rsa-keyxchg
+  common.cipher-uses.edh-rsa-keyxchg common.cipher-uses.idea-bulk common.cipher-uses.md5-digest
+  common.cipher-uses.null-bulk common.cipher-uses.null-digest common.cipher-uses.rc2-bulk
+  common.cipher-uses.rc4-bulk common.cipher-uses.rsa-keyxchg common.cipher-uses.sha-digest
+  common.cur-compat-conns common.cur-conns common.cur-native-conns common.decrypted-bytes-in
+  common.decrypted-bytes-out common.encrypted-bytes-in common.encrypted-bytes-out
+  common.fatal-alerts common.fully-hw-accelerated-conns common.handshake-failures
+  common.insecure-handshake-accepts common.insecure-handshake-rejects common.insecure-renegotiation-rejects
+  common.max-compat-conns common.max-conns common.max-native-conns
+  common.non-hw-accelerated-conns common.partially-hw-accelerated-conns
+  common.protocol-uses.dtlsv1 common.protocol-uses.sslv2 common.protocol-uses.sslv3
+  common.protocol-uses.tlsv1 common.protocol-uses.tlsv1-1 common.protocol-uses.tlsv1-2
+  common.secure-handshakes common.tot-compat-conns common.tot-native-conns
 }
 set virtual_stats {
     clientside.bits-in clientside.bits-out clientside.cur-conns

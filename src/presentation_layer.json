@@ -68,7 +68,7 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"2.0_001"
-				},	
+				},
 				{
 					"name":"routeDomain",
 					"description":"iApp: Route Domain",
@@ -113,7 +113,7 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"2.0_001"
-				}				
+				}
 			]
 		},
 		{
@@ -169,7 +169,7 @@
 					"description":"Pool: Pool Table",
 					"help":"The pools to create.  Note that pool index must be >0 and sequential.",
 					"type":"table",
-					"uivisible":true,			
+					"uivisible":true,
 					"modes":[1,2,3,4],
 					"minver":"2.0_001",
 					"fields": [
@@ -205,7 +205,7 @@
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						},		
+						},
 						{
 							"name":"LbMethod",
 							"description":"LB Method:",
@@ -236,7 +236,7 @@
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						},	
+						},
 						{
 							"name":"Monitor",
 							"description":"Monitor(s):",
@@ -258,9 +258,9 @@
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"0.3_012"
-						}				
+						}
 					]
-				},				
+				},
 				{
 					"name":"MemberDefaultPort",
 					"description":"Pool: Member Default Port",
@@ -346,7 +346,7 @@
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"1.0_002"
-						},						
+						},
 						{
 							"name":"State",
 							"description":"State:",
@@ -371,7 +371,7 @@
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						}					
+						}
 					]
 				}
 			]
@@ -420,7 +420,7 @@
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						},		
+						},
 						{
 							"name":"Options",
 							"description":"Options:",
@@ -431,7 +431,7 @@
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						}				
+						}
 					]
 				}
 			]
@@ -468,9 +468,9 @@
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						}				
+						}
 					]
-				},			
+				},
 				{
 					"name":"Name",
 					"description":"Virtual Server: Name",
@@ -606,7 +606,7 @@
 				{
 					"name":"ProfileAnalytics",
 					"description":"Virtual Server: Analytics Profile",
-					"help":"The analytics profile",				
+					"help":"The analytics profile",
 					"type":"string",
 					"default":"",
 					"required":false,
@@ -625,7 +625,7 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_005"
-				},				
+				},
 				{
 					"name":"ProfileDefaultPersist",
 					"description":"Virtual Server: Default Persistence Profile",
@@ -709,7 +709,7 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
-				}, 
+				},
 				{
 					"name":"ProfileClientSSLChain",
 					"description":"Virtual Server: Client SSL Certificate Chain",
@@ -754,7 +754,7 @@
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_008"					
+					"minver":"0.3_008"
 				},
 				{
 					"name":"ProfileSecurityIPBlacklist",
@@ -769,7 +769,7 @@
 						],
 					"required":false,
 					"modes":[1,2,3,4],
-					"minver":"0.3_015"					
+					"minver":"0.3_015"
 				},
 				{
 					"name":"ProfileSecurityDoS",
@@ -781,8 +781,8 @@
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_016"					
-				},				
+					"minver":"0.3_016"
+				},
 				{
 					"name":"ProfileAccess",
 					"description":"Virtual Server: Access Profile",
@@ -793,7 +793,7 @@
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_011"					
+					"minver":"0.3_011"
 				},
 				{
 					"name":"ProfileConnectivity",
@@ -805,7 +805,7 @@
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_011"					
+					"minver":"0.3_011"
 				},
 				{
 					"name":"ProfilePerRequest",
@@ -816,8 +816,8 @@
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_011"					
-				},				
+					"minver":"0.3_011"
+				},
 				{
 					"name":"OptionSourcePort",
 					"description":"Virtual Server: Source Port Behavior",
@@ -843,7 +843,7 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
-				},				
+				},
 				{
 					"name":"Irules",
 					"description":"Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)",
@@ -878,9 +878,9 @@
 							"modes":[1,2,3,4],
 							"minver":"2.0_001",
 							"required":false
-						}					
+						}
 					]
-				},				
+				},
 				{
 					"name":"AdvOptions",
 					"description":"Virtual Server: Advanced Options",
@@ -924,7 +924,7 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"2.0_001"
-				}				
+				}
 			]
 		},
 		{
@@ -968,7 +968,7 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"2.0_001"
-				},				
+				},
 				{
 					"name":"rulesMatch",
 					"description":"L7 Policy: Rules: Matching",
@@ -987,7 +987,7 @@
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						},					
+						},
 						{
 							"name":"Operand",
 							"description":"Operand:",
@@ -1034,7 +1034,7 @@
 								"http-uri/request/port",
 								"http-uri/request/query-parameter/name/&lt;name&gt;",
 								"http-uri/request/scheme",
-								"http-uri/request/unnamed-query-parameter/index/&lt;index&gt;",	
+								"http-uri/request/unnamed-query-parameter/index/&lt;index&gt;",
 								"http-version/request/all",
 								"http-version/request/major",
 								"http-version/request/minor",
@@ -1056,7 +1056,7 @@
 								"tcp/request/route-domain/internal",
 								"tcp/request/rtt/internal",
 								"tcp/request/vlan/internal",
-								"tcp/request/vlan-id/internal"								
+								"tcp/request/vlan-id/internal"
 							],
 							"required":false,
 							"display":"xlarge",
@@ -1091,7 +1091,7 @@
 								"greater",
 								"greater-or-equal",
 								"less",
-								"less-or-equal"  
+								"less-or-equal"
 							],
 							"required":false,
 							"display":"large",
@@ -1123,7 +1123,7 @@
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						},						
+						},
 						{
 							"name":"Missing",
 							"description":"Missing:",
@@ -1138,7 +1138,7 @@
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						}					
+						}
 					]
 				},
 				{
@@ -1159,7 +1159,7 @@
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"2.0_001"
-						},					
+						},
 						{
 							"name":"Target",
 							"description":"Target:",
@@ -1249,7 +1249,7 @@
 							"minver":"2.0_001"
 						}
 					]
-				}			
+				}
 			]
 		},
 		{
@@ -1271,7 +1271,7 @@
 					"display":"medium",
 					"modes":[1,2,3,4],
 					"minver":"0.3_006"
-				},			
+				},
 				{
 					"name":"statsHTTP",
 					"description":"HTTP: Stats Reporting",
@@ -1338,7 +1338,7 @@
 					"display":"medium",
 					"modes":[1,2,3,4],
 					"minver":"0.3_007"
-				},				
+				},
 				{
 					"name":"securityEnableHSTS",
 					"description":"HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)",
@@ -1415,7 +1415,7 @@
 							"minver":"0.3_008"
 						}
 					]
-				}								
+				}
 			]
 		},
 		{
@@ -1454,6 +1454,6 @@
 					"minver":"0.3_001"
 				}
 			]
-		}			
+		}
 	]
 }

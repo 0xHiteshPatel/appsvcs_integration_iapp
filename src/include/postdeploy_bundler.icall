@@ -13,7 +13,7 @@ set timestamp %TIMESTAMP%
 set apm_import_cmd [list %APMIMPORTCMD%]
 set newdeploy %NEWDEPLOY%
 set redeploy %REDEPLOY%
-set apm_associate %APMASSOCIATE% 
+set apm_associate %APMASSOCIATE%
 set asm_mode %ASMMODE%
 set apm_mode %APMMODE%
 set strict_updates %STRICTUPDATES%
@@ -30,7 +30,7 @@ foreach policy $asm_policy_list {
 	set policy_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $app $policy $timestamp]
 	puts "$logprefix Looking for file '$policy_filename'..."
 	if { [file exists $policy_filename] } {
-		puts "$logprefix  Found file matching policy '$policy' at '$policy_filename'"		
+		puts "$logprefix  Found file matching policy '$policy' at '$policy_filename'"
 		incr file_found
 	}
 }
@@ -40,7 +40,7 @@ foreach policy $apm_policy_list {
 
 	puts "$logprefix Looking for file '$policy_filename'..."
 	if { [file exists $policy_filename] } {
-		puts "$logprefix Found file matching policy '$policy' at '$policy_filename'"		
+		puts "$logprefix Found file matching policy '$policy' at '$policy_filename'"
 		incr file_found
 	}
 }
@@ -49,12 +49,12 @@ puts "$logprefix [llength $all_policy_list] policies selected for deployment, $f
 
 if { $file_found != [llength $all_policy_list] } {
 		puts "$logprefix All policy files were not found, exiting (this is normal on the secondary device)"
-		exit 0	
+		exit 0
 }
 
 tmsh::cd $app_path
 puts "$logprefix Setting iCall handler to inactive..."
-tmsh::modify sys application service $aso strict-updates disabled 
+tmsh::modify sys application service $aso strict-updates disabled
 tmsh::modify sys icall handler periodic postdeploy_bundler status inactive
 
 istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "ASM_IN_PROGRESS"
@@ -71,7 +71,7 @@ foreach policy $asm_policy_list {
 	puts "$logprefix  Deleting file $policy_filename..."
 	file delete $policy_filename
 	istats::set [format "%s string deploy.postdeploy_bundler.asm.%s" $iaso $policy] "DEPLOY_COMPLETE"
-	
+
 }
 istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "ASM_COMPLETE"
 
@@ -80,9 +80,9 @@ set apm_apply 0
 foreach policy $apm_policy_list {
 	istats::set [format "%s string deploy.postdeploy_bundler.apm.%s" $iaso $policy] "DEPLOY_IN_PROGRESS"
 	set policy_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $app $policy $timestamp]
-	
+
 	if { $redeploy && $apm_mode == 2 } {
-		catch { tmsh::modify [format "ltm virtual %s/%s profiles delete \{ %s/bundled_apm_policy \{ \} \}" $app_path $vs_name $app_path] 
+		catch { tmsh::modify [format "ltm virtual %s/%s profiles delete \{ %s/bundled_apm_policy \{ \} \}" $app_path $vs_name $app_path]
 				tmsh::delete apm profile access bundled_apm_policy
 				tmsh::delete apm policy access-policy bundled_apm_policy }
 	}
@@ -93,7 +93,7 @@ foreach policy $apm_policy_list {
 	# Iterate through all the create APM objects and set the ASO
 	foreach {apm_obj} [tmsh::get_config /apm] {
 		set apm_objname [lrange $apm_obj 0 end-1]
-		tmsh::modify [format "%s app-service %s" $apm_objname $aso] 
+		tmsh::modify [format "%s app-service %s" $apm_objname $aso]
 	}
 
 	puts "$logprefix  Applying APM policy $app_path/bundled_apm_policy..."
@@ -140,8 +140,8 @@ if { $enable_vs && ! $apm_apply} {
 # after 10000
 
 set dellist {}
-lappend dellist [format "/var/tmp/appsvcs_apmapply_%s.sh" $app] 
-# lappend dellist [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app] 
+lappend dellist [format "/var/tmp/appsvcs_apmapply_%s.sh" $app]
+# lappend dellist [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app]
 # lappend dellist [format "/var/tmp/appsvcs_load_postdeploy_%s.sh" $app]
 
 puts "$logprefix Cleaning up..."
