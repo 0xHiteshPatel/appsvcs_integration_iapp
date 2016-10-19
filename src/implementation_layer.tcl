@@ -624,7 +624,9 @@ foreach poolRow $pool__Pools {
   incr poolIdx
 }
 
-if { ! [info exists poolIndexes($pool__DefaultPoolIndex)] && $pool__DefaultPoolIndex ne ""} {
+if { ![info exists poolIndexes($pool__DefaultPoolIndex)] 
+     && $pool__DefaultPoolIndex ne "" 
+     && $poolCount > 0 } {
   error "The default pool index specified was not present in the pool table"
 }
 
