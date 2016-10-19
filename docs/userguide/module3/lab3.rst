@@ -153,7 +153,7 @@ WAF Policy Deployment via URL
         * - :ref:`L7 Policy: Rules: Action <preso-l7policy-rulesAction>`
           - - Row 3: 
 
-              - Group: 0
+              - Group: 2
               - Operand: asm/request/enable/policy
               - Parameter: bundled:remote_asm1
 

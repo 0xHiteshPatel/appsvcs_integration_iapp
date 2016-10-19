@@ -159,6 +159,8 @@ Create Virtual Server
           - 10.1.20.\ |labmodule|\ |labnum|
         * - :ref:`Virtual Server: Port <preso-pool-port>`
           - 80
+        * - :ref:`Virtual Server: Default Pool Index <preso-pool-DefaultPoolIndex>`
+          - <remove the default value>          
         * - :ref:`Pool: Pool Table <preso-pool-Pools>`
           - - Row 1: <remove the default row that is shown>
         * - :ref:`Pool: Members <preso-pool-Members>`
@@ -197,7 +199,7 @@ Create Virtual Server
 
               - Group: 1
               - Operand: forward/request/select/pool
-              - Parameter: /Common/Lab4.1_tenant1.app/Lab4.1_tenant2_pool_0
+              - Parameter: /Common/Lab4.1_tenant2.app/Lab4.1_tenant2_pool_0
 
 #. Click the 'Finished' button to deploy the template
 #. Review the deployed configuration using the iApp Components view
