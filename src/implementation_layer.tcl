@@ -975,6 +975,8 @@ debug [list l7policy l7p_cmd] $l7p_cmd 7
 
 if { [llength $l7p_matchGroups] > 0 && [llength $l7p_actionGroups] > 0 } {
   if { $l7p_defer_create > 0 } {
+    lappend bundler_deferred_cmds [create_escaped_tmsh [format "tmsh::create sys folder %s/Drafts" $app_path]]
+    
     debug [list l7policy defer_create] $l7p_cmd 1
     set l7p_cmd_create [format "tmsh::create %s" $l7p_cmd]
     set l7p_cmd_modify [format "tmsh::modify %s" $l7p_cmd]
@@ -988,12 +990,18 @@ if { [llength $l7p_matchGroups] > 0 && [llength $l7p_actionGroups] > 0 } {
 
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s profiles add \{ /Common/websecurity \{ \} \}" $app_path $vs__Name]]]
     lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::modify ltm virtual %s/%s policies add \{ %s/%s_l7policy \}" $app_path $vs__Name $app_path $app]]]
+
+    if { $l7p_new_model } {
+      lappend bundler_deferred_cmds [format "tmsh::delete sys folder %s/Drafts " $app_path]
+    }
   } else {
+    tmsh::create [format "sys folder %s/Drafts" $app_path]
     debug [list l7policy tmsh_create] $l7p_cmd 1
     tmsh::create $l7p_cmd
   	if { $l7p_new_model } {
   		debug [list l7policy tmsh_publish] $l7p_publish_cmd 1
   		tmsh::publish $l7p_publish_cmd
+      tmsh::delete [format "sys folder %s/Drafts" $app_path]
   	}
 
     # Add the created policy to the vs__AdvPolicies variable so we attach it to the
