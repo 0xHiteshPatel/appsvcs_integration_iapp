@@ -25,3 +25,9 @@ functionality that is available but has not been covered in a specific lab.
 Developers interested in running the test framework would use the 
 :github_file:`run_tests.py <test/run_tests.py>` script.  The script can 
 be run with the ``--help`` option to obtain more information.
+
+.. NOTE::
+   The test script currently requires unix-style utilities (scp/ssh).  Linux
+   and Mac OS have these utilities installed or available.  To run the test
+   framework on a Windows system please install 
+   `Cygwin <https://www.cygwin.com/>`__.
