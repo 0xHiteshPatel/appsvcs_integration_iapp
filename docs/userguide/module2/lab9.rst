@@ -49,12 +49,12 @@ following steps for each of the lab.
     - Open an SSH session to your BIG-IP
     - Execute the following tmsh command to view the iCall handler:
 
-       - .. parsed-literal:: tmsh list sys icall handler periodic |labmodule|\ .<X>.app/publish_stats
+       - .. parsed-literal:: tmsh list sys icall handler periodic Lab\ |labmodule|\ .<X>.app/publish_stats
 
     - Execute the following tmsh command to view the iCall stats collector
       script:
 
-       - .. parsed-literal:: tmsh list sys icall script |labmodule|\ .<X>.app/publish_stats
+       - .. parsed-literal:: tmsh list sys icall script Lab\ |labmodule|\ .<X>.app/publish_stats
 
     - Look for the ‘set http_enabled’ and ‘set ssl_enabled’ TCL code near the
       top of the script.  Notice how they change depending on the type of

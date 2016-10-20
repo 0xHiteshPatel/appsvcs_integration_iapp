@@ -167,31 +167,31 @@ HTTP URI or Host Header to one of four pools:
           - - Row 1: 
 
               - Group: 0
-              - Operand: forward/request/select/pool
+              - Target: forward/request/select/pool
               - Parameter: pool:0
 
             - Row 2: 
 
               - Group: 1
-              - Operand: forward/request/select/pool
+              - Target: forward/request/select/pool
               - Parameter: pool:1
 
             - Row 3: 
 
               - Group: 2
-              - Operand: forward/request/select/pool
+              - Target: forward/request/select/pool
               - Parameter: pool:2
 
             - Row 4: 
 
               - Group: 3
-              - Operand: forward/request/select/pool
+              - Target: forward/request/select/pool
               - Parameter: pool:3
 
 #. Review the deployed policy by clicking on the |labname|\ _l7policy object in 
    the component view.
 
-    - Review the rules that were creating by the iApp template
+    - Review the rules that were created by the iApp template
 
 HTTP Cookie/Header Manipulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -213,25 +213,25 @@ manipulations.
           - - Row 5: 
 
               - Group: 0
-              - Operand: http-header/request/insert/name,value
+              - Target: http-header/request/insert/name,value
               - Parameter: X-My-Header,Lab2.8
 
             - Row 6: 
 
               - Group: 1
-              - Operand: http-cookie/request/insert/name,value
+              - Target: http-cookie/request/insert/name,value
               - Parameter: MyCookie,Lab2.8
 
             - Row 7: 
 
               - Group: 2
-              - Operand: http-header/request/remove/name
+              - Target: http-header/request/remove/name
               - Parameter: User-Agent
 
             - Row 8: 
 
               - Group: 3
-              - Operand: http-header/response/replace/name,value
+              - Target: http-header/response/replace/name,value
               - Parameter: Server,GoAway
 
 #. Review the deployed policy by clicking on the |labname|\ _l7policy object in 
@@ -265,7 +265,7 @@ step of this lab.
           - - Row 9: 
 
               - Group: default
-              - Operand: http-reply/request/redirect/location
+              - Target: http-reply/request/redirect/location
               - Parameter: http://www.example3.com
 
 #. Review the deployed policy by clicking on the |labname|\ _l7policy object in

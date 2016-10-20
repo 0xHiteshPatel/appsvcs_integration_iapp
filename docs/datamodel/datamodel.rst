@@ -69,7 +69,7 @@ rows cannot be guaranteed to remain consistent in an orchestration/automation
 toolchain.  Throughout the Presentation Layer of the template the value of the 
 Index field is used to provide a 'hard' link to a specific item within a table.  
 
-As an example when creating LTM Pools and Monitors, we use the Pool\_\_Pools 
+As an example, when creating LTM Pools and Monitors, we use the Pool\_\_Pools 
 and Monitor\_\_Monitors tables.  Each row in the Monitor\_\_Monitors table 
 creates a specific monitor on the system.  To reference a particular Monitor 
 to use for the Pool we use the Index of the row in the Monitor\_\_Monitors 

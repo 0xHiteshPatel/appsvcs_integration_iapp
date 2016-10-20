@@ -192,13 +192,13 @@ Create Virtual Server
           - - Row 1: 
 
               - Group: 0
-              - Operand: forward/request/select/pool
+              - Target: forward/request/select/pool
               - Parameter: /Common/Lab4.1_tenant1.app/Lab4.1_tenant1_pool_0
 
             - Row 2: 
 
               - Group: 1
-              - Operand: forward/request/select/pool
+              - Target: forward/request/select/pool
               - Parameter: /Common/Lab4.1_tenant2.app/Lab4.1_tenant2_pool_0
 
 #. Click the 'Finished' button to deploy the template

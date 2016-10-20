@@ -125,10 +125,11 @@ We will deploy a virtual server with the following customizations:
           - /Common/ca-bundle.crt
         * - :ref:`Virtual Server: Client SSL Advanced Options <preso-vs-ProfileClientSSLAdvOptions>`
           - secure-renegotiation=request
-        * - :ref:`Virtual Server: Advanced Profiles <preso-vs-AdvProfiles>`
-          - /Common/stats          
         * - :ref:`Virtual Server: Advanced Options <preso-vs-AdvOptions>`
           - gtm-score=50;rate-limit=100
+        * - :ref:`Virtual Server: Advanced Profiles <preso-vs-AdvProfiles>`
+          - /Common/stats          
+
 
 
 #. Review the deployed config and deployment log

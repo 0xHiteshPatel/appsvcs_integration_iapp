@@ -20,7 +20,7 @@ It supports setting multiple options as shown built-in ``--help`` output.
 
 The script supports:
 
-- Creating a new template that does not existing on the target system
+- Creating a new template that does not exist on the target system
 - Modifying an existing template if the ``-o`` option is specified
 
 We require that the implementation, presentation, HTML Help and macro 
@@ -126,7 +126,7 @@ To deploy the sample_myhttps.json template a command like this can be used:
 .. code:: 
 
 	cd deploy_iapp_samples
-	python ../deploy_iapp_bigip.py -i <BIG-IP mgmt IP> -u <username> -p <password> sample_myhttps.json
+	python ../deploy_iapp_bigip.py -u <username> -p <password> <BIG-IP mgmt IP> sample_myhttps.json
 
 By default the script will automatically save the system config.  This 
 behaviour can be disabled by using the ``-d`` option.
@@ -144,9 +144,9 @@ The script supports:
 - Specification of the BIG-IP partition (``-P`` option; default is ``Common``)
 - Script-friendly operation to suppress delete confirmation (``-n`` option)
 
-To delete the an iApp deployment name ``my_http`` a command like this can be used:
+To delete the an iApp deployment named ``my_http`` a command like this can be used:
  
-``python delete_iapp_bigip.py -i <BIG-IP mgmt IP> -u <username> -p <password> my_http``
+``python delete_iapp_bigip.py -u <username> -p <password> <BIG-IP mgmt IP> my_http``
 
 By default the script will automatically save the system config.  This 
 behaviour can be disabled by using the ``-d`` option.

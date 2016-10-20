@@ -97,19 +97,19 @@ WAF Policy Deployment via Bundled Resource
           - - Row 1: 
 
               - Group: 0
-              - Operand: asm/request/enable/policy
+              - Target: asm/request/enable/policy
               - Parameter: bundled:asm_example1
 
             - Row 2: 
 
               - Group: 1
-              - Operand: asm/request/enable/policy
+              - Target: asm/request/enable/policy
               - Parameter: bundled:asm_example2
 
             - Row 3: 
 
               - Group: default
-              - Operand: forward/request/reset
+              - Target: forward/request/reset
 
 #. Click the 'Finished' button to deploy the template and monitor the deployment
    log
@@ -154,13 +154,13 @@ WAF Policy Deployment via URL
           - - Row 3: 
 
               - Group: 2
-              - Operand: asm/request/enable/policy
+              - Target: asm/request/enable/policy
               - Parameter: bundled:remote_asm1
 
             - Row 4: 
 
               - Group: default
-              - Operand: forward/request/reset
+              - Target: forward/request/reset
 
 #. Click the 'Finished' button to deploy the template and monitor the deployment
    log
