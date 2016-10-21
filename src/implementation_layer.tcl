@@ -975,7 +975,7 @@ debug [list l7policy l7p_cmd] $l7p_cmd 7
 
 if { [llength $l7p_matchGroups] > 0 && [llength $l7p_actionGroups] > 0 } {
   if { $l7p_defer_create > 0 } {
-    lappend bundler_deferred_cmds [create_escaped_tmsh [format "tmsh::create sys folder %s/Drafts" $app_path]]
+    lappend bundler_deferred_cmds [format "catch { %s }" [create_escaped_tmsh [format "tmsh::create sys folder %s/Drafts" $app_path]]]
     
     debug [list l7policy defer_create] $l7p_cmd 1
     set l7p_cmd_create [format "tmsh::create %s" $l7p_cmd]
@@ -1339,11 +1339,11 @@ if { [llength $bundled_irules] > 0 } {
         set bundled_irule_fh [open $bundled_irule_filename]
         set bundled_irule_src [string map $bundled_irule_map [read $bundled_irule_fh]]
         close $bundled_irule_fh
-        file delete $bundled_irule_filename
         set bundled_irule_do_add 1
       } else {
         set bundled_irule_do_add 0
       }
+      file delete $bundled_irule_filename
     }
 
     debug [list virtual_server bundled_irule $bundled_irule do_add] [format "%s" $bundled_irule_do_add] 7
