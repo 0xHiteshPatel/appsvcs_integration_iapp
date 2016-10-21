@@ -202,18 +202,31 @@ iapp_url       = "https://%s/mgmt/tm/sys/application/service" % (args.host)
 save_url       = "https://%s/mgmt/tm/sys/config" % (args.host)
 template_url   = "https://%s/mgmt/tm/sys/application/template?$select=name" % (args.host)
 iapp_exist_url = "%s/~%s~%s.app~%s" % (iapp_url, final["partition"], final["name"], final["name"])
+time_url       = "https://%s/mgmt/shared/time" % (args.host)
 
 # Create request session, set credentials, allow self-signed SSL cert
 s = requests.session()
 s.auth = (final["username"], final["password"])
 s.verify = False
 
-resp = s.get(template_url)
+resp = s.get(time_url)
 
 if resp.status_code == 401:
 	print "[error] Authentication to %s failed" % (args.host)
 	sys.exit(1)
 
+systime = resp.json();
+
+debug("[check_time] %s" % systime)
+
+delta = time.time() - systime["nowMicrosUtc"]//1000000 
+debug("[check_time] delta=%s" % delta)
+
+if delta > 10:
+	print "[error] Time delta between local system and BIG-IP is %s.  Limit is 10 seconds.  Please ensure time is synced" % delta
+	sys.exit(1)
+	
+resp = s.get(template_url)
 templates = resp.json();
 
 tmpllist = []
