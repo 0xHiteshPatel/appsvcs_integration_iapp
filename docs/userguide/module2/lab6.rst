@@ -137,6 +137,11 @@ We will deploy a virtual server with the following customizations:
 SSL/TLS Resource Deployment via URL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+We will now modify the deployment to dynamically load SSL/TLS resources from a 
+remote server.  This functionality allows users to integrate |appsvcs| 
+deployments with third party PKI solutions.  Additionally the variable 
+substitution functionality described in :ref:`policies_url` is also available.
+
 .. NOTE::
     To complete this lab you must have a web server configured as detailed in 
     the :ref:`ug_lab_environment`

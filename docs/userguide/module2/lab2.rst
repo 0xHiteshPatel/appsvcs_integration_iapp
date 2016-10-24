@@ -68,7 +68,7 @@ Deploy HTTPS Service (auto-created Client-SSL profile and SNAT pool)
           - ``create:10.1.10.250,10.1.10.251``
 
             .. NOTE::
-                This is the first example of the create syntax.  This value 
+                This is the first example of the :doc:`/datamodel/createadvopt`.  This value 
                 will create a SNAT pool with two IPs in it.
         * - :ref:`Virtual Server: Client SSL Certificate <preso-vs-ProfileClientSSLCert>`
           - /Common/default.crt
