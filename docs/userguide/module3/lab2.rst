@@ -98,6 +98,10 @@ The second method of resource deployment is via a URL that dynamically loads the
 resource at runtime.  This functionality is fully documented in the 
 :ref:`policies_url` section of the :doc:`/refguide`.
 
+.. NOTE::
+    If you specify a hostname in a URL please be sure to configure DNS
+    resolution on the BIG-IP system
+
 #. Click iApps -> Application Services -> |labname| -> Reconfigure
 #. Modify the following values and click 'Finished':
 
