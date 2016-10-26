@@ -29,17 +29,18 @@ import sys
 parser = argparse.ArgumentParser(description='Script to import an iApp template to a BIG-IP device')
 parser.add_argument("host",             help="The IP/Hostname of the BIG-IP device")
 parser.add_argument("name",             help="The name iApp template")
-parser.add_argument("-i", "--impl",     help="The path to the iApp implementation layer file to import", default="iapp.tcl")
 parser.add_argument("-a", "--apl",      help="The path to the iApp apl layer file to import",            default="iapp.apl")
-parser.add_argument("-n", "--html",     help="The path to the iApp HTML help file to import",            default="iapp.html")
+parser.add_argument("-c", "--checkonly",help="Only check to see if a template existings on the device",  action="store_true")
+parser.add_argument("-d", "--dontsave", help="Don't automatically save the config",                      action="store_true")
+parser.add_argument("-i", "--impl",     help="The path to the iApp implementation layer file to import", default="iapp.tcl")
 parser.add_argument("-m", "--macro",    help="The path to the iApp HTML help file to import",            default="iapp.macro")
-parser.add_argument("-v", "--minver",   help="The minimum version of BIG-IP TMOS required",              default="11.0.0")
-parser.add_argument("-x", "--maxver",   help="The maximum version of BIG-IP TMOS required",              default="")
+parser.add_argument("-n", "--html",     help="The path to the iApp HTML help file to import",            default="iapp.html")
+parser.add_argument("-o", "--overwrite",help="Overwrite an existing template definitions",               action="store_true")
+parser.add_argument("-p", "--password", help="The BIG-IP password",                                      default="admin")
 parser.add_argument("-r", "--modules",  help="The BIG-IP TMOS modules required (ex: ltm,gtm)",           default="")
 parser.add_argument("-u", "--username", help="The BIG-IP username",                                      default="admin")
-parser.add_argument("-p", "--password", help="The BIG-IP password",                                      default="admin")
-parser.add_argument("-d", "--dontsave", help="Don't automatically save the config",                      action="store_true")
-parser.add_argument("-o", "--overwrite",help="Overwrite an existing template definitions",               action="store_true")
+parser.add_argument("-v", "--minver",   help="The minimum version of BIG-IP TMOS required",              default="11.0.0")
+parser.add_argument("-x", "--maxver",   help="The maximum version of BIG-IP TMOS required",              default="")
 args = parser.parse_args()
 
 # Create request session, set credentials, allow self-signed SSL cert
@@ -52,6 +53,24 @@ template_url       = "https://%s/mgmt/tm/sys/application/template" % (args.host)
 save_url           = "https://%s/mgmt/tm/sys/config" % (args.host)
 template_exist_url = "%s/%s" % (template_url, args.name)
 definition_url     = "%s/actions/definition" % (template_exist_url)
+
+# Check to see if the template with the name specified in the arguments exists on the BIG-IP device
+resp = s.get(template_exist_url)
+
+# Check to see if authentication succeeded
+if resp.status_code == 401:
+	print "[error] Authentication failed: %s" % (resp)
+	sys.exit(1)
+
+if args.checkonly:
+	if resp.status_code == 200:
+		# The template exists exit 1
+		print "Template '%s' exists on %s" % (args.name, args.host)
+		sys.exit(1)
+	else:
+		# Exit 0
+		print "Template '%s' does not exist on %s" % (args.name, args.host)
+		sys.exit(0)
 
 # Get data from the file containing implementation layer TCL code (-i argument)
 with open(args.impl) as impl:
@@ -86,14 +105,6 @@ template_payload["totalSigningStatus"] = "not-all-signed"
 template_payload["requiresBigipVersionMin"] = args.minver
 template_payload["requiresBigipVersionMax"] = args.maxver
 template_payload["requiresModules"] = args.modules.split(',')
-
-# Check to see if the template with the name specified in the arguments exists on the BIG-IP device
-resp = s.get(template_exist_url)
-
-# Check to see if authentication succeeded
-if resp.status_code == 401:
-	print "[error] Authentication failed: %s" % (resp)
-	sys.exit(1)
 
 # The template exists and the -o argument (overwrite) was not specified.  Print error and exit
 if resp.status_code == 200 and not args.overwrite:

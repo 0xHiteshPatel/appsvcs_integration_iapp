@@ -1329,7 +1329,7 @@ if { [llength $bundled_irules] > 0 } {
       set bundled_irule_isurl 1
       set bundled_irule_url [url_subst $bundled_irule]
 
-      regexp {^.*/(.*).irule$} $bundled_irule_url -> bundled_irule
+      regexp {^.*/(.*).irule} $bundled_irule_url -> bundled_irule
       set bundled_irule_filename [format "/var/tmp/appsvcs_irule_%s_%s_%s.irule" $::app $bundled_irule $bundler_timestamp]
 
       set bundled_irule_curl_state [curl_save_file $bundled_irule_url $bundled_irule_filename $bundled_irule_curl_mode]
@@ -1869,7 +1869,7 @@ if { [llength $bundler_asm_policies] > 0 } {
     if { [string match "asm:url=*" $bundled_asm] } {
       set bundled_asm_isurl 1
       set bundled_asm_url [url_subst $bundled_asm]
-      regexp {^.*/(.*).xml$} $bundled_asm_url -> bundled_asm_stripped
+      regexp {^.*/(.*).xml} $bundled_asm_url -> bundled_asm_stripped
       set bundled_asm_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $::app $bundled_asm_stripped $bundler_timestamp]
     } else {
       set bundled_asm_stripped [string map {"asm:" ""} $bundled_asm]
@@ -1916,7 +1916,7 @@ if { [llength $bundler_apm_policies] == 1 } {
   if { [string match "apm:url=*" $bundled_apm] } {
     set bundled_apm_isurl 1
     set bundled_apm_url [url_subst $bundled_apm]
-    regexp {^.*/(.*).tar.gz$} $bundled_apm_url -> bundled_apm_stripped
+    regexp {^.*/(.*).tar.gz} $bundled_apm_url -> bundled_apm_stripped
     set bundled_apm_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $::app $bundled_apm_stripped $bundler_timestamp]
   } else {
     set bundled_apm_stripped [string map {"apm:" ""} $bundled_apm]
