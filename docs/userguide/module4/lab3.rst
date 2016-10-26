@@ -49,5 +49,9 @@ To run the test framework the following prerequisite steps are required:
    :github_file:`run_tests.py <test/run_tests.py>` with the ``-b <IP Address>`` 
    option.
 
+#. Build the template using the command ``python build.py -nd -b test/bundled.test``
+
+#. Upload the template to the BIG-IP (:ref:`helper_deploy_iapp` can be used)
+
 #. Monitor the deployment log on BIG-IP using ``tail –f /var/tmp/scriptd.out``
  
