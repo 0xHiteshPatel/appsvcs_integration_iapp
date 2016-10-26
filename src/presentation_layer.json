@@ -283,7 +283,7 @@
 						{
 							"name":"Index",
 							"description":"Pool Idx:",
-							"help":"The Pool Index this Member belongs to.  Used to support creation of multiple pools",
+							"help":"The Index cross-reference of the Pool in the Pools table this Member is a part of",
 							"type":"number",
 							"default":"0",
 							"required":false,

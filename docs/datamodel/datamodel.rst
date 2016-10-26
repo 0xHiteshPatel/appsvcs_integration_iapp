@@ -59,6 +59,8 @@ The formats described in this section are implemented specifically by this
 template only.  The items specified in this section extend APL data types to add
 additional functionality.
 
+.. _datamodel_index:
+
 Indexes in APL Tables
 ---------------------
 

@@ -8,6 +8,10 @@
 Deploy Basic HTTP ADC Service
 -----------------------------
 
+.. NOTE::
+    It is recommended you review the :ref:`datamodel_index` section the of 
+    :doc:`/refguide` before continuing
+
 #. Open an SSH connection to your BIG-IP device:
    ``ssh root@<management ip>``
 #. Execute the following command to monitor the iApp deployment log:
