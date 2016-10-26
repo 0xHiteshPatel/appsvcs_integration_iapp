@@ -26,8 +26,28 @@ Developers interested in running the test framework would use the
 :github_file:`run_tests.py <test/run_tests.py>` script.  The script can 
 be run with the ``--help`` option to obtain more information.
 
+To run the test framework the following prerequisite steps are required:
+
 .. NOTE::
    The test script currently requires unix-style utilities (scp/ssh).  Linux
    and Mac OS have these utilities installed or available.  To run the test
    framework on a Windows system please install 
    `Cygwin <https://www.cygwin.com/>`__.
+
+#. Provision your BIG-IP device with the following modules in at a 'nominal' 
+   level:
+
+    - LTM
+    - APM
+    - ASM
+    - AFM
+
+#. Untar :github_file:`remote_url_files.tar.gz <test/remote_url_files.tar.gz>` 
+   to the root of a webserver.  
+
+#. Provide the IP address of the server to 
+   :github_file:`run_tests.py <test/run_tests.py>` with the ``-b <IP Address>`` 
+   option.
+
+#. Monitor the deployment log on BIG-IP using ``tail –f /var/tmp/scriptd.out``
+ 
