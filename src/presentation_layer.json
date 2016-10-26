@@ -1342,8 +1342,8 @@
 				{
 					"name":"securityEnableHSTS",
 					"description":"HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)",
-					"help":"Enabled insertion of the Strict-Transport-Security HTTP header.  The preload and subdomain options can be omitted or included based on this selection.  This setting also modifies creation of the HTTP->HTTPS redirect option to perform a 301 HTTP redirect",
-					"type":"choice",
+					"help":"Enabled insertion of the Strict-Transport-Security HTTP header.  The preload and subdomain options can be omitted or included based on this selection.  This setting also modifies creation of the HTTP->HTTPS redirect option to perform a 301 HTTP redirect.  The max-age parameter can be specified by appending ';max-age=<value>'",
+					"type":"editchoice",
 					"default":"disabled",
 					"required":false,
 					"choices":[

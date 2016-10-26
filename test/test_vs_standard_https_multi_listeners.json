@@ -23,7 +23,7 @@
       { "vs__ProfileClientSSLCipherString":"DEFAULT" },
       { "vs__ProfileClientSSLAdvOptions":"" },
       { "feature__redirectToHTTPS":"enabled" },
-      { "feature__securityEnableHSTS":"enabled-preload-subdomain" }
+      { "feature__securityEnableHSTS":"enabled-preload" }
 	],
    "tables":[
       {

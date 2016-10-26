@@ -24,7 +24,8 @@
       { "feature__insertXForwardedFor":"enabled" },
       { "feature__redirectToHTTPS":"enabled" },
       { "feature__sslEasyCipher":"tls_1.1+1.2" },
-      { "feature__securityEnableHSTS":"enabled-preload-subdomain" }
+      { "feature__securityEnableHSTS":"enabled-preload-subdomain;max-age=300" },
+      { "feature__easyL4Firewall":"auto" }
 	],
    "tables":[
       {

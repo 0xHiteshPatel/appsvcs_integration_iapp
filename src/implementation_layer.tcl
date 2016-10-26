@@ -1103,11 +1103,19 @@ if { $clientssl > 0 && [string match enabled* $feature__securityEnableHSTS] } {
   set hstsrule [format "%s/hsts_irule" $app_path]
 
   # Substitute in HSTS options is specified
+  if { [string match "*;*" $feature__securityEnableHSTS] } {
+    set hstsoptions [format "%s\; " [lindex [split $feature__securityEnableHSTS \;] 1]]
+    set feature__securityEnableHSTS [lindex [split $feature__securityEnableHSTS \;] 0]
+    debug [list virtual_server feature__securityEnableHSTS options] $hstsoptions 7
+  } else {
+    set hstsoptions "max-age=31536000; "
+  }
+
   switch [string tolower $feature__securityEnableHSTS] {
-    enabled-preload { set hstsoptions "\; preload" }
-    enabled-subdomain { set hstsoptions "\; includeSubDomains" }
-    enabled-preload-subdomain { set hstsoptions "\; includeSubDomains\; preload" }
-    default { set hstsoptions "" }
+    enabled-preload { append hstsoptions "preload" }
+    enabled-subdomain { append hstsoptions "includeSubDomains" }
+    enabled-preload-subdomain { append hstsoptions "includeSubDomains\; preload" }
+    default { error "An invalid option was specified for feature__securityEnableHSTS" }
   }
 
   set irule_HSTS_final [string map [list %HSTSOPTIONS% $hstsoptions] $irule_HSTS]
@@ -1740,6 +1748,11 @@ if { $feature__redirectToHTTPS eq "enabled" && $pool__addr ne "255.255.255.254" 
      "redirect_listener_mask" "mask"
      "redirect_listener_src" "source"
      "vs__IpProtocol" "ip-protocol"
+    }
+
+    if { $feature__easyL4Firewall == "enabled" } {
+      set redirect_listener_options(fw_name) "fw-enforced-policy"
+      debug [list virtual_server feature__redirectToHTTPS $redirect_listener_idx fw_check] [format "feature__easyL4Firewall is enabled, using %s" $redirect_listener_options(fw_name)] 5
     }
 
     if { [is_ipv6 $redirect_listener_addr] } {
