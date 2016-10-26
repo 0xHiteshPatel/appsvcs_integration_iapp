@@ -26,7 +26,8 @@ Developers interested in running the test framework would use the
 :github_file:`run_tests.py <test/run_tests.py>` script.  The script can 
 be run with the ``--help`` option to obtain more information.
 
-To run the test framework the following prerequisite steps are required:
+To run the complete test framework the following prerequisite steps are 
+required:
 
 .. NOTE::
    The test script currently requires unix-style utilities (scp/ssh).  Linux
@@ -41,6 +42,9 @@ To run the test framework the following prerequisite steps are required:
     - APM
     - ASM
     - AFM
+
+#. Configure NTP and DNS servers on the BIG-IP system.  DNS servers should be
+   able to resolve internet host names.
 
 #. Untar :github_file:`remote_url_files.tar.gz <test/remote_url_files.tar.gz>` 
    to the root of a webserver.  
