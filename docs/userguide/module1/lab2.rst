@@ -6,11 +6,8 @@ Obtain and Import the Pre-built Template
 Obtain the Pre-built Template
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Open a web browser and navigate to the App Services iApp GitHub Releases_
-   page
-#. Find the |version| release
-#. Under the 'Downloads' section find the file ending in ``.tmpl`` and save
-   this file to your system
+#. Right-click :tmpl_file:`here <../../_static>` and save version 
+   |ver_major|\ (\ |ver_minor|\ )_\ |ver_pres| of the template to your system.
 
 .. _ug_module1_lab2:
 

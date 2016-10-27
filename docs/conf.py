@@ -175,7 +175,8 @@ extlinks = {
     'github_url':("%s/%%s" % ver_data['github_root'], 'repository '),
     'github_zip_url':("%s%%s/%s.zip" % (ver_data['github_root'], ver_data['github_tag']), None),
     'github_remote_url':("%sraw/%s/%%s/remote_url_files.tar.gz" % (ver_data['github_root'], ver_data['github_tag']), None),
-    'github_file':("%stree/%s/%%s" % (ver_data['github_root'], ver_data['github_tag']), None)
+    'github_file':("%stree/%s/%%s" % (ver_data['github_root'], ver_data['github_tag']), None),
+    'tmpl_file':("%%s/appsvcs_integration_v%s.tmpl" % (releasefn), None)
     }
 
 rst_prolog = """
