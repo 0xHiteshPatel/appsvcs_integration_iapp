@@ -187,8 +187,12 @@ def run_test():
 		test_name = test_template.split('.')[0]
 
 		(del_override, del_override_name, del_partition) = process_file(test_template)
-				
-		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 60 -w 1 %s %s_%s.tmp" % (args.username, args.password, args.host, test_template, sessionid)
+		
+		cmddebug = ""
+		if args.debug:
+			cmddebug = "-D"		
+
+		cmd = "python ../scripts/deploy_iapp_bigip.py -r -d -u %s -p %s -c 60 -w 1 %s %s %s_%s.tmp" % (args.username, args.password, cmddebug, args.host, test_template, sessionid)
 
 		for i in range(args.retries):
 			if args.debug:
@@ -200,6 +204,9 @@ def run_test():
 
 			exitcode, out, err = get_exitcode_stdout_stderr(cmd)
 
+			if args.debug:
+				print out
+				
 			if del_override:
 				print "DEL_OVERRIDE ",
 

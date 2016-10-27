@@ -202,29 +202,37 @@ iapp_url       = "https://%s/mgmt/tm/sys/application/service" % (args.host)
 save_url       = "https://%s/mgmt/tm/sys/config" % (args.host)
 template_url   = "https://%s/mgmt/tm/sys/application/template?$select=name" % (args.host)
 iapp_exist_url = "%s/~%s~%s.app~%s" % (iapp_url, final["partition"], final["name"], final["name"])
-time_url       = "https://%s/mgmt/shared/time" % (args.host)
+bash_url       = "https://%s/mgmt/tm/util/bash" % (args.host)
 
 # Create request session, set credentials, allow self-signed SSL cert
 s = requests.session()
 s.auth = (final["username"], final["password"])
 s.verify = False
 
-resp = s.get(time_url)
+time_payload = {
+    "command":"run",
+    "utilCmdArgs":"-c 'date +%s'"
+}
+
+resp = s.post(bash_url, data=json.dumps(time_payload))
 
 if resp.status_code == 401:
-	print "[error] Authentication to %s failed" % (args.host)
-	sys.exit(1)
+    print "[error] Authentication to %s failed" % (args.host)
+    sys.exit(1)
 
-systime = resp.json();
+
+systimejson = json.loads(resp.text)
+systime = systimejson.get('commandResult')
+systime = systime.replace('\n','')
 
 debug("[check_time] %s" % systime)
 
-delta = time.time() - systime["nowMicrosUtc"]//1000000 
+delta = time.time() - int(systime)
 debug("[check_time] delta=%s" % delta)
 
 if delta > 10:
-	print "[error] Time delta between local system and BIG-IP is %s.  Limit is 10 seconds.  Please ensure time is synced" % delta
-	sys.exit(1)
+    print "[error] Time delta between local system and BIG-IP is %s.  Limit is 10 seconds.  Please ensure time is synced" % delta
+    sys.exit(1)
 	
 resp = s.get(template_url)
 templates = resp.json();
