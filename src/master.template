@@ -25,7 +25,7 @@ sys application template /Common/appsvcs_integration_v%IMPLVERSION_MAJOR%_%PRESE
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-%insertfile:tmp/apl.build%
+%insertfile:%TEMP_DIR%/apl.build%
             }
             role-acl none
             run-as none

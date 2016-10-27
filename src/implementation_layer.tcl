@@ -37,7 +37,7 @@ array set bundler_objects {}
 array set bundler_data {}
 set bundler_deferred_cmds []
 
-%insertfile:tmp/bundler.build%
+%insertfile:%TEMP_DIR%/bundler.build%
 
 set app $tmsh::app_name
 debug [list start] [format "Starting %s version IMPL=%s PRES=%s TMPLNAME=%s app_name=%s" $NAME $IMPLVERSION $PRESVERSION $TMPLNAME $app] 0

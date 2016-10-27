@@ -87,6 +87,7 @@ options = {
     'preso': os.path.join('src','presentation_layer.json'),
     'impl': os.path.join('src','implementation_layer.tcl'), 
     'workingdir': "../", 
+    'tempdir': 'rtdtemp',
     'bundledir': 'bundled', 
     'outfile': os.path.join('docs','_static','appsvcs_integration_v%s.tmpl' % releasefn), 
     'docsdir': 'docs/', 
@@ -105,7 +106,7 @@ if on_rtd:
 b = AppSvcsBuilder(**options)
 
 if on_rtd:
-    os.mkdir("../tmp")
+    os.mkdir("../rtdtemp")
     b.buildAPL()
     b.buildTemplate()
 

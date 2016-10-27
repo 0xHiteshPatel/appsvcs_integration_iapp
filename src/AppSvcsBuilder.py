@@ -21,6 +21,7 @@ class AppSvcsBuilder:
 		'preso': os.path.join('src','presentation_layer.json'),
 		'impl': os.path.join('src','implementation_layer.tcl'),
 		'workingdir': os.getcwd(),
+		'tempdir': 'tmp',
 		'bundledir': 'bundled',
 		'outfile': None,
 		'docsdir': 'docs', 
@@ -261,7 +262,8 @@ class AppSvcsBuilder:
 			line = re.sub(r'%PRESENTATION_TCL_ALLVARS%', self.buildinfo["allvarsTCL"], line)
 			line = re.sub(r'%NAME_APPEND%', self.options["append"], line)
 			line = re.sub(r'%TMPL_NAME%', "appsvcs_integration_v%s_%s%s" % (self.buildinfo["impl_major"], self.buildinfo["pres_rev"], self.options["append"]), line)
-
+			line = re.sub(r'%TEMP_DIR%', self.options["tempdir"], line)
+				
 			match = re.match( r'(.*)\%insertfile:(.*)\%(.*)', line)
 			if match:
 				insertfile = self._safe_open("%s/%s" % (self.options["workingdir"], match.group(2)))
@@ -427,7 +429,7 @@ class AppSvcsBuilder:
 		resources = []
 
 		print "Building bundled resources:"
-		fh = self._safe_open(os.path.join(self.options["workingdir"],'tmp','bundler.build'), "wt")
+		fh = self._safe_open(os.path.join(self.options["workingdir"], self.options["tempdir"],'bundler.build'), "wt")
 		print " Adding iRules (%sirules/*.irule)..." % (self.options["bundledir"])
 		files = glob.glob(os.path.join(self.options["bundledir"],'irules','*.irule'))
 
@@ -514,7 +516,7 @@ class AppSvcsBuilder:
 
 		self._debug("buildAPL options=%s" % self.options)
 
-		fh = self._safe_open(os.path.join(self.options["workingdir"],'tmp','apl.build'), "wt")
+		fh = self._safe_open(os.path.join(self.options["workingdir"], self.options["tempdir"],'apl.build'), "wt")
 
 		for section in self.pres_data["sections"]:
 			fh.write("section %s {\n" % section["name"])
