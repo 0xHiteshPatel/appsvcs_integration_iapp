@@ -79,6 +79,7 @@ with open("VERSION","r") as data_file:
     ver_data = json.load(data_file)
     version = "%s_%s" % (ver_data["impl_major"], ver_data["pres_rev"])
     release = "%s(%s)_%s" % (ver_data["impl_major"], ver_data["impl_minor"], ver_data["pres_rev"])
+    releasefn = "%s-%s_%s" % (ver_data["impl_major"], ver_data["impl_minor"], ver_data["pres_rev"])
 
 data_file.close()
 
@@ -87,7 +88,7 @@ options = {
     'impl': os.path.join('src','implementation_layer.tcl'), 
     'workingdir': "../", 
     'bundledir': 'bundled', 
-    'outfile': None, 
+    'outfile': os.path.join('docs','_static','appsvcs_integration_v%s.tmpl' % releasefn), 
     'docsdir': 'docs/', 
     'append': "", 
     'roottmpl': os.path.join('src','master.template'),
@@ -102,6 +103,11 @@ if on_rtd:
     options["debug"] = True
     
 b = AppSvcsBuilder(**options)
+
+if on_rtd:
+    os.mkdir("../tmp")
+    b.buildAPL()
+    b.buildTemplate()
 
 b.buildDoc()
 
