@@ -109,6 +109,10 @@ if on_rtd:
     os.mkdir("../rtdtemp")
     b.buildAPL()
     b.buildTemplate()
+    os.remove("../rtdtemp/apl.build")
+    os.remove("../rtdtemp/bundler.build")
+    os.rmdir("../rtdtemp")
+    
 
 b.buildDoc()
 
