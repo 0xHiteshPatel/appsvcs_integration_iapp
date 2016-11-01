@@ -146,6 +146,10 @@ if "." in args.variable:
 	for d in final["tables"]:
 		if d["name"] == table:
 			colidx = d["columnNames"].index(column)
+
+			if len(d["rows"]) == 0:
+				sys.exit(1)
+				
 			for row in d["rows"]:
 				print "%s" % row["row"][colidx]
 			sys.exit(0)
