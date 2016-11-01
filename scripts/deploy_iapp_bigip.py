@@ -299,7 +299,7 @@ if resp.status_code == 404:
 		print "[error] iApp deployment might have failed.  Please check /var/tmp/scriptd.out on the device"
 		sys.exit(1)
 
-# Template exists and args.redeploy (-r) is TRUE so we will modify the existing template
+# iApp deployment exists and args.redeploy (-r) is TRUE so we will redeploy
 else:
 	del deploy_payload["inheritedDevicegroup"]
 	del deploy_payload["inheritedTrafficGroup"]
@@ -316,7 +316,6 @@ else:
 
 	if check_final_deploy(istat_key):
 		print "[success] iApp \"%s\" re-deployed on BIG-IP \"%s\"" % (final["name"], args.host)
-		sys.exit(0)
 	else:
 		print "[error] iApp deployment might have failed.  Please check /var/tmp/scriptd.out on the device"
 		sys.exit(1)
@@ -330,3 +329,5 @@ if not args.dontsave:
 		sys.exit(1)
 	else:
 		print "[success] Config saved"
+
+sys.exit(0)
