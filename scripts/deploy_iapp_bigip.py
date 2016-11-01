@@ -294,7 +294,6 @@ if resp.status_code == 404:
 		sys.exit(1)
 	if check_final_deploy(istat_key):
 		print "[success] iApp \"%s\" deployed on BIG-IP \"%s\"" % (final["name"], args.host)
-		sys.exit(0)
 	else:
 		print "[error] iApp deployment might have failed.  Please check /var/tmp/scriptd.out on the device"
 		sys.exit(1)
