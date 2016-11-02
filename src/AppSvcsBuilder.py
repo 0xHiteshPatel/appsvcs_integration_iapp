@@ -490,6 +490,17 @@ class AppSvcsBuilder:
 
 		fh.close()
 
+	def buildDocVersion(self, **kwargs):
+		self._debug("in buildDocVersion")
+		if bool(kwargs):
+			self.__init__(**kwargs)
+
+		self._debug("buildDocVersion options=%s" % self.options)
+
+		ver = self._safe_open(os.path.join(self.options["workingdir"],self.options["docsdir"],'VERSION'), "wt")
+		ver.write(json.dumps(self.buildinfo))
+		ver.close()
+
 	def buildDoc(self, **kwargs):
 		self._debug("in buildDoc")
 
@@ -498,9 +509,7 @@ class AppSvcsBuilder:
 
 		self._debug("buildDoc options=%s" % self.options)
 
-		ver = self._safe_open(os.path.join(self.options["workingdir"],self.options["docsdir"],'VERSION'), "wt")
-		ver.write(json.dumps(self.buildinfo))
-		ver.close()
+		self.buildDocVersion(**kwargs)
 
 		fh = self._safe_open(os.path.join(self.options["workingdir"],self.options["docsdir"],'presoref.rst'), "wt")
 		fh.write("Presentation Layer Reference\n")
