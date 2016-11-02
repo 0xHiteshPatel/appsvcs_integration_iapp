@@ -491,7 +491,7 @@ proc get_items_starting_with { prefix string {splitchar " "} {strip 0}} {
     }
   }
   debug [list get_items_starting_with retlist] $retlist 10
-  return $retlist
+  return [string map [list "\\?" "?"] $retlist]
 }
 
 # Properly escape a tmsh command string
