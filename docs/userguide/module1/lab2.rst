@@ -6,8 +6,8 @@ Obtain and Import the Pre-built Template
 Obtain the Pre-built Template
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Right-click :tmpl_file:`here <../../_static>` and save version 
-   |ver_major|\ (\ |ver_minor|\ )_\ |ver_pres| of the template to your system.
+#. Right-click :tmpl_file:`here <../../_static>` and save version |release| of 
+   the template to your system.
 
 .. _ug_module1_lab2:
 

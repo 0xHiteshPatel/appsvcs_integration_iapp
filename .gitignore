@@ -2,4 +2,5 @@ appsvcs_integration_v*-*_*.tmpl
 parts/*
 docs/_build/*
 docs/presoref.rst
+docs/VERSION
 test/run/*
