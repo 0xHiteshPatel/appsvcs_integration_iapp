@@ -17,7 +17,7 @@ set bundler_timestamp [clock format $startTime -format {%Y%m%d%H%M%S}]
 
 set NAME "F5 Application Services Integration iApp (Community Edition)"
 set TMPLNAME "%TMPL_NAME%"
-set IMPLMAJORVERSION "2.0"
+set IMPLMAJORVERSION "2.1dev"
 set IMPLMINORVERSION "001"
 set IMPLVERSION [format "%s(%s)" $IMPLMAJORVERSION $IMPLMINORVERSION]
 set PRESVERSION "%PRESENTATION_REV%"
