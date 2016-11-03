@@ -1,0 +1,82 @@
+{
+   "name":"test_vs_standard_https_bundle_all_preserve",
+   "parent":"include_defaults.json",
+   "test_parent":"test_vs_standard_https_bundle_all_preserve",
+   "strings":[
+      { "iapp__asmDeployMode":"preserve-bypass" },
+      { "iapp__apmDeployMode":"preserve-bypass" },
+      { "pool__addr":"%TEST_VS_IP%" },
+      { "pool__port":"443" },
+      { "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_https_bundle_all_preserve_vs" },
+      { "vs__Description":"Standard HTTPS Virtual Server with bundled iRule, APM, ASM and L7 policy" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"automap" },
+      { "vs__ProfileHTTP":"/Common/http" },
+      { "vs__ProfileOneConnect":"/Common/oneconnect" },
+      { "vs__ProfileCompression":"/Common/httpcompression" },
+      { "vs__ProfileDefaultPersist":"/Common/cookie" },
+      { "vs__ProfileFallbackPersist":"/Common/source_addr" },
+      { "vs__ProfileClientSSLCert":"/Common/default.crt" },
+      { "vs__ProfileClientSSLKey":"/Common/default.key" },
+      { "vs__ProfileAccess":"use-bundled" }
+   ],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/http", "none", "none" ] }
+         ]
+      },
+      {
+         "name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] },
+            { "row": [ "1", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+      {
+         "name":"pool__Members",
+         "columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+      },
+      {
+         "name":"vs__BundledItems",
+         "columnNames": ["Resource"],
+         "rows" : [
+            { "row": [ "irule:bundle2" ] },
+            { "row": [ "irule:bundle1" ] },
+            { "row": [ "asm:asm_example1" ] },
+            { "row": [ "asm:asm_example2" ] },
+            { "row": [ "apm:test_%TEST_DEV_VERSION_MAJOR%" ] }
+         ]
+      },        
+      {
+         "name":"l7policy__rulesMatch",
+         "columnNames": ["Group","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+         "rows" : [ 
+            { "row": ["0","http-host/request/all","yes","equals","www.yoda.com","yes","yes"] },
+            { "row": ["1","http-uri/request/path","no","starts-with","/admiral,/akbar","no","no"] },
+            { "row": ["default","","no","","","no","no"]}
+         ]
+      },
+      {
+         "name":"l7policy__rulesAction",
+         "columnNames": ["Group","Target","Parameter"],
+         "rows" : [ 
+            { "row": ["0","forward/request/select/pool","pool:1"] },
+            { "row": ["1","asm/request/enable/policy","bundled:asm_example1"] },
+            { "row": ["default","asm/request/enable/policy","bundled:asm_example2"]}
+         ]
+       }                
+   ]
+}

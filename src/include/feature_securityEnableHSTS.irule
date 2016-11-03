@@ -1,0 +1,3 @@
+when HTTP_RESPONSE {
+  HTTP::header insert Strict-Transport-Security "%HSTSOPTIONS%"
+}

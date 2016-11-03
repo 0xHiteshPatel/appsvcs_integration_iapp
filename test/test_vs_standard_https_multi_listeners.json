@@ -1,0 +1,75 @@
+{
+	"name":"%TEST_NAME%",
+	"parent":"include_defaults.json",
+	"strings":[
+      { "iapp__routeDomain":"998" },
+		{ "pool__addr":"%TEST_VS_IP%" },
+		{ "pool__port":"443" },
+		{ "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_https_addlisteners_vs" },
+      { "vs__Description":"Standard HTTPS Virtual Server with Addtional Listeners" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"" },
+      { "vs__ProfileHTTP":"/Common/http" },
+      { "vs__ProfileOneConnect":"/Common/oneconnect" },
+      { "vs__ProfileCompression":"/Common/httpcompression" },
+      { "vs__ProfileDefaultPersist":"/Common/cookie" },
+      { "vs__ProfileFallbackPersist":"/Common/source_addr" },
+      { "vs__ProfileServerSSL":"/Common/serverssl" },
+      { "vs__ProfileClientSSL":"/Common/clientssl" },
+      { "vs__ProfileClientSSLCert":"" },
+      { "vs__ProfileClientSSLKey":"" },
+      { "vs__ProfileClientSSLChain":"/Common/ca-bundle.crt" },
+      { "vs__ProfileClientSSLCipherString":"DEFAULT" },
+      { "vs__ProfileClientSSLAdvOptions":"" },
+      { "feature__redirectToHTTPS":"enabled" },
+      { "feature__securityEnableHSTS":"enabled-preload" }
+	],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/http", "none", "none" ] }
+         ]
+      },
+		{
+			"name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] },
+            { "row": [ "1", "", "", "round-robin", "0", "none"] },
+            { "row": [ "2", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+		{
+			"name":"pool__Members",
+      	"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "2", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "2", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "2", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+		},
+      {
+         "name":"vs__Listeners",
+         "columnNames": ["Listener","Destination"],
+         "rows" : [
+            { "row": ["%TEST_VS_IP%:445","default"] },
+            { "row": ["[%TEST_VS6_IP%]:443","1"] },
+            { "row": ["[%TEST_VS6_IP%]:81","redirect"] },
+            { "row": ["%TEST_VS6_IP%.443","/Common/test_pool"] },
+            { "row": ["%TEST_VS_IP%:80","redirect"] },
+            { "row": ["%TEST_VS_IP%:85","/Common/test_pool;nossl"] },
+            { "row": ["%TEST_VS_IP%:86","1;noclientssl"] },
+            { "row": ["%TEST_VS_IP%:87","0;noserverssl"] }
+         ]
+      }
+	]
+}

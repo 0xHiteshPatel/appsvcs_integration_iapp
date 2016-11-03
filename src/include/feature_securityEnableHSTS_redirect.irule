@@ -1,0 +1,3 @@
+when HTTP_REQUEST {
+  HTTP::respond 301 Location "https://[getfield [HTTP::host] ":" 1][HTTP::uri]"
+}

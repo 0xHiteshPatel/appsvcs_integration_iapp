@@ -1,0 +1,19 @@
+delete_iapp_bigip.py
+	Delete an iApp deployment from a BIG-IP system using the iControl-REST API
+
+This script uses the F5 BIG-IP iControl REST API to delete a specific
+instance of an iApp deployment.
+
+The script supports:
+ - Specification of the BIG-IP partition (-P option; default is "Common")
+ - Script-firendly operation to supress delete confirmation (-n option)
+
+To delete the an iApp deployment name 'my_http' a command like this can be used:
+ 
+ python delete_iapp_bigip.py -i <BIG-IP mgmt IP> -u <username> -p <password> my_http
+
+By default the script will automatically save the system config.  This 
+behaviour can be disabled by using the '-d' option.
+
+For further options please run the script with the --help argument
+

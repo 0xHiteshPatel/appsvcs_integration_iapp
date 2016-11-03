@@ -1,0 +1,17 @@
+{
+	"name":"my_http_sample",
+	"parent":"sample_http.json",
+	"strings":[
+                { "pool__addr":"172.16.0.231" }
+	],
+        "tables":[
+                {
+                        "name":"pool__Members",
+                        "columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+                        "rows" : [
+                                { "row": [ "0", "10.0.0.100", "80", "0", "1", "0", "enabled", "none"]  },
+                                { "row": [ "0", "10.0.0.102", "80", "0", "1", "0", "disabled", "none"] }
+                        ]
+                }
+        ]
+}

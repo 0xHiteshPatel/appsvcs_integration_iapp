@@ -1,0 +1,40 @@
+{
+	"name":"test_pools",
+	"parent":"include_defaults.json",
+   "test_delete_override":"true",
+   "test_parent":"test_pools",
+	"strings":[
+		{ "pool__addr":"255.255.255.254" },
+		{ "pool__port":"80" },
+		{ "pool__DefaultPoolIndex":"1" },
+      { "pool__MemberDefaultPort":"8080" }
+	],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/tcp", "none", "none" ] },
+            { "row": [ "1", "/Common/http", "none", "none" ] }
+         ]
+      },
+		{
+			"name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] },
+            { "row": [ "1", "custom_pool_name_1", "pool 1 description", "least-connections-member", "0,1", "min-active-members=2"] },
+            { "row": [ "2", "adv_options_2", "pool 2 description", "round-robin", "0,1;2", "allow-nat=no;ip-tos-to-client=mimic;slow-ramp-time=300"] }
+         ]
+      },
+		{
+			"name":"pool__Members",
+      	"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "", "1000", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "", "2000", "1", "0", "drain-disabled", "none"] }
+         ]
+		}
+	]
+}

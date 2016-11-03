@@ -1,0 +1,21 @@
+import_cert_key.py 
+   Import an cert/key pair to a BIG-IP system using the iControl-REST API
+
+This script uses the F5 BIG-IP iControl REST API to import a cert/key pair. 
+It supports setting multiple options as shown built-in '--help' output.  
+
+The script supports:
+ - Importing cert/key objects
+ - Overwriting an existing object (-o option)
+
+Example:
+
+	python import_cert_key.py -P Common -c example.crt -k exmaple.key <BIG-IP mgmt IP> example
+
+The preceeding command will create the following objects:
+
+	/Common/example.crt:	The cert contained in the example.crt file
+	/Common/example.key:	The key contained in the example.key file
+	
+For further options please run the script with the --help argument
+

@@ -1,0 +1,41 @@
+{
+	"name":"%TEST_NAME%",
+	"parent":"include_defaults.json",
+	"strings":[
+		{ "pool__addr":"%TEST_VS_IP%" },
+		{ "pool__port":"80" },
+		{ "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_fasthttp_tcp_vs" },
+      { "vs__Description":"FastHTTP TCP Virtual Server" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"automap" },
+      { "vs__ProfileClientProtocol":"create:type=fasthttp;idle-timeout=600;insert-xforwarded-for=enabled;reset-on-timeout=enabled" },
+      { "vs__ProfileServerProtocol":"" },
+      { "vs__AdvOptions":"vlans-enabled;vlans=set_add:test_appsvcs_vlan1,test_appsvcs_vlan2" }
+	],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/http", "none", "none" ] }
+         ]
+      },
+		{
+			"name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+		{
+			"name":"pool__Members",
+      	"columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+		}
+	]
+}

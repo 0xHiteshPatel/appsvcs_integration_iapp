@@ -1,0 +1,59 @@
+{
+   "name":"%TEST_NAME%",
+   "parent":"include_defaults.json",
+   "test_delete_override":"true",
+   "strings":[
+      { "iapp__apmDeployMode":"preserve-block" },
+      { "pool__addr":"%TEST_VS_IP%" },
+      { "pool__port":"443" },
+      { "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_https_bundle_apm_preserve_vs" },
+      { "vs__Description":"Standard HTTPS Virtual Server with bundled APM policy" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"automap" },
+      { "vs__ProfileHTTP":"/Common/http" },
+      { "vs__ProfileOneConnect":"/Common/oneconnect" },
+      { "vs__ProfileCompression":"/Common/httpcompression" },
+      { "vs__ProfileDefaultPersist":"/Common/cookie" },
+      { "vs__ProfileFallbackPersist":"/Common/source_addr" },
+      { "vs__ProfileClientSSLCert":"/Common/default.crt" },
+      { "vs__ProfileClientSSLKey":"/Common/default.key" },
+      { "vs__ProfileAccess":"use-bundled" }
+   ],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/http", "none", "none" ] }
+         ]
+      },
+      {
+         "name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] },
+            { "row": [ "1", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+      {
+         "name":"pool__Members",
+         "columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+      },
+      {
+         "name":"vs__BundledItems",
+         "columnNames": ["Resource"],
+         "rows" : [
+            { "row": [ "apm:test_%TEST_DEV_VERSION_MAJOR%" ] }
+         ]
+      }   
+   ]
+}

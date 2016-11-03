@@ -1,0 +1,34 @@
+import_template_bigip.py 
+   Import an iApp template to a BIG-IP system using the iControl-REST API
+
+This script uses the F5 BIG-IP iControl REST API to import an iApp template. 
+It supports setting multiple options as shown built-in '--help' output.  
+
+The script supports:
+ - Creating a new template that does not existing on the target system
+ - Modifying an existing template if the '-o' option is specified
+
+We require that the implementation, presentation, HTML Help and macro 
+definitions of the iApp template be in different files.  By default it will 
+look in the current working directory for the following files:
+
+ Default Filename	Description			Required  CLI Argument
+ -----------------------------------------------------------------------------
+ iapp.tcl		Implementation Layer TCL Code	YES	  -i
+ iapp.apl		Presentation Layer APL Code	YES	  -a
+ iapp.html		HTML based Help			NO	  -n
+ iapp.macro		iApp Macro definition		NO	  -m
+
+Different filenames can be specified using the corresponding CLI arguments 
+in the table above 
+
+By default the script will automatically save the system config.  This 
+behaviour can be disabled by using the '-d' option.
+
+If you are specifying the require TMOS modules please format as a comma 
+seperated list of module names such as:
+ 
+	ltm,gtm,asm,afm
+
+For further options please run the script with the --help argument
+

@@ -1,0 +1,35 @@
+deploy_iapp_bigip.py
+	Deploy an iApp to a BIG-IP system using the iControl-REST API
+
+This script uses the F5 BIG-IP iControl REST API to create a specific
+instance of an iApp deployment.
+
+The script supports:
+ - Deployment/Redeployment of an iApp using JSON template files
+ - Hierarchical definition of a deployment using multiple JSON files
+   - A JSON template can specify a 'parent' file to inherit properties from
+   - No limit to the number of levels of inheritence
+ - Automatic selection of the latest version of the appsvcs_integration_iapp 
+ - Specification of partition, traffic-group, device-group and other global items
+
+Sample template files are included in the 'deploy_iapp_samples' directory
+that implement a three-level hierarchy and deploy a HTTPS or HTTP virtual 
+server using the appsvcs_integration_iapp.  The following table describes 
+the contents of the sample files:
+
+ sample_defaults.json: Default values for all the fields contained in the iApp
+ sample_https.json:    Default values for a HTTPS service (parent: sample_defaults.json)
+ sample_myhttps.json:  Top level definition of the service (parent: sample_https.json)
+ sample_http.json:     Default values for a HTTP service (parent: sample_defaults.json)
+ sample_myhttp.json:   Top level definition of the service (parent: sample_http.json)
+
+To deploy the sample_myhttps.json template a command like this can be used:
+ 
+ cd deploy_iapp_samples
+ python ../deploy_iapp_bigip.py -i <BIG-IP mgmt IP> -u <username> -p <password> sample_myhttps.json
+
+By default the script will automatically save the system config.  This 
+behaviour can be disabled by using the '-d' option.
+
+For further options please run the script with the --help argument
+

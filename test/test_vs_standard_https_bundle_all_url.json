@@ -1,0 +1,90 @@
+{
+   "name":"%TEST_NAME%",
+   "parent":"include_defaults.json",
+   "strings":[
+      { "iapp__asmDeployMode":"redeploy-block" },
+      { "pool__addr":"%TEST_VS_IP%" },
+      { "pool__port":"443" },
+      { "pool__DefaultPoolIndex":"0" },
+      { "vs__Name":"test_vs_standard_https_bundle_all_url" },
+      { "vs__Description":"Standard HTTPS Virtual Server with url sourced items" },
+      { "vs__IpProtocol":"tcp" },
+      { "vs__SNATConfig":"automap" },
+      { "vs__ProfileHTTP":"/Common/http" },
+      { "vs__ProfileOneConnect":"/Common/oneconnect" },
+      { "vs__ProfileCompression":"/Common/httpcompression" },
+      { "vs__ProfileDefaultPersist":"/Common/cookie" },
+      { "vs__ProfileFallbackPersist":"/Common/source_addr" },
+      { "vs__ProfileClientSSLCert":"/Common/default.crt" },
+      { "vs__ProfileClientSSLKey":"/Common/default.key" },
+		{ "vs__ProfileAccess":"use-bundled" }
+   ],
+   "tables":[
+      {
+         "name":"monitor__Monitors",
+         "columnNames": ["Index", "Name", "Type", "Options"],
+         "rows" : [
+            { "row": [ "0", "/Common/http", "none", "none" ] }
+         ]
+      },
+      {
+         "name":"pool__Pools",
+         "columnNames": [ "Index", "Name", "Description", "LbMethod", "Monitor", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "", "", "round-robin", "0", "none"] },
+            { "row": [ "1", "", "", "round-robin", "0", "none"] }
+         ]
+      },
+      {
+         "name":"pool__Members",
+         "columnNames": [ "Index", "IPAddress", "Port", "ConnectionLimit", "Ratio", "PriorityGroup", "State", "AdvOptions" ],
+         "rows" : [
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "disabled", "none"] },
+            { "row": [ "1", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "drain-disabled", "none"] }
+         ]
+      },
+      {
+         "name":"vs__BundledItems",
+         "columnNames": ["Resource"],
+         "rows" : [
+            { "row": [ "irule:bundle2" ] },
+            { "row": [ "irule:url=http://%TEST_POLICY_HOST%/appsvcs/remote_1.irule" ] },
+            { "row": [ "irule:urloptional=http://%TEST_POLICY_HOST%/appsvcs/remote_1_optional.irule" ] },
+            { "row": [ "irule:urloptional=http://%TEST_POLICY_HOST%/appsvcs/remote_2_optional.irule" ] },
+            { "row": [ "irule:url=http://%TEST_POLICY_HOST%/appsvcs/%APP_NAME%.irule" ] },
+            { "row": [ "irule:bundle1" ] },
+            { "row": [ "asm:asm_example1" ] },
+            { "row": [ "asm:asm_example2" ] },
+            { "row": [ "asm:url=http://%TEST_POLICY_HOST%/appsvcs/remote_asm1.xml" ] },
+            { "row": [ "asm:url=http://%TEST_POLICY_HOST%/appsvcs/%APP_NAME%_asm.xml" ] },
+            { "row": [ "apm:url=http://%TEST_POLICY_HOST%/appsvcs/remote_apm_%TEST_DEV_VERSION_MAJOR%.conf.tar.gz" ] }      
+         ]
+      },        
+      {
+         "name":"l7policy__rulesMatch",
+         "columnNames": ["Group","Operand","Negate","Condition","Value","CaseSensitive","Missing"],
+         "rows" : [ 
+            { "row": ["0","http-host/request/all","yes","equals","www.yoda.com","yes","yes"] },
+            { "row": ["1","http-uri/request/path","no","starts-with","/admiral,/akbar","no","no"] },
+            { "row": ["2","http-uri/request/path","no","starts-with","/hansolo","no","no"] },
+            { "row": ["3","http-uri/request/path","no","starts-with","/chewbacca","no","no"] },
+            { "row": ["default","","no","","","no","no"]}
+         ]
+      },
+      {
+         "name":"l7policy__rulesAction",
+         "columnNames": ["Group","Target","Parameter"],
+         "rows" : [ 
+            { "row": ["0","forward/request/select/pool","pool:1"] },
+            { "row": ["1","asm/request/enable/policy","bundled:asm_example1"] },
+            { "row": ["2","asm/request/enable/policy","bundled:remote_asm1"] },
+            { "row": ["3","asm/request/enable/policy","bundled:%APP_NAME%_asm"] },
+            { "row": ["default","asm/request/enable/policy","bundled:asm_example2"]}
+         ]
+       }                
+   ]
+}

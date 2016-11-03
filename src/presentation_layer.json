@@ -1,10 +1,16 @@
 {
-	"tmpl_majorversion":"1.0",
+	"tmpl_majorversion":"2.0",
 	"pres_revision":"001",
+	"modes": {
+		"1": "Standalone",
+		"2": "iWorkflow",
+		"3": "Cisco APIC",
+		"4": "VMware NSX"
+	},
 	"sections":[
 		{
 			"name":"intro",
-			"description":"F5 Application Services Integration iApp v%IMPLVERSION_MAJOR%_%PRESENTATION_REV% (Community Edition)",
+			"description":"F5 Application Services Integration iApp v%IMPLVERSION_MAJOR%(%IMPLVERSION_MINOR%)_%PRESENTATION_REV% (Community Edition)",
 			"fields":[
 				{
 					"name":"hello",
@@ -21,18 +27,19 @@
 				{
 					"name":"strictUpdates",
 					"description":"iApp: Strict Updates",
-					"help":"Control Strict Updates mode (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211)",
+					"help":"Control `Strict Updates <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-iapps-developer-11-4-0/2.html#unique_1198712211>`_ mode",
 					"type":"boolean",
 					"default":true,
 					"required":false,
 					"display":"large",
+					"uivisible":true,
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
 					"name":"appStats",
 					"description":"iApp: Statistics Handler Creation",
-					"help":"Control whether Virtual Server/Pool statistics handlers are created in Standalone or BIG-IQ Cloud mode",
+					"help":"Control whether Virtual Server/Pool statistics handlers are created in Standalone or iWorkflow mode",
 					"type":"boolean",
 					"default":true,
 					"required":false,
@@ -50,7 +57,18 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_013"
-				},					
+				},
+				{
+					"name":"logLevel",
+					"description":"iApp: Log Level",
+					"help":"The log level to use during deployment.  0=silent, 10=most verbose",
+					"type":"string",
+					"default":"7",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				},
 				{
 					"name":"routeDomain",
 					"description":"iApp: Route Domain",
@@ -61,7 +79,41 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_013"
-				}						
+				},
+				{
+					"name":"asmDeployMode",
+					"description":"iApp: ASM: Deployment Mode",
+					"help":"The behaviour to take on iApp (re)deployment for ASM policies.  The 'redeploy' options will replace the existing policy with the one packaged in the template.  The 'preserve' options keep the existing policy.  The 'block' modifier to both preserve and redeploy marks the deployed virtual server down to prevent traffic from reaching pool members until policy deployment is complete.  The 'bypass' modifier does not change the virtual server state, however, could cause traffic to bypass the policy until deployment completes.",
+					"type":"choice",
+					"default":"preserve-bypass",
+					"choices":[
+					    "preserve-bypass",
+					    "preserve-block",
+					    "redeploy-bypass",
+					    "redeploy-block"
+					    ],
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				},
+				{
+					"name":"apmDeployMode",
+					"description":"iApp: APM: Deployment Mode",
+					"help":"The behaviour to take on iApp (re)deployment for an APM policy.  The 'redeploy' options will replace the existing policy with the one packaged in the template.  The 'preserve' options keep the existing policy.  The 'block' modifier to both preserve and redeploy marks the deployed virtual server down to prevent traffic from reaching pool members until policy deployment is complete.  The 'bypass' modifier does not change the virtual server state, however, could cause traffic to bypass the policy until deployment completes.",
+					"type":"choice",
+					"default":"preserve-bypass",
+					"choices":[
+					    "preserve-bypass",
+					    "preserve-block",
+					    "redeploy-bypass",
+					    "redeploy-block"
+					    ],
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				}
 			]
 		},
 		{
@@ -71,9 +123,9 @@
 				{
 					"name":"addr",
 					"description":"Virtual Server: Address",
-					"help":"The destination address of the Virtual Server",
+					"help":"The destination address of the Virtual Server.  Specifying a value of '255.255.255.254' will skip Virtual Server creation.",
 					"type":"ipaddr",
-					"default":"172.16.0.231",
+					"default":"",
 					"required":true,
 					"display":"large",
 					"modes":[1,2,3,4],
@@ -95,82 +147,126 @@
 					"description":"Virtual Server: Port",
 					"help":"The L4 port the Virtual Server listens on.  '*' is supported",
 					"type":"port",
-					"default":"443",
+					"default":"",
 					"display":"small",
 					"required":true,
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
-					"name":"Name",
-					"description":"Pool: Name",
-					"help":"The name of the Pool.  Is no value is specified the name will be set to <iapp_name>_pool",
-					"type":"string",
-					"default":"my_pool",
-					"required":true,
-					"display":"xxlarge",
+					"name":"DefaultPoolIndex",
+					"description":"Virtual Server: Default Pool Index",
+					"help":"The index of the pool to use as the default pool for the Virtual Server",
+					"type":"number",
+					"default":"0",
+					"display":"small",
+					"required":false,
 					"modes":[1,2,3,4],
-					"minver":"0.3_001"
+					"minver":"2.0_001"
 				},
 				{
-					"name":"Description",
-					"description":"Pool: Description",
-					"help":"The description string configured in the Pool",
-					"type":"string",
-					"default":"pooldescr",
-					"required":false,
-					"display":"xxlarge",
+					"name":"Pools",
+					"description":"Pool: Pool Table",
+					"help":"The pools to create.  Note that pool index must be >0 and sequential.",
+					"type":"table",
+					"uivisible":true,
 					"modes":[1,2,3,4],
-					"minver":"0.3_001"
-				},
-				{
-					"name":"Monitor",
-					"description":"Pool: Health Monitor",
-					"help":"The path to a preconfigured Pool Health Monitor",
-					"type":"string",
-					"default":"/Common/http",
-					"required":false,
-					"display":"large",
-					"modes":[1,2,3,4],
-					"minver":"0.3_001"
-				},
-				{
-					"name":"LbMethod",
-					"description":"Pool: Load Balancing Method",
-					"help":"The pool Load Balancing Method (https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305)",
-					"type":"choice",
-					"default":"round-robin",
-					"choices":[
-					    "dynamic-ratio-member",
-					    "dynamic-ratio-node",
-					    "fastest-app-response",
-					    "fastest-node",
-					    "least-connections-member",
-					    "least-connections-node",
-					    "least-sessions",
-					    "observed-member",
-					    "observed-node",
-					    "predictive-member",
-					    "predictive-node",
-					    "round-robin",
-					    "ratio-member",
-					    "ratio-node",
-					    "ratio-session",
-					    "ratio-least-connections-member",
-					    "ratio-least-connections-node",
-					    "weighted-least-connections-member"
-					    ],
-					"required":false,
-					"display":"xxlarge",
-					"modes":[1,2,3,4],
-					"minver":"0.3_001"
+					"minver":"2.0_001",
+					"fields": [
+						{
+							"name":"Index",
+							"description":"Index:",
+							"help":"The Pool Index of this Pool",
+							"type":"number",
+							"default":"0",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Name",
+							"description":"Name:",
+							"help":"The Name of this Pool",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Description",
+							"description":"Description:",
+							"help":"The Description of this Pool",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"LbMethod",
+							"description":"LB Method:",
+							"help":"The pool `Load Balancing Method <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm_configuration_guide_10_0_0/ltm_pools.html#1215305>`_",
+							"type":"choice",
+							"default":"round-robin",
+							"choices":[
+							    "dynamic-ratio-member",
+							    "dynamic-ratio-node",
+							    "fastest-app-response",
+							    "fastest-node",
+							    "least-connections-member",
+							    "least-connections-node",
+							    "least-sessions",
+							    "observed-member",
+							    "observed-node",
+							    "predictive-member",
+							    "predictive-node",
+							    "round-robin",
+							    "ratio-member",
+							    "ratio-node",
+							    "ratio-session",
+							    "ratio-least-connections-member",
+							    "ratio-least-connections-node",
+							    "weighted-least-connections-member"
+							    ],
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Monitor",
+							"description":"Monitor(s):",
+							"help":"The pool monitor(s) and minimum number of monitors that have to pass can be specified using a string of the format '[<monitor index>[,<monitor index>][;<minimum # healthy>]]'.  For example '0,1,2;2' would associate the monitors with indexes 0, 1 and 2 and require at least 2 pass.  If no value is specified no monitor is associated with the pool",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"AdvOptions",
+							"description":"Adv Options:",
+							"help":"The options to set in the created Pool.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"0.3_012"
+						}
+					]
 				},
 				{
 					"name":"MemberDefaultPort",
 					"description":"Pool: Member Default Port",
 					"help":"The L4 port to used when a pool member is added via a Dynamic Endpoint Insertion notication from Cisco APIC",
 					"type":"string",
-					"default":"80",
+					"default":"",
 					"required":false,
 					"display":"small",
 					"modes":[3],
@@ -185,12 +281,24 @@
 					"minver":"0.3_001",
 					"fields":[
 						{
+							"name":"Index",
+							"description":"Pool Idx:",
+							"help":"The Index cross-reference of the Pool in the Pools table this Member is a part of",
+							"type":"number",
+							"default":"0",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
 							"name":"IPAddress",
 							"description":"IP/Node Name:",
 							"help":"IP Address OR Node Name of the Pool Member",
-							"type":"string",
-							"default":"10.0.0.100",
-							"required":true,
+							"type":"editchoice",
+							"create_list":["ltm node"],
+							"default":"",
+							"required":false,
 							"display":"large",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
@@ -201,7 +309,7 @@
 							"help":"L4 port of the Pool Member",
 							"type":"string",
 							"default":"80",
-							"required":true,
+							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
@@ -212,7 +320,7 @@
 							"help":"The Connection Limit for the Pool Member.  '0' denotes unlimited connections",
 							"type":"string",
 							"default":"0",
-							"required":true,
+							"required":false,
 							"display":"medium",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
@@ -223,10 +331,21 @@
 							"help":"The Ratio weight for the Pool Member.  Used with 'ratio' based Load Balancing Methods",
 							"type":"string",
 							"default":"1",
-							"required":true,
+							"required":false,
 							"display":"small",
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
+						},
+						{
+							"name":"PriorityGroup",
+							"description":"Priority Group:",
+							"help":"The Priority Group for the Pool Member.",
+							"type":"string",
+							"default":"0",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"1.0_002"
 						},
 						{
 							"name":"State",
@@ -242,19 +361,78 @@
 							"required":false,
 							"modes":[1,2,3,4],
 							"minver":"0.3_001"
+						},
+						{
+							"name":"AdvOptions",
+							"description":"Adv Options:",
+							"help":"The Advanced Options for the Pool Member.",
+							"type":"string",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
 						}
 					]
-				},
+				}
+			]
+		},
+		{
+			"name":"monitor",
+			"description":"Pool Monitor(s) Configuration",
+			"fields":[
 				{
-					"name":"AdvOptions",
-					"description":"Pool: Advanced Options",
-					"help":"The options to set in the created Pool.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
-					"type":"string",
-					"default":"",
-					"required":false,
-					"display":"xxlarge",
+					"name":"Monitors",
+					"description":"Monitor: Monitor Table",
+					"help":"The monitors to create/associate.  Note that monitor index must be >0 and sequential.",
+					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"0.3_012"
+					"minver":"2.0_001",
+					"fields": [
+						{
+							"name":"Index",
+							"description":"Index:",
+							"help":"The Index of this Monitor",
+							"type":"number",
+							"default":"0",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Name",
+							"description":"Name:",
+							"help":"The Name of the Monitor to create or associate.  To associate an existing monitor specify the full path to the existing monitor object (e.g. '/Common/http')",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Type",
+							"description":"Type:",
+							"help":"The Type of this Monitor.  To determine the available types on a BIG-IP system execute 'tmsh create ltm monitor ?' from the CLI",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Options",
+							"description":"Options:",
+							"help":"The options to set in the created Monitor.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						}
+					]
 				}
 			]
 		},
@@ -263,12 +441,43 @@
 			"description":"Virtual Server Configuration",
 			"fields":[
 				{
+					"name":"Listeners",
+					"description":"Virtual Server: Additional Listeners",
+					"help":"A list of additional IPv4/IPv6 listeners to create.  All listeners will be configured identically except if flags are specified in the Destination column modifying specific profiles.",
+					"type":"table",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001",
+					"fields":[
+						{
+							"name":"Listener",
+							"description":"Listener:",
+							"help":"Listener to create in <address>:<port> format",
+							"type":"string",
+							"required":false,
+							"display":"large",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Destination",
+							"description":"Destination",
+							"help":"The destination for traffic bound for this listener in the format (default|<pool index>|redirect|<TMOS pool object path>)[;(nossl|noclientssl|noserverssl)].  If no value or the keyword 'default' is specified the default pool index will be used.",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"medium",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						}
+					]
+				},
+				{
 					"name":"Name",
 					"description":"Virtual Server: Name",
 					"help":"The name of the Virtual Server.  If no value is specified the name will be set to <iapp_name>_vs",
 					"type":"string",
-					"default":"my_virtualserver",
-					"required":true,
+					"default":"",
+					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
@@ -278,11 +487,28 @@
 					"description":"Virtual Server: Description",
 					"help":"The description string configured in the Virtual Server",
 					"type":"string",
-					"default":"vsdescr",
+					"default":"",
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
+				},
+				{
+					"name":"RouteAdv",
+					"description":"Virtual Server: Route Advertisement",
+					"help":"Control the route-advertisement behaviour setting of the associated Virtual Address object.  Routing protocol configuration must be completed on the device manually.",
+					"type":"choice",
+					"default":"disabled",
+					"choices":[
+						"disabled",
+						"all_vs",
+						"any_vs",
+						"always"
+					],
+					"required":false,
+					"display":"medium",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
 				},
 				{
 					"name":"SourceAddress",
@@ -321,8 +547,9 @@
 					"name":"ProfileClientProtocol",
 					"description":"Virtual Server: Client-side L4 Protocol Profile",
 					"help":"The client-side protocol profile.  This field supports the 'create:' format for customization",
-					"type":"string",
-					"default":"/Common/tcp-wan-optimized",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{ltm profile tcp}","{ltm profile udp}","{ltm profile fastl4}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
@@ -332,8 +559,9 @@
 					"name":"ProfileServerProtocol",
 					"description":"Virtual Server: Server-side L4 Protocol Profile",
 					"help":"The server-side protocol profile.  This field supports the 'create:' format for customization",
-					"type":"string",
-					"default":"/Common/tcp-lan-optimized",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{ltm profile tcp}","{ltm profile udp}","{ltm profile fastl4}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
@@ -343,8 +571,9 @@
 					"name":"ProfileHTTP",
 					"description":"Virtual Server: HTTP Profile",
 					"help":"The HTTP protocol profile.  This field supports the 'create:' format for customization",
-					"type":"string",
-					"default":"/Common/http",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{ltm profile http}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
@@ -354,8 +583,9 @@
 					"name":"ProfileOneConnect",
 					"description":"Virtual Server: OneConnect Profile",
 					"help":"The oneconnect profile.  This field supports the 'create:' format for customization",
-					"type":"string",
-					"default":"/Common/oneconnect",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{ltm profile one-connect}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
@@ -365,8 +595,9 @@
 					"name":"ProfileCompression",
 					"description":"Virtual Server: Compression Profile",
 					"help":"The compression profile.  This field supports the 'create:' format for customization",
-					"type":"string",
-					"default":"/Common/httpcompression",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{ltm profile http-compression}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
@@ -375,7 +606,7 @@
 				{
 					"name":"ProfileAnalytics",
 					"description":"Virtual Server: Analytics Profile",
-					"help":"The analytics profile",				
+					"help":"The analytics profile",
 					"type":"string",
 					"default":"",
 					"required":false,
@@ -387,19 +618,21 @@
 					"name":"ProfileRequestLogging",
 					"description":"Virtual Server: Request Logging Profile",
 					"help":"The request logging profile.  This field supports the 'create:' format for customization",
-					"type":"string",
+					"type":"editchoice",
+					"create_list":["{ltm profile request-log}"],
 					"default":"",
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_005"
-				},				
+				},
 				{
 					"name":"ProfileDefaultPersist",
 					"description":"Virtual Server: Default Persistence Profile",
-					"help":"The default persistence profile",
-					"type":"string",
-					"default":"/Common/cookie",
+					"help":"The default persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{ltm persistence cookie}","{ltm persistence dest-addr}","{ltm persistence hash}","{ltm persistence msrdp}","{ltm persistence sip}","{ltm persistence source-addr}","{ltm persistence ssl}","{ltm persistence universal}"],
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
@@ -408,9 +641,10 @@
 				{
 					"name":"ProfileFallbackPersist",
 					"description":"Virtual Server: Fallback Persistence Profile",
-					"help":"The fallback persistence profile",
-					"type":"string",
-					"default":"/Common/source_addr",
+					"help":"The fallback persistence profile.  This field supports the 'create:' format for customization.  A key of 'type' specifying the persisence type to create must be specified (ex: create:type=cookie;...)",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{ltm persistence cookie}","{ltm persistence dest-addr}","{ltm persistence hash}","{ltm persistence msrdp}","{ltm persistence sip}","{ltm persistence source-addr}","{ltm persistence ssl}","{ltm persistence universal}"],
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
@@ -420,8 +654,9 @@
 					"name":"SNATConfig",
 					"description":"Virtual Server: SNAT Configuration (enter SNAT pool name, 'automap' or leave blank to disable SNAT)",
 					"help":"The SNAT option to use.  Specifiy 'automap','/Common/<existing_snat_pool_name>','partition-default','create:<ip1,>....<ipX>'.  The partition-default option references a SNAT pool created by Cisco APIC as part of the APIC partition",
-					"type":"string",
+					"type":"editchoice",
 					"default":"automap",
+					"create_list":["{ltm snatpool}"],
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
@@ -431,8 +666,9 @@
 					"name":"ProfileServerSSL",
 					"description":"Virtual Server: Server SSL Profile",
 					"help":"The server-ssl profile.  This field supports the 'create:' format for customization",
-					"type":"string",
+					"type":"editchoice",
 					"default":"",
+					"create_list":["{ltm profile server-ssl}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
@@ -442,8 +678,9 @@
 					"name":"ProfileClientSSL",
 					"description":"Virtual Server: Client SSL Profile",
 					"help":"The path to an existing Client-SSL profile.  If specified this value overrides Client-SSL profile creation",
-					"type":"string",
+					"type":"editchoice",
 					"default":"",
+					"create_list":["{ltm profile client-ssl}"],
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
@@ -452,9 +689,10 @@
 				{
 					"name":"ProfileClientSSLCert",
 					"description":"Virtual Server: Client SSL Certificate",
-					"help":"The path to an existing SSL Certificate.  If the work 'auto' is specfied the value /Common/<iapp_name>.crt will be substituted",
-					"type":"string",
-					"default":"/Common/default.crt",
+					"help":"The path to an existing SSL Certificate.  If the word 'auto' is specfied the value /Common/<iapp_name>.crt will be substituted.  This field also supports the url=<url> format to load a PEM encoded resources.",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{sys file ssl-cert}"],
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
@@ -463,20 +701,22 @@
 				{
 					"name":"ProfileClientSSLKey",
 					"description":"Virtual Server: Client SSL Key",
-					"help":"The path to an existing SSL Key.  If the work 'auto' is specfied the value /Common/<iapp_name>.key will be substituted",
-					"type":"string",
-					"default":"/Common/default.key",
+					"help":"The path to an existing SSL Key.  If the word 'auto' is specfied the value /Common/<iapp_name>.key will be substituted.  This field also supports the url=<url> format to load a PEM encoded resources.",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{sys file ssl-key}"],
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
-				}, 
+				},
 				{
 					"name":"ProfileClientSSLChain",
 					"description":"Virtual Server: Client SSL Certificate Chain",
-					"help":"The path to the SSL Certicate Chain bundle",
-					"type":"string",
-					"default":"/Common/ca-bundle.crt",
+					"help":"The path to the SSL Certicate Chain bundle.  This field also supports the url=<url> format to load a PEM encoded resources.",
+					"type":"editchoice",
+					"default":"",
+					"create_list":["{sys file ssl-cert}"],
 					"required":false,
 					"display":"large",
 					"modes":[1,2,3,4],
@@ -485,9 +725,9 @@
 				{
 					"name":"ProfileClientSSLCipherString",
 					"description":"Virtual Server: Client SSL Cipher String",
-					"help":"The SSL Cipher String (https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html)",
+					"help":"The SSL `Cipher String <https://support.f5.com/kb/en-us/solutions/public/13000/100/sol13171.html>`_",
 					"type":"string",
-					"default":"DEFAULT:!SSLV3",
+					"default":"DEFAULT",
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
@@ -508,12 +748,13 @@
 					"name":"ProfileSecurityLogProfiles",
 					"description":"Virtual Server: Security Logging Profiles",
 					"help":"A comma seperated list of existing security logging profiles",
-					"type":"string",
+					"type":"editchoice",
 					"default":"",
+					"create_list":["{security log profile}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_008"					
+					"minver":"0.3_008"
 				},
 				{
 					"name":"ProfileSecurityIPBlacklist",
@@ -528,40 +769,43 @@
 						],
 					"required":false,
 					"modes":[1,2,3,4],
-					"minver":"0.3_015"					
+					"minver":"0.3_015"
 				},
 				{
 					"name":"ProfileSecurityDoS",
 					"description":"Virtual Server: Security: DoS Profile",
 					"help":"The DoS Protection Policy to configure",
-					"type":"string",
+					"type":"editchoice",
 					"default":"",
+					"create_list":["{security dos profile}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_016"					
-				},				
+					"minver":"0.3_016"
+				},
 				{
 					"name":"ProfileAccess",
 					"description":"Virtual Server: Access Profile",
-					"help":"The APM Access Policy to configure",
-					"type":"string",
+					"help":"The APM Access Policy to configure.  To automatically associate a bundled APM policy after deployment use the value 'use-bundled'",
+					"type":"editchoice",
 					"default":"",
+					"create_list":["{apm profile access}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_011"					
+					"minver":"0.3_011"
 				},
 				{
 					"name":"ProfileConnectivity",
 					"description":"Virtual Server: Connectivity Profile",
 					"help":"The APM Connectivity Policy to configure",
-					"type":"string",
+					"type":"editchoice",
 					"default":"",
+					"create_list":["{apm profile connectivity}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_011"					
+					"minver":"0.3_011"
 				},
 				{
 					"name":"ProfilePerRequest",
@@ -572,8 +816,8 @@
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
-					"minver":"0.3_011"					
-				},				
+					"minver":"0.3_011"
+				},
 				{
 					"name":"OptionSourcePort",
 					"description":"Virtual Server: Source Port Behavior",
@@ -599,27 +843,43 @@
 					"display":"large",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
-				},				
+				},
 				{
 					"name":"Irules",
 					"description":"Virtual Server: iRules (to specify multiple iRules seperate with a comma ex: irule1,irule2,irule3)",
 					"help":"A comma seperated list of existing iRules to attach to the virtual server.  Ordering is preserved.",
-					"type":"string",
+					"type":"editchoice",
 					"default":"",
+					"create_list":["{ltm rule}"],
 					"required":false,
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_001"
 				},
 				{
-					"name":"BundledIrules",
-					"description":"Virtual Server: Bundled iRules",
-					"help":"The bundled iRules to deploy.  Ordering is preserved.  See irules/README for more info.",
-					"type":"dynamic_filelist_multi",
-					"glob":"irules/*.irule",
+					"name":"BundledItems",
+					"description":"Virtual Server: Bundled Items",
+					"help":"The bundled resources to deploy.  See bundled/README for more info.",
+					"type":"table",
 					"modes":[1,2,3,4],
-					"minver":"0.3_014",
-					"required":false
+					"minver":"2.0_001",
+					"required":false,
+					"fields": [
+						{
+							"name":"Resource",
+							"description":"Resource:",
+							"help":"The bundled items to deploy.  See bundled/README for more info.",
+							"type":"editchoice",
+							"glob":[
+										{ "path":"irules/*.irule", "prefix":"irule:" },
+										{ "path":"asm_policies/*.xml", "prefix":"asm:" },
+										{ "path":"apm_policies/*.tar.gz", "prefix":"apm:" }
+									],
+							"modes":[1,2,3,4],
+							"minver":"2.0_001",
+							"required":false
+						}
+					]
 				},
 				{
 					"name":"AdvOptions",
@@ -642,12 +902,359 @@
 					"display":"xxlarge",
 					"modes":[1,2,3,4],
 					"minver":"0.3_010"
-				}	
+				},
+				{
+					"name":"AdvPolicies",
+					"description":"Virtual Server: Advanced Policies",
+					"help":"A comma-seperated list of policies to link to the Virtual Server: <policy_name>[,<policy_name>]",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				},
+				{
+					"name":"VirtualAddrAdvOptions",
+					"description":"Virtual Address: Advanced Options",
+					"help":"The options to set in the global Virtual Address object.  Options can be specified using the format: <tmsh_option_name>=<tmsh_option_value>[,<tmsh_option_name>=<tmsh_option_value>]",
+					"type":"string",
+					"default":"",
+					"required":false,
+					"display":"xxlarge",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				}
+			]
+		},
+		{
+			"name":"l7policy",
+			"description":"L7 Traffic Policy",
+			"fields":[
+				{
+					"name":"strategy",
+					"description":"L7 Policy: Match Strategy",
+					"help":"The Matching Strategy to use for the `L7 Policy <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html>`_",
+					"type":"editchoice",
+					"default":"/Common/first-match",
+					"choices":[
+						"/Common/first-match",
+						"/Common/best-match",
+						"/Common/all-match"
+					],
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				},
+				{
+					"name":"defaultASM",
+					"description":"L7 Policy: Default ASM Policy",
+					"help":"The default ASM policy to use for the L7 Policy.  Specifying a value of 'bypass' will set all actions to bypass ASM processing unless a explicit ASM Action Target is specified",
+					"type":"string",
+					"default":"bypass",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				},
+				{
+					"name":"defaultL7DOS",
+					"description":"L7 Policy: Default L7 DoS Policy",
+					"help":"The default L7 DoS policy to use for the L7 Policy.  Specifying a value of 'bypass' will set all actions to bypass ASM processing unless a explicit L7 DoS Action Target is specified",
+					"type":"string",
+					"default":"bypass",
+					"required":false,
+					"display":"large",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001"
+				},
+				{
+					"name":"rulesMatch",
+					"description":"L7 Policy: Rules: Matching",
+					"help":"The L7 policy `Matching <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html>`_ ruleset to configure.",
+					"type":"table",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001",
+					"fields":[
+						{
+							"name":"Group",
+							"description":"Group:",
+							"help":"The group for this match rule.  The corresponding action is configured by specifying a matching action with the same group(s).  Multiple rows with the same group may be specified to create multiple match conditions.",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Operand",
+							"description":"Operand:",
+							"help":"The specific operand to use for a policy match.",
+							"type":"editchoice",
+							"choices":[
+								"client-ssl/request/cipher",
+								"client-ssl/request/cipher-bits",
+								"client-ssl/request/protocol",
+								"client-ssl/response/cipher",
+								"client-ssl/response/cipher-bits",
+								"client-ssl/response/protocol",
+								"http-basic-auth/request/username",
+								"http-basic-auth/request/password",
+								"http-cookie/request/all/name/&lt;name&gt;",
+								"http-header/request/all/name/&lt;name&gt;",
+								"http-header/request/all/name/&lt;name&gt;",
+								"http-host/request/all",
+								"http-host/request/host",
+								"http-host/request/port",
+								"http-method/request/all",
+								"http-referer/request/all",
+								"http-referer/request/extension",
+								"http-referer/request/host",
+								"http-referer/request/path",
+								"http-referer/request/path-segment/index/&lt;index&gt;",
+								"http-referer/request/port",
+								"http-referer/request/query-parameter/name/&lt;name&gt;",
+								"http-referer/request/scheme",
+								"http-referer/request/unnamed-query-parameter/index/&lt;index&gt;",
+								"http-set-cookie/response/domain/name/&lt;name&gt;",
+								"http-set-cookie/response/expiry/name/&lt;name&gt;",
+								"http-set-cookie/response/path/name/&lt;name&gt;",
+								"http-set-cookie/response/value/name/&lt;name&gt;",
+								"http-set-cookie/response/version/name/&lt;name&gt;",
+								"http-status/response/all",
+								"http-status/response/code",
+								"http-status/response/text",
+								"http-uri/request/all",
+								"http-uri/request/extension",
+								"http-uri/request/host",
+								"http-uri/request/path",
+								"http-uri/request/path-segment/index/&lt;index&gt;",
+								"http-uri/request/port",
+								"http-uri/request/query-parameter/name/&lt;name&gt;",
+								"http-uri/request/scheme",
+								"http-uri/request/unnamed-query-parameter/index/&lt;index&gt;",
+								"http-version/request/all",
+								"http-version/request/major",
+								"http-version/request/minor",
+								"http-version/request/protocol",
+								"http-version/response/all",
+								"http-version/response/major",
+								"http-version/response/minor",
+								"http-version/response/protocol",
+								"ssl-cert/ssl-server-handshake/common-name/index/&lt;index&gt;",
+								"ssl-extension/ssl-client-hello/alpn",
+								"ssl-extension/ssl-client-hello/npn",
+								"ssl-extension/ssl-client-hello/server-name",
+								"ssl-extension/ssl-server-hello/alpn",
+								"ssl-extension/ssl-server-hello/npn",
+								"ssl-extension/ssl-server-hello/server-name",
+								"tcp/request/mss/internal",
+								"tcp/request/port/internal",
+								"tcp/request/port/local",
+								"tcp/request/route-domain/internal",
+								"tcp/request/rtt/internal",
+								"tcp/request/vlan/internal",
+								"tcp/request/vlan-id/internal"
+							],
+							"required":false,
+							"display":"xlarge",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Negate",
+							"description":"Negate:",
+							"help":"Reverses the meaning of the operation (for example, enabling Negate and specifying https as the starts-with value resolves to true if the header does not start with https).",
+							"type":"choice",
+							"default":"no",
+							"choices":[
+								"no",
+								"yes"
+							],
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Condition",
+							"description":"Condition:",
+							"help":"Specifies a conditions to use for matching.",
+							"type":"choice",
+							"choices":[
+								"equals",
+								"starts-with",
+								"ends-with",
+								"contains",
+								"greater",
+								"greater-or-equal",
+								"less",
+								"less-or-equal"
+							],
+							"required":false,
+							"display":"large",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Value",
+							"description":"Value:",
+							"help":"Specifies a list of values the operand is matched against.  To specify multiple values seperate with a ';'",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"large",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"CaseSensitive",
+							"description":"Case Sensitive:",
+							"help":"Specifies a list of values the operand is matched against.  To specify multiple values seperate with a ';'",
+							"type":"choice",
+							"default":"no",
+							"choices":[
+								"no",
+								"yes"
+							],
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Missing",
+							"description":"Missing:",
+							"help":"Indicates whether a value can be missing.",
+							"type":"choice",
+							"default":"no",
+							"choices":[
+								"no",
+								"yes"
+							],
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						}
+					]
+				},
+				{
+					"name":"rulesAction",
+					"description":"L7 Policy: Rules: Action",
+					"help":"The L7 policy `Action <https://support.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/ltm-concepts-11-5-1/3.html>`_ ruleset actions to configure",
+					"type":"table",
+					"modes":[1,2,3,4],
+					"minver":"2.0_001",
+					"fields":[
+						{
+							"name":"Group",
+							"description":"Group:",
+							"help":"The group for this action rule.  Multiple rows with the same group may be specified to create multiple action targets",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"small",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Target",
+							"description":"Target:",
+							"help":"The specific target to use for a policy match.",
+							"type":"editchoice",
+							"choices":[
+								"asm/request/enable/policy",
+								"asm/request/disable",
+								"cache/request/enable/pin",
+								"cache/request/disable",
+								"cache/response/enable/pin",
+								"cache/respones/disable",
+								"compress/request/enable",
+								"compress/request/disable",
+								"compress/response/enable",
+								"compress/response/disable",
+								"decompress/request/enable",
+								"decompress/request/disable",
+								"decompress/response/enable",
+								"decompress/response/disable",
+								"forward/request/reset",
+								"forward/request/select/clone-pool",
+								"forward/request/select/member",
+								"forward/request/select/nexthop",
+								"forward/request/select/node",
+								"forward/request/select/pool",
+								"forward/request/select/rateclass",
+								"forward/request/select/snat",
+								"forward/request/select/snatpool",
+								"forward/request/select/vlan",
+								"forward/request/select/vlan-id",
+								"http/request/enable",
+								"http/request/disable",
+								"http-cookie/request/insert/name,value",
+								"http-cookie/request/remove/name",
+								"http-header/request/insert/name,value",
+								"http-header/request/remove/name",
+								"http-header/request/replace/name,value",
+								"http-header/response/insert/name,value",
+								"http-header/response/remove/name",
+								"http-header/response/replace/name,value",
+								"http-host/request/replace/value",
+								"http-referer/request/insert/value",
+								"http-referer/request/remove",
+								"http-referer/request/replace/value",
+								"http-reply/request/redirect/location",
+								"http-reply/response/redirect/location",
+								"http-set-cookie/response/insert/name,domain,path,value",
+								"http-set-cookie/response/remove/name",
+								"http-uri/response/replace/path,query-string,value",
+								"l7dos/request/enable/from-profile",
+								"l7dos/request/disable",
+								"log/request/write/message",
+								"log/response/write/message",
+								"request-adapt/request/enable/internal-virtual-server",
+								"request-adapt/request/disable",
+								"request-adapt/response/enable/internal-virtual-server",
+								"request-adapt/response/disable",
+								"response-adapt/request/enable/internal-virtual-server",
+								"response-adapt/request/disable",
+								"response-adapt/response/enable/internal-virtual-server",
+								"request-adapt/response/disable",
+								"server-ssl/request/enable",
+								"server-ssl/request/disable",
+								"tcl/request/set-variable/name,expression",
+								"tcl/response/set-variable/name,expression",
+								"tcl/ssl-client-hello/set-variable/name,expression",
+								"tcl/ssl-server-handshake/set-variable/name,expression",
+								"tcl/ssl-server-hello/set-variable/name,expression",
+								"tcp-nagle/request/enable",
+								"tcp-nagle/request/disable"
+							],
+							"required":false,
+							"display":"xlarge",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						},
+						{
+							"name":"Parameter",
+							"description":"Parameter:",
+							"help":"Specifies the value for the action. Possible values depend on the target.  Multiple values can be entered by seperating with a ';'.  To reference a bundled policy item for use with a supported target use the format 'bundled:<bundled item name>'",
+							"type":"string",
+							"default":"",
+							"required":false,
+							"display":"large",
+							"modes":[1,2,3,4],
+							"minver":"2.0_001"
+						}
+					]
+				}
 			]
 		},
 		{
 			"name":"feature",
-			"description":"L4-7 Application Functionality",
+			"description":"L4-7 Helpers",
 			"fields":[
 				{
 					"name":"statsTLS",
@@ -664,7 +1271,7 @@
 					"display":"medium",
 					"modes":[1,2,3,4],
 					"minver":"0.3_006"
-				},			
+				},
 				{
 					"name":"statsHTTP",
 					"description":"HTTP: Stats Reporting",
@@ -684,7 +1291,7 @@
 				{
 					"name":"insertXForwardedFor",
 					"description":"HTTP: Insert X-Forwarded-For Header",
-					"help":"Insert the X-Forwarded-For header.  The auto option will enable this feature if a http profile is attached, otherwise disable",
+					"help":"Insert the X-Forwarded-For header.  The auto option will enable this feature if a HTTP profile and SNAT is configured, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
@@ -700,7 +1307,7 @@
 				{
 					"name":"redirectToHTTPS",
 					"description":"HTTP: Security: Create HTTP(80)->HTTPS(443) Redirect",
-					"help":"Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a client-ssl profile is configured, otherwise disable",
+					"help":"Create a virtual service on TCP/80 that performs a 302 HTTP redirect to TCP/443 on the same IP address.  The auto option will enable this feature if a HTTP profile is configured and the TCP port is 443, otherwise disable",
 					"type":"choice",
 					"default":"auto",
 					"choices":[
@@ -731,12 +1338,12 @@
 					"display":"medium",
 					"modes":[1,2,3,4],
 					"minver":"0.3_007"
-				},				
+				},
 				{
 					"name":"securityEnableHSTS",
 					"description":"HTTP: Security: Enable HTTP Strict Transport Security (only valid if ClientSSL is configured)",
-					"help":"Enabled insertion of the Strict-Transport-Security HTTP header.  The preload and subdomain options can be omitted or included based on this selection.  This setting also modifies creation of the HTTP->HTTPS redirect option to perform a 301 HTTP redirect",
-					"type":"choice",
+					"help":"Enabled insertion of the Strict-Transport-Security HTTP header.  The preload and subdomain options can be omitted or included based on this selection.  This setting also modifies creation of the HTTP->HTTPS redirect option to perform a 301 HTTP redirect.  The max-age parameter can be specified by appending ';max-age=<value>'",
+					"type":"editchoice",
 					"default":"disabled",
 					"required":false,
 					"choices":[
@@ -781,7 +1388,6 @@
 							"description":"CIDR Block:",
 							"help":"CIDR Range",
 							"type":"string",
-							"default":"",
 							"required":false,
 							"display":"large",
 							"modes":[1,2,3,4],
@@ -809,17 +1415,7 @@
 							"minver":"0.3_008"
 						}
 					]
-				},
-				{
-					"name":"easyASMPolicy",
-					"description":"Security: WAF: Policy Name",
-					"help":"The bundled ASM policy name to deploy.  See asm_policies/README for more info.",
-					"type":"dynamic_filelist",
-					"glob":"asm_policies/*.xml",
-					"modes":[1,2,3,4],
-					"minver":"0.3_009",
-					"required":false
-				}								
+				}
 			]
 		},
 		{
@@ -858,6 +1454,6 @@
 					"minver":"0.3_001"
 				}
 			]
-		}			
+		}
 	]
 }

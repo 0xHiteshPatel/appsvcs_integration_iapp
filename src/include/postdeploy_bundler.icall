@@ -1,0 +1,176 @@
+sys icall script %APP_PATH%/postdeploy_bundler {
+    app-service %APP_PATH%/%APP_NAME%
+    definition {
+set app %APP_NAME%
+set app_path %APP_PATH%
+set partition %PARTITION%
+set vs_name %VS_NAME%
+set enable_vs %ENABLEVS%
+set asm_policy_list [list %ASMPOLICYLIST%]
+set apm_policy_list [list %APMPOLICYLIST%]
+set all_policy_list [list %ASMPOLICYLIST% %APMPOLICYLIST%]
+set timestamp %TIMESTAMP%
+set apm_import_cmd [list %APMIMPORTCMD%]
+set newdeploy %NEWDEPLOY%
+set redeploy %REDEPLOY%
+set apm_associate %APMASSOCIATE%
+set asm_mode %ASMMODE%
+set apm_mode %APMMODE%
+set strict_updates %STRICTUPDATES%
+
+set aso "/$partition/${app}.app/$app"
+set iaso [format "sys.application.service %s" $aso]
+set logprefix "\[appsvcs_postdeploy_bundler\]\[$app\]"
+
+set systemTime [clock seconds]
+puts "$logprefix Starting at [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S]"
+
+set file_found 0
+foreach policy $asm_policy_list {
+	set policy_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $app $policy $timestamp]
+	puts "$logprefix Looking for file '$policy_filename'..."
+	if { [file exists $policy_filename] } {
+		puts "$logprefix  Found file matching policy '$policy' at '$policy_filename'"
+		incr file_found
+	}
+}
+
+foreach policy $apm_policy_list {
+	set policy_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $app $policy $timestamp]
+
+	puts "$logprefix Looking for file '$policy_filename'..."
+	if { [file exists $policy_filename] } {
+		puts "$logprefix Found file matching policy '$policy' at '$policy_filename'"
+		incr file_found
+	}
+}
+
+puts "$logprefix [llength $all_policy_list] policies selected for deployment, $file_found policy files found"
+
+if { $file_found != [llength $all_policy_list] } {
+		puts "$logprefix All policy files were not found, exiting (this is normal on the secondary device)"
+		exit 0
+}
+
+tmsh::cd $app_path
+puts "$logprefix Setting iCall handler to inactive..."
+tmsh::modify sys application service $aso strict-updates disabled
+tmsh::modify sys icall handler periodic postdeploy_bundler status inactive
+
+istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "ASM_IN_PROGRESS"
+foreach policy $asm_policy_list {
+	istats::set [format "%s string deploy.postdeploy_bundler.asm.%s" $iaso $policy] "DEPLOY_IN_PROGRESS"
+	set policy_filename [format "/var/tmp/appsvcs_asm_%s_%s_%s.xml" $app $policy $timestamp]
+	puts "$logprefix Loading ASM policy from $policy_filename to ASO $aso..."
+	tmsh::load asm policy $policy file $policy_filename overwrite
+	tmsh::modify asm policy $policy app-service $aso
+
+	puts "$logprefix  Setting ASM policy $app_path/$policy active..."
+	tmsh::modify asm policy $policy active
+
+	puts "$logprefix  Deleting file $policy_filename..."
+	file delete $policy_filename
+	istats::set [format "%s string deploy.postdeploy_bundler.asm.%s" $iaso $policy] "DEPLOY_COMPLETE"
+
+}
+istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "ASM_COMPLETE"
+
+istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "APM_IN_PROGRESS"
+set apm_apply 0
+foreach policy $apm_policy_list {
+	istats::set [format "%s string deploy.postdeploy_bundler.apm.%s" $iaso $policy] "DEPLOY_IN_PROGRESS"
+	set policy_filename [format "/var/tmp/appsvcs_apm_%s_%s_%s.tar.gz" $app $policy $timestamp]
+
+	if { $redeploy && $apm_mode == 2 } {
+		catch { tmsh::modify [format "ltm virtual %s/%s profiles delete \{ %s/bundled_apm_policy \{ \} \}" $app_path $vs_name $app_path]
+				tmsh::delete apm profile access bundled_apm_policy
+				tmsh::delete apm policy access-policy bundled_apm_policy }
+	}
+
+	puts "$logprefix Loading APM policy from $policy_filename to ASO $aso..."
+	eval exec $apm_import_cmd 2>&1
+
+	# Iterate through all the create APM objects and set the ASO
+	foreach {apm_obj} [tmsh::get_config /apm] {
+		set apm_objname [lrange $apm_obj 0 end-1]
+		tmsh::modify [format "%s app-service %s" $apm_objname $aso]
+	}
+
+	puts "$logprefix  Applying APM policy $app_path/bundled_apm_policy..."
+	# We need to sleep outside of scriptd to allow TMM to commit the APM config
+	# Credit to F5 iApp team/CTX VDI iApp for finding this
+    set fn [format "/var/tmp/appsvcs_apmapply_%s.sh" $app]
+    catch {
+        set fh [open $fn w]
+        puts $fh "sleep 5"
+        puts $fh [format "tmsh modify apm profile access %s/bundled_apm_policy generation-action increment" $app_path]
+        if { $enable_vs } {
+        	set apm_apply 1
+			puts "$logprefix   Re-enabling Virtual Server after apply operation completes (block modifier was specified in deployment mode)"
+        	puts $fh [format "tmsh modify ltm virtual %s/%s enabled" $app_path $vs_name]
+        }
+        close $fh
+        exec chmod 777 $fn
+        exec $fn &
+    } {}
+
+	if { $apm_associate } {
+		puts "$logprefix  Associating APM policy with VS (use-bundled value specified for vs__ProfileAccess)"
+		tmsh::modify [format "ltm virtual %s/%s profiles add \{ %s/bundled_apm_policy \{ \} \}" $app_path $vs_name $app_path]
+	}
+
+	puts "$logprefix  Deleting file $policy_filename..."
+	file delete $policy_filename
+	istats::set [format "%s string deploy.postdeploy_bundler.apm.%s" $iaso $policy] "DEPLOY_COMPLETE"
+}
+istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "APM_COMPLETE"
+
+istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "DEFERRED_CMDS_IN_PROGRESS"
+%DEFERREDCMDS%
+istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "DEFERRED_CMDS_COMPLETE"
+
+puts "$logprefix Bundled policy deployment completed"
+
+if { $enable_vs && ! $apm_apply} {
+	puts "$logprefix Re-enabling Virtual Server (block modifier was specified in deployment mode)"
+	tmsh::modify [format "ltm virtual %s/%s enabled" $app_path $vs_name]
+}
+
+# puts "$logprefix Delaying to ensure completion..."
+# after 10000
+
+set dellist {}
+lappend dellist [format "/var/tmp/appsvcs_apmapply_%s.sh" $app]
+# lappend dellist [format "/var/tmp/appsvcs_postdeploy_%s.conf" $app]
+# lappend dellist [format "/var/tmp/appsvcs_load_postdeploy_%s.sh" $app]
+
+puts "$logprefix Cleaning up..."
+foreach df $dellist {
+	if { [file exists $df] } {
+		puts "$logprefix  Deleting file '$df'"
+		file delete $df
+	}
+}
+
+tmsh::delete sys icall handler periodic postdeploy_bundler
+tmsh::modify sys icall handler periodic postdeploy_final first-occurrence now status active
+if { $strict_updates eq "enabled" } {
+	tmsh::modify sys application service $aso strict-updates enabled
+}
+
+set systemTime [clock seconds]
+puts "$logprefix Finished at [clock format $systemTime -format %D] [clock format $systemTime -format %H:%M:%S]"
+istats::set [format "%s string deploy.postdeploy_bundler" $iaso] "FINISHED"
+    }
+    description none
+    events none
+}
+
+sys icall handler periodic %APP_PATH%/postdeploy_bundler {
+    app-service %APP_PATH%/%APP_NAME%
+    first-occurrence %ICALLTIME%
+    interval 3000
+    last-occurrence now+10m
+    script %APP_PATH%/postdeploy_bundler
+    status active
+}

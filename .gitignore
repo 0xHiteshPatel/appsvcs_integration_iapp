@@ -1,3 +1,6 @@
 appsvcs_integration_v*-*_*.tmpl
-asm_policies/*.xml
-irules/*.irule
+parts/*
+docs/_build/*
+docs/presoref.rst
+docs/VERSION
+test/run/*
