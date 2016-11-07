@@ -57,7 +57,7 @@ Advanced Options String
 			- Auto-create Client-SSL Profiles
 
 	* - Syntax
-	  - ``<tmsh_option_name>=<tmsh_option_value>[;<tmsh_option_name>=<tmsh_option_name>]``
+	  - ``<tmsh_option_name>=<tmsh_option_value>[;<tmsh_option_name>=<tmsh_option_value>]``
 	* - Example
 	  - ``slow-ramp-time=300;min-up-members=1``
 
