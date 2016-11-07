@@ -5,7 +5,7 @@
 .. |labname| replace:: Lab\ |labdot|
 .. |labnameund| replace:: Lab\ |labund|
 
-Mulitple Pools & Listeners
+Multiple Pools & Listeners
 --------------------------
 
 In order to support more complex ADC configurations this template includes the
