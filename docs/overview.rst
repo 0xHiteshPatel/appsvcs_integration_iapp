@@ -14,7 +14,7 @@ The iApp supports multiple modes of operation:
   :widths: 20 80
   :stub-columns: 1
 
-  "Standalone","Deployment driven by BIG-IP via GUI or API (SOAP/REST"
+  "Standalone","Deployment driven by BIG-IP via GUI or API (SOAP/REST)"
   "F5 iWorkflow","Deployment driven by the F5's iWorkflow product 
   (Service Catalog/REST Proxy)"
   "Cisco APIC","Deployment driven by L4-7 Service Graphs via the iWorkflow 
