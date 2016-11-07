@@ -61,6 +61,6 @@ Deploy Generic UDP SLB Service
    
    .. NOTE::
       The health monitors will fail because the backend pool member is not 
-      listening on TCP/245.  This is normal and can be ignored.
+      listening on UDP/245.  This is normal and can be ignored.
 
 #. Review the deployed config and deployment log

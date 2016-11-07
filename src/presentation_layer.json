@@ -1,5 +1,5 @@
 {
-	"tmpl_majorversion":"2.0",
+	"tmpl_majorversion":"2.1dev",
 	"pres_revision":"001",
 	"modes": {
 		"1": "Standalone",

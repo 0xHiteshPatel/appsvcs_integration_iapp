@@ -33,7 +33,7 @@ Create String
 			- Persistence (Default & Fallback)
 
 	* - Syntax
-	  - ``create:type=<profile type>;<tmsh_option_name>=<tmsh_option_value>[;<tmsh_option_name>=<tmsh_option_name>]``
+	  - ``create:type=<profile type>;<tmsh_option_name>=<tmsh_option_value>[;<tmsh_option_name>=<tmsh_option_value>]``
 	* - Example
 	  - ``create:type=tcp;nagle=disabled;proxy-low-buffer=10000;defaults-from=/Common/tcp``
 
