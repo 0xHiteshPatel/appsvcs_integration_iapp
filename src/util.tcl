@@ -99,10 +99,10 @@ proc get_mode { } {
     return [list 4 $folder $partition $routedomainid $newdeploy]
   }
 
-  # If we get here we can safely assume that this is either a Standalone or BIG-IQ Cloud mode deployment
-  # The only way we currently have to check for BIG-IQ Cloud mode is to see if app_stats was sent
+  # If we get here we can safely assume that this is either a Standalone or iWorkflow mode deployment
+  # The only way we currently have to check for iWorkflow mode is to see if app_stats was sent
   if { [info exists ::app_stats] } {
-    debug [list get_mode bigiq] "all other modes checked for and app_stats set, assuming BIG-IQ Cloud deployment mode (2)" 10
+    debug [list get_mode iworkflow] "all other modes checked for and app_stats set, assuming iWorkflow deployment mode (2)" 10
     return [list 2 $folder $partition $routedomainid $newdeploy]
   }
 
