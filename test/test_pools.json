@@ -32,7 +32,7 @@
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "0", "1", "0", "enabled",  "none"] },
             { "row": [ "0", "%TEST_MEMBER6_IP%", "80", "1000", "1", "0", "disabled", "none"] },
             { "row": [ "0", "%TEST_MEMBER_IP%", "80", "2000", "1", "0", "drain-disabled", "none"] },
-            { "row": [ "0", "80", "%TEST_MEMBER_IP%%0", "3000", "1", "0", "drain-disabled", "none"] },
+            { "row": [ "0", "80", "%TEST_MEMBER_IP%%0", "3000", "1", "0", "force-disabled", "none"] },
             { "row": [ "1", "test_node0",                      "80", "0", "1", "0", "enabled",  "none"] },
             { "row": [ "1", "test_node3",                      "80", "0", "1", "0", "enabled",  "none"] },
             { "row": [ "1", "/Common/test_node1",              "80", "0", "1", "0", "enabled",  "none"] },
