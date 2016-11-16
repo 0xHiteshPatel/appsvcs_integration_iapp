@@ -41,10 +41,10 @@ To build the template complete these tasks:
    extracted source directory
 
    .. NOTE::
-   	   Notice the ``-nd -a custom`` flag to the build script.  This flag 
-   	   disables building the documentation tree.  Running 
-   	   ``python build.py --help`` will show you other options available during
-   	   the build process.
+   	   Notice the ``-nd -a custom`` arguments to the build script.  The ``-nd``
+   	   argument disables building the documentation tree; ``-a custom`` appends
+   	   ``custom`` to the template name.  Running ``python build.py --help`` will
+   	   show you other options available during the build process.
 
 #. You should now have a file named
    appsvcs_integration_v\ |ver_major|\ -\ |ver_minor|\ _\ |ver_pres|\ _custom.tmpl
@@ -66,18 +66,18 @@ covered in subsequent labs.
 #. Open the source directory that was created in the previous lab
 #. Open the 'bundled' directory.  Notice the three directories that exist there.
 #. We will now populate the directories with sample resources that included 
-   with the |appsvcs| test framework. Copy the follow files (paths relative to 
-   the root of the source tree):
+   with the |appsvcs| test framework. **Copy the follow files (paths relative to 
+   the root of the source tree):**
    
    - test/bundled.test/irules/* -> bundled/irules/
    - test/bundled.test/asm_policies/* -> bundled/asm_policies/
-   - test/bundled.test/apl_policies/* -> bundled/apm_policies/
+   - test/bundled.test/apm_policies/* -> bundled/apm_policies/
 
 #. Run ``build.py -nd -a custom`` using a shell/command line.  Take note of the
-   output form the build script.  You should see the copied files are now 
+   output from the build script.  You should see the copied files are now 
    being packaged into the template:
 
-   .. code::
+   .. code:: console
 
 		$ ./build.py -nd -a custom
 		Appending "custom" to template name
