@@ -158,10 +158,10 @@ array set table_defaults {
     }
 }
 
-array set pool_state {
+array set pool_member_state {
     enabled        {session user-enabled state user-up}
-    disabled       {state user-down}
-    force-disabled {state user-down}
+    disabled       {session user-disabled state user-up}
+    force-disabled {session user-disabled state user-down}
     drain-disabled {session user-disabled state user-up}
 }
 
@@ -533,7 +533,13 @@ foreach poolRow $pool__Pools {
       set memberColumn(Dest) [get_dest_str $memberColumn(IPAddress) $memberColumn(Port)]
     }
 
-    append memberStr [format " %s \{ connection-limit %s ratio %s priority-group %s %s %s\} " $memberColumn(Dest) $memberColumn(ConnectionLimit) $memberColumn(Ratio) $memberColumn(PriorityGroup) $memberColumn(AdvOptions) $::pool_state($memberColumn(State))]
+	if { ![info exists ::pool_member_state($memberColumn(State))] } {
+		error "The pool member state specified for $memberColumn(Dest) is not valid"
+	}
+
+	lappend postfinal_deferred_cmds [create_escaped_tmsh [format "tmsh::modify ltm pool %s/%s members modify \{ %s \{ %s \} \}" $app_path $poolNames($poolColumn(Index)) $memberColumn(Dest) $::pool_member_state($memberColumn(State))]]
+
+    append memberStr [format " %s \{ connection-limit %s ratio %s priority-group %s %s \} " $memberColumn(Dest) $memberColumn(ConnectionLimit) $memberColumn(Ratio) $memberColumn(PriorityGroup) $memberColumn(AdvOptions)]
   }
   append memberStr " \} "
 
