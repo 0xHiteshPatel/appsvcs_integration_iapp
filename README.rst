@@ -3,7 +3,7 @@ Application Services Integration iApp (Community Edition)
 
 |travis_build| |docs|
 
-.. _Documentation: http://appsvcs-integration-iapp.readthedocs.io/en/latest/index.html
+.. _Documentation: http://appsvcs-integration-iapp.readthedocs.io/en/v2.0_001/
 
 Please read the Documentation_ for detailed information.
 
