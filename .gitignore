@@ -1,4 +1,6 @@
 appsvcs_integration_v*-*_*.tmpl
+appsvcs_integration_v*-*_*.apl
+appsvcs_integration_v*-*_*.tcl
 parts/*
 docs/_build/*
 docs/presoref.rst

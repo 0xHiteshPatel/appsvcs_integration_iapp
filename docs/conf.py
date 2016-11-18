@@ -113,11 +113,22 @@ options["outfile"] = os.path.join('docs','_static','appsvcs_integration_v%s.tmpl
 if on_rtd:
     os.mkdir("../rtdtemp")
     b.buildAPL(**options)
-    b.buildTemplate()
+    b.buildTemplate()    
+
+    # Build the TCL only file
+    options["outfile"] = os.path.join('docs','_static','appsvcs_integration_v%s.tcl' % releasefn)
+    options["roottmpl"] = os.path.join('src','implementation_only.template')
+    b.buildTemplate(**options)
+       
+    # Build the APL only file 
+    options["outfile"] = os.path.join('docs','_static','appsvcs_integration_v%s.apl' % releasefn)
+    options["roottmpl"] = os.path.join('rtdtemp','apl.build')
+
+    b.buildTemplate(**options)
+
     os.remove("../rtdtemp/apl.build")
     os.remove("../rtdtemp/bundler.build")
     os.rmdir("../rtdtemp")
-    
 
 b.buildDoc()
 
