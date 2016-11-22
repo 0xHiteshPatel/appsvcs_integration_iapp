@@ -79,7 +79,7 @@ The script supports:
 
 Example:
 
-	``python import_cert_key.py -P Common -c example.crt -k exmaple.key <BIG-IP mgmt IP> example``
+	``python import_cert_key.py -P Common -c example.crt -k example.key <BIG-IP mgmt IP> example``
 
 The preceding command will create the following objects:
 
