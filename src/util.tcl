@@ -1,3 +1,8 @@
+# ****THIS IS TERRIBLE CODE****
+# Just kidding, you are my hero, BK-san!
+#
+#
+#
 # Print a timestamped debug message to /var/tmp/scriptd.out
 # Input: headers = TCL list of headers for the log message
 #        msg = The message to log
