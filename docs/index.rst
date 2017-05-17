@@ -15,7 +15,7 @@
 App Services Integration iApp
 =============================
 
-.. WARNING: These docs are deprecated and only maintained for historical purposes.  Please
+.. ERROR:: These docs are deprecated and only maintained for historical purposes.  Please
    see https://devcentral.f5.com/wiki/iApp.AppSvcsiApp_index.ashx for offical documentation.
    
 Release Version: |release|
